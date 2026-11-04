@@ -5319,3 +5319,30 @@ button {
   background: var(--surface);
   border: 1px solid var(--border);
 }
+
+/* A box that holds a digital signature shows its details when clicked: no "Click to sign" label,
+   only a quiet outline on hover so it reads as clickable */
+.pdf-form-signature.is-digital:hover {
+  border-color: var(--pdf-select);
+  border-style: solid;
+}
+
+/* Dialogs that can be taller than a short window scroll inside it, with their buttons pinned at the
+   bottom, instead of running off the screen with the buttons out of reach */
+.pdf-sig-dialog,
+.pdf-labels-dialog,
+.pdf-scan-dialog {
+  /* the overlay sits below the ribbon, so the height to fit is the overlay's, not the window's */
+  margin-top: 24px;
+  max-height: calc(100% - 48px);
+  overflow-y: auto;
+}
+
+.pdf-sig-dialog .pdf-modal-actions,
+.pdf-labels-dialog .pdf-modal-actions,
+.pdf-scan-dialog .pdf-modal-actions {
+  position: sticky;
+  bottom: 0;
+  background: var(--surface);
+  padding-top: 8px;
+}

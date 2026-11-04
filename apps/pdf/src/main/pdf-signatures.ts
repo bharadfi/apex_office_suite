@@ -14,6 +14,7 @@ import {
 } from 'pdf-lib'
 import type { PDFObject } from 'pdf-lib'
 import type { CertificateInfo, PdfSignatureInfo, PdfSignatureProblem } from '../shared/ipc'
+import { findValidityLayers } from './validity-layers'
 
 const A = forge.asn1
 
@@ -486,6 +487,7 @@ function verifyOne(
     chain: [],
     trusted: false,
     ...(widgetRect(field.widget) ? { rect: widgetRect(field.widget) } : {}),
+    ...(findValidityLayers(field.widget).length > 0 ? { validityLayer: true } : {}),
   }
   const fail = (problem: PdfSignatureProblem): PdfSignatureInfo => {
     info.problems = [problem]

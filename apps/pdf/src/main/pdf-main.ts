@@ -10,7 +10,8 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { randomUUID } from 'node:crypto'
-import { open, readFile, stat, writeFile } from 'node:fs/promises'
+import { open, readFile, rm, stat, writeFile } from 'node:fs/promises'
+import { pathToFileURL } from 'node:url'
 import { userInfo } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import { BrowserWindow, WebContentsView, app, dialog, ipcMain, shell } from 'electron'
@@ -29,7 +30,6 @@ import {
   rendererUrl,
 } from '@genoffice/electron-utils'
 import { createI18n, getUiLang } from '@genoffice/i18n'
-import { generateImageTool, documentMediaRoots } from '@genoffice/ai-search'
 import { PDF_CHANNELS } from '../shared/ipc'
 import { printJobOptions, printOutcome } from '@genoffice/electron-utils/print-job'
 import { printPdfViaCups, printToPdfOptionsFor } from '@genoffice/electron-utils/print-cups'
@@ -53,6 +53,8 @@ import type {
   ReplacePagesRequest,
   ReplacePagesResult,
   SetPageSizeRequest,
+  PrintVectorRequest,
+  PrintVectorResult,
   ScanResult,
   ScanToPdfResult,
   SetPageSizeResult,
@@ -117,6 +119,8 @@ import { SignError, openCertificate, openExternalCertificate, signPdf } from './
 import type { ExternalSigner, SignPdfOptions } from './pdf-sign'
 import { readPdfSignatures } from './pdf-signatures'
 import { readPageLabelRanges } from './page-labels-io'
+import { signatureDisplayCopy } from './signature-display'
+import { buildPrintCopy } from './print-copy'
 import {
   addTrusted,
   loadTrusted,
@@ -1289,6 +1293,74 @@ function registerPdfIpc(): void {
     return printers.map((p) => ({ name: p.name, displayName: p.displayName || p.name }))
   })
 
+  /**
+   * Print the real PDF. The page pictures the renderer used to make turned every printed page, and
+   * so every "Print to PDF", into a flat picture with no text. Here the file itself is printed by
+   * the system's PDF viewer, so text stays text and fonts stay fonts, and each signature box
+   * carries its verdict mark. Only Windows takes this route for now; elsewhere (or if the viewer
+   * does not load) the caller is told to print pictures instead.
+   */
+  ipcMain.handle(
+    PDF_CHANNELS.printVector,
+    async (e, request: unknown): Promise<PrintVectorResult> => {
+      const req = (request ?? {}) as Partial<PrintVectorRequest>
+      const path = req.path
+      if (typeof path !== 'string' || !allowedByWc.get(e.sender.id)?.has(path)) {
+        return { ok: false, error: 'pdf: path not granted to this view' }
+      }
+      if (process.platform !== 'win32') return { ok: false, fallback: true }
+      const pages = Array.isArray(req.pages)
+        ? req.pages.filter((n) => Number.isInteger(n))
+        : undefined
+      const opts = printJobOptions(req.job)
+      let temp: string | null = null
+      let win: BrowserWindow | null = null
+      try {
+        let userTrusted: ReadonlySet<string> = new Set()
+        try {
+          userTrusted = trustedFingerprints(await loadTrusted(trustedCertificatesPath()))
+        } catch {
+          /* printed without it */
+        }
+        const copy = await buildPrintCopy(new Uint8Array(await readFile(path)), pages, userTrusted)
+        temp = join(app.getPath('temp'), `genoffice-print-${process.pid}-${Date.now()}.pdf`)
+        await writeFile(temp, copy)
+        win = new BrowserWindow({ show: false, webPreferences: { plugins: true } })
+        await win.loadURL(pathToFileURL(temp).toString())
+        // the viewer lays its pages out a moment after the page has loaded
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+        const contents = win.webContents
+        return await new Promise<PrintVectorResult>((resolve) => {
+          contents.print(
+            {
+              margins: { marginType: 'none' },
+              silent: opts.silent,
+              ...(opts.deviceName !== undefined ? { deviceName: opts.deviceName } : {}),
+              ...(opts.copies !== undefined ? { copies: opts.copies } : {}),
+              ...(opts.collate !== undefined ? { collate: opts.collate } : {}),
+              ...(opts.duplexMode !== undefined ? { duplexMode: opts.duplexMode } : {}),
+            },
+            (success, failureReason) => resolve(printOutcome(success, failureReason, opts.silent)),
+          )
+        })
+      } catch (err) {
+        return {
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+          fallback: true,
+        }
+      } finally {
+        const closing = win
+        const file = temp
+        // the spooler may still be reading the file when the job is handed over
+        setTimeout(() => {
+          closing?.destroy()
+          if (file) void rm(file, { force: true })
+        }, 10_000)
+      }
+    },
+  )
+
   ipcMain.handle(PDF_CHANNELS.print, async (e, job: unknown) => {
     const opts = printJobOptions(job)
     // the renderer's print stylesheet already lays one rasterized page per sheet
@@ -2116,25 +2188,6 @@ function registerPdfIpc(): void {
     },
   )
 
-  // pdf-owned (unlike ai:image-search / ai:fetch-image, which the shell registers app-wide):
-  // slides' ai:generate-image is only registered once a slides view exists, so pdf needs its own
-  ipcMain.handle(PDF_CHANNELS.generateImage, (e, op: { prompt?: unknown; aspectRatio?: unknown }) =>
-    generateImageTool(
-      join(app.getPath('userData'), 'ai-settings.json'),
-      {
-        prompt: String(op?.prompt ?? ''),
-        aspectRatio: op?.aspectRatio ? String(op.aspectRatio) : undefined,
-      },
-      {
-        // pdf keeps its media (exported/edited images) beside the open file
-        mediaRoots: documentMediaRoots(
-          openPathByWc.get(e.sender.id),
-          join(app.getPath('temp'), 'genoffice-pasted'),
-        ),
-      },
-    ),
-  )
-
   ipcMain.handle(
     PDF_CHANNELS.readPageLabels,
     async (e, path: unknown): Promise<PageLabelRange[]> => {
@@ -2148,6 +2201,28 @@ function registerPdfIpc(): void {
       } catch {
         // protected or damaged: no labels to show, and the document still opens
         return []
+      }
+    },
+  )
+
+  // The copy of a signed file to show and print: each signature box with its own verdict mark
+  ipcMain.handle(
+    PDF_CHANNELS.signatureDisplayCopy,
+    async (e, path: unknown): Promise<ArrayBuffer | null> => {
+      if (typeof path !== 'string' || !allowedByWc.get(e.sender.id)?.has(path)) return null
+      try {
+        const bytes = new Uint8Array(await readFile(path))
+        let userTrusted: ReadonlySet<string> = new Set()
+        try {
+          userTrusted = trustedFingerprints(await loadTrusted(trustedCertificatesPath()))
+        } catch {
+          /* judged without it */
+        }
+        const copy = await signatureDisplayCopy(bytes, userTrusted)
+        return copy ? copy.slice().buffer : null
+      } catch {
+        // no copy: the original is shown as it is
+        return null
       }
     },
   )

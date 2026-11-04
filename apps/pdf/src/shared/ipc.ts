@@ -1,6 +1,4 @@
-import type { AiPanelPrefs } from '@genoffice/ui'
 import type { Lang } from '@genoffice/i18n'
-import type { AiSettings, AiStreamChunk, AiStreamRequest } from '@genoffice/ai-provider'
 import type { PrintDuplex, PrintJobOptions, PrinterInfo } from '@genoffice/electron-utils/print-job'
 import type { PageLabelRange } from './page-labels'
 export type { PrintDuplex, PrintJobOptions, PrinterInfo }
@@ -8,8 +6,10 @@ export type { PageLabelRange }
 
 export const PDF_CHANNELS = {
   readPageLabels: 'pdf:read-page-labels',
+  signatureDisplayCopy: 'pdf:signature-display-copy',
   scanPage: 'pdf:scan-page',
   scanToPdf: 'pdf:scan-to-pdf',
+  printVector: 'pdf:print-vector',
   consumePending: 'pdf:consume-pending',
   readFile: 'pdf:read-file',
   readFileChunk: 'pdf:read-file-chunk',
@@ -44,7 +44,6 @@ export const PDF_CHANNELS = {
   exportImages: 'pdf:export-images',
   convertOffice: 'pdf:convert-office',
   createDocument: 'pdf:create-document',
-  generateImage: 'pdf:generate-image',
   listDigitalSignatures: 'pdf:list-digital-signatures',
   pickCertificate: 'pdf:pick-certificate',
   listSystemCertificates: 'pdf:list-system-certificates',
@@ -75,8 +74,6 @@ export const PDF_CHANNELS = {
   languageChanged: 'app:language-changed',
   getTheme: 'app:get-theme',
   themeChanged: 'app:theme-changed',
-  getAiPanelPrefs: 'app:get-ai-panel-prefs',
-  aiPanelPrefsChanged: 'app:ai-panel-prefs-changed',
 } as const
 
 export const VISUAL_SIGNATURE_CONTENT_PREFIX = 'GenOffice visual signature field: '
@@ -167,6 +164,8 @@ export interface PdfSignatureInfo {
   trustedByUser?: boolean
   /** The signature box on its page, PDF user space [x0, y0, x1, y1]; absent for invisible signatures */
   rect?: [number, number, number, number]
+  /** The box already carries Adobe's own verdict mark layer, which the display copy redraws (so no overlay is needed) */
+  validityLayer?: boolean
 }
 
 /** One certificate the user chose to trust (kept in userData, shared by all documents) */
@@ -919,6 +918,19 @@ export type ScanResult =
       detail?: string
     }
 
+/** Print the real PDF (text stays text) from the main process: the file's path, the 1-based pages, and the chosen printer's options (none = the system dialog) */
+export interface PrintVectorRequest {
+  path: string
+  pages?: number[]
+  job?: PrintJobOptions
+}
+
+/**
+ * `fallback`: this system cannot print the PDF itself (not Windows, or its viewer did not load), so the
+ * caller should print the pages as pictures instead. No `error` with `ok: false` is a print the user cancelled.
+ */
+export type PrintVectorResult = { ok: true } | { ok: false; error?: string; fallback?: boolean }
+
 /** The scanned pages made into a new PDF, written to the default save folder and opened in a new tab */
 export type ScanToPdfResult = { ok: true; savedPath: string } | { ok: false; error: string }
 
@@ -1037,43 +1049,6 @@ export type ExportImagesResult =
   | { ok: true; savedDir: string; count: number }
   | { ok: true; canceled: true }
   | { ok: false; error: string }
-
-/** AI channels are app-wide shared ipcMain handlers (shell registers via docs-main registerAiIpc); pass-through only */
-export interface UserSkillEntry {
-  name: string
-  description: string
-  relevant: boolean
-}
-
-export const AI_CHANNELS = {
-  getSettings: 'ai:get-settings',
-  setSettings: 'ai:set-settings',
-  settingsChanged: 'ai:settings-changed',
-  openModelSettings: 'ai:open-model-settings',
-  openSkillsSettings: 'ai:open-skills-settings',
-  skillsList: 'ai:skills-list',
-  skillText: 'ai:skill-text',
-  gskStatus: 'ai:gsk-status',
-  stream: 'ai:stream',
-  streamChunk: 'ai:stream-chunk',
-  streamCancel: 'ai:stream-cancel',
-  imageSearch: 'ai:image-search',
-  fetchImage: 'ai:fetch-image',
-} as const
-
-export interface ImageSearchResponse {
-  images: Array<{
-    title: string
-    imageUrl: string
-    sourceUrl: string
-    source: string
-    width?: number
-    height?: number
-  }>
-  method: string
-  /** failure reason when method === 'error' */
-  error?: string
-}
 
 /** API exposed by preload to the renderer (window.pdfApi) */
 export interface PdfApi {
@@ -1206,19 +1181,14 @@ export interface PdfApi {
   convertOffice(format: PdfConvertFormat): Promise<void>
   /** AI create_document: build a new standalone file in the default folder and open it in a new tab */
   createDocument(request: CreateDocumentRequest): Promise<CreateDocumentResult>
-  /** Web image search for AI tools (app-wide ai:image-search handler) */
-  imageSearch(query: string, maxResults?: number): Promise<ImageSearchResponse>
-  /** Download an image URL in the main process (SSRF-guarded, avoids CORS); null on failure */
-  fetchImage(url: string): Promise<{ base64: string; mime: string } | null>
-  /** AI image generation via Genspark (gsk); returns a downloadable URL or an error message */
-  generateImage(op: { prompt: string; aspectRatio?: string }): Promise<{
-    url?: string
-    error?: string
-  }>
   /** Read and verify the digital (certificate) signatures embedded in a granted PDF */
   listDigitalSignatures(path: string): Promise<PdfSignatureInfo[]>
+  /** The copy of a granted, signed PDF to display or print: each signature box showing its own verdict mark. null when there is nothing to redraw */
+  signatureDisplayCopy(path: string): Promise<ArrayBuffer | null>
   /** The page-label ranges of a granted PDF ([] when it has none, or is protected and cannot be read here) */
   readPageLabels(path: string): Promise<PageLabelRange[]>
+  /** Print the real PDF, with each signature box showing its verdict mark and only the chosen pages; resolves when the job is handed over */
+  printVector(request: PrintVectorRequest): Promise<PrintVectorResult>
   /** Open the Windows scan window and return the picture it scans (PNG); one window at a time */
   scanPage(): Promise<ScanResult>
   /** Make a new PDF from scanned PNG pictures (one page each, in order) and open it in a new tab */
@@ -1281,28 +1251,7 @@ export interface PdfApi {
   onLanguageChanged(handler: (lang: Lang) => void): () => void
   getTheme(): Promise<UiTheme>
   onThemeChanged(handler: (theme: UiTheme) => void): () => void
-  /** AI panel text size + chat-input spellcheck (Settings → General in the shell) */
-  getAiPanelPrefs(): Promise<AiPanelPrefs>
-  setAiPanelPrefs(patch: Partial<AiPanelPrefs>): Promise<AiPanelPrefs>
-  onAiPanelPrefsChanged(handler: (prefs: AiPanelPrefs) => void): () => void
   /** press on the shell chrome (tab strip is a sibling WebContentsView whose
    *  clicks produce no DOM event here) — dismiss open popovers */
   onChromePressed(handler: () => void): () => void
-  getAiSettings(): Promise<AiSettings>
-  setAiSettings(settings: AiSettings): Promise<void>
-  /** ai-settings.json was rewritten by any renderer; re-read it */
-  onAiSettingsChanged(handler: () => void): () => void
-  /** shell only: switch to Home and open Settings › AI Model (rejects in standalone) */
-  openAiModelSettings(): Promise<void>
-  /** shell only: switch to Home and open Settings › Integrations (the skills list) */
-  openSkillsSettings(): Promise<void>
-  /** the skills the user installed into GenOffice */
-  skillsList(): Promise<UserSkillEntry[]>
-  /** one installed skill's body, by name */
-  skillText(name: string): Promise<string>
-  /** Genspark login state (gsk); gates the cloud-only generate_image tool */
-  gskStatus(): Promise<{ loggedIn: boolean }>
-  aiStream(request: AiStreamRequest): Promise<void>
-  aiStreamCancel(requestId: string): Promise<void>
-  onAiStream(handler: (chunk: AiStreamChunk) => void): () => void
 }

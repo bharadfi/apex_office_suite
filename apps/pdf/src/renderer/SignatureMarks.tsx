@@ -28,6 +28,8 @@ export function marksForPage(
   const marks: SignatureMark[] = []
   for (const sig of signatures) {
     if (sig.kind !== 'signature' || sig.pageIndex !== pageIndex || !sig.rect) continue
+    // a box with its own verdict layer is redrawn in the display copy: a second mark would double it
+    if (sig.validityLayer) continue
     const verifies = sig.status === 'valid' || sig.status === 'untrusted'
     const name = sig.signer?.commonName ?? sig.signerName
     marks.push({

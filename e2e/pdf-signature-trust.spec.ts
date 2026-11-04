@@ -56,6 +56,27 @@ test('a signature shows its verdict on the page, and trusting the signer is reme
     await expect(mark).toHaveClass(/untrusted/)
     await expect(page.locator('.pdf-sig-banner')).toContainText('signer not trusted')
 
+    // clicking the signature box shows the signature's details: it must never offer to sign again
+    await page.locator('.pdf-form-signature.is-digital').first().click()
+    await expect(page.getByRole('dialog', { name: 'Digital signatures' })).toBeVisible()
+    await expect(page.getByRole('dialog', { name: 'Add signature' })).toHaveCount(0)
+
+    // even in a short window the dialog scrolls, with its OK button always within reach
+    await first.app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows()[0]?.setSize(1000, 520),
+    )
+    await expect
+      .poll(async () => {
+        const ok = await page
+          .getByRole('dialog', { name: 'Digital signatures' })
+          .getByRole('button', { name: 'OK' })
+          .boundingBox()
+        const height = await page.evaluate(() => window.innerHeight)
+        return ok !== null && ok.y >= 0 && ok.y + ok.height <= height
+      })
+      .toBe(true)
+    await page.keyboard.press('Escape')
+
     // trust the signer from the signatures list: the mark and the banner follow at once
     await page.getByRole('button', { name: 'View signatures' }).click()
     await page.getByRole('button', { name: 'Add to trusted certificates', exact: true }).click()

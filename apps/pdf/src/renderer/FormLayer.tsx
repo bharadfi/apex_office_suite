@@ -27,12 +27,15 @@ export function FormLayer({
   edits,
   activeWidgetId,
   signedWidgetIds,
+  digitalFieldNames,
   signatureLabel = 'Sign',
+  signatureViewLabel = 'View signature',
   dateInvalidLabel = (format: string) => format,
   datePickLabel = 'Pick a date',
   registerControl,
   onFocus,
   onSignature,
+  onViewSignatures,
   onEdit,
 }: {
   widgets: FormWidget[]
@@ -42,12 +45,16 @@ export function FormLayer({
   edits: ReadonlyMap<string, FormValueInput>
   activeWidgetId?: string | null
   signedWidgetIds?: ReadonlySet<string>
+  /** names of the fields that hold a digital (certificate) signature: clicking one shows its details */
+  digitalFieldNames?: ReadonlySet<string>
   signatureLabel?: string
+  signatureViewLabel?: string
   dateInvalidLabel?: (format: string) => string
   datePickLabel?: string
   registerControl?: (id: string, element: HTMLElement | null) => void
   onFocus?: (widget: FormWidget) => void
   onSignature?: (widget: FormWidget) => void
+  onViewSignatures?: () => void
   onEdit: (value: FormValueInput) => void
 }): ReactElement | null {
   if (widgets.length === 0) return null
@@ -59,22 +66,24 @@ export function FormLayer({
         const edit = edits.get(w.fieldName)
         const active = activeWidgetId === w.id ? ' is-active' : ''
         if (w.kind === 'signature') {
-          const signed = w.signed || signedWidgetIds?.has(w.id)
+          const digital = digitalFieldNames?.has(w.fieldName) === true
+          const signed = w.signed || signedWidgetIds?.has(w.id) || digital
           return (
             <button
               key={w.id}
               ref={(element) => registerControl?.(w.id, element)}
               type="button"
-              className={`pdf-form-signature${signed ? ' is-signed' : ''}${active}`}
+              className={`pdf-form-signature${signed ? ' is-signed' : ''}${digital ? ' is-digital' : ''}${active}`}
               style={style}
-              disabled={readOnly || w.readOnly}
-              aria-disabled={signed || undefined}
+              disabled={digital ? false : readOnly || w.readOnly}
+              aria-disabled={signed && !digital ? true : undefined}
               aria-required={w.required}
-              aria-label={signatureLabel}
-              title={w.fieldName}
+              aria-label={digital ? signatureViewLabel : signatureLabel}
+              title={digital ? signatureViewLabel : w.fieldName}
               onFocus={() => onFocus?.(w)}
               onClick={() => {
-                if (!signed) onSignature?.(w)
+                if (digital) onViewSignatures?.()
+                else if (!signed) onSignature?.(w)
               }}
             >
               {signed ? null : signatureLabel}

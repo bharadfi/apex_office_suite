@@ -36,6 +36,7 @@ const extraStrings = {
     'Certificates you add to your trusted list count as trusted here, in every document.',
   sigCertifiedBy: 'Document certified by {name}.',
   sigCertifiedByEmail: 'Document certified by {name} <{email}>.',
+  sigViewTip: 'View signature details',
   // Page labels
   pageLabels: 'Page labels',
   pageLabelsTip: 'Number pages i, ii, iii or A-1, A-2 instead of 1, 2, 3',
@@ -106,6 +107,7 @@ const localizedExtraStrings = {
     sigTrustYours: '你加入受信任列表的证书，在所有文档中都会被视为可信。',
     sigCertifiedBy: '文档由 {name} 认证。',
     sigCertifiedByEmail: '文档由 {name} <{email}> 认证。',
+    sigViewTip: '查看签名详情',
     pageLabels: '页码标签',
     pageLabelsTip: '把页码标成 i、ii、iii 或 A-1、A-2，而不是 1、2、3',
     pageLabelsIntro: '选择页面的编号方式。每一行从你给出的页开始一段新的编号。',
@@ -168,6 +170,7 @@ const localizedExtraStrings = {
     sigTrustYours: '你加入受信任清單的憑證，在所有文件中都會被視為可信。',
     sigCertifiedBy: '文件由 {name} 認證。',
     sigCertifiedByEmail: '文件由 {name} <{email}> 認證。',
+    sigViewTip: '檢視簽章詳細資料',
     pageLabels: '頁碼標籤',
     pageLabelsTip: '把頁碼標成 i、ii、iii 或 A-1、A-2，而不是 1、2、3',
     pageLabelsIntro: '選擇頁面的編號方式。每一列從你給的頁開始一段新的編號。',
