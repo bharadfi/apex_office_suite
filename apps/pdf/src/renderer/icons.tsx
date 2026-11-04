@@ -34,6 +34,35 @@ export function Icon({
   )
 }
 
+export const IconReadPage = () => (
+  <Icon>
+    <path d="M4.5 9.5 L8.5 9.5 L13 5.5 L13 18.5 L8.5 14.5 L4.5 14.5 Z" />
+    <path d="M16 9 C17.4 10.6 17.4 13.4 16 15" />
+    <path d="M18.6 6.6 C21.2 9.6 21.2 14.4 18.6 17.4" />
+  </Icon>
+)
+export const IconReadToEnd = () => (
+  <Icon>
+    <path d="M3.5 9.5 L7 9.5 L11 5.8 L11 18.2 L7 14.5 L3.5 14.5 Z" />
+    <path d="M14 8 C15 9.4 15 12.6 14 14" />
+    <path d="M14.5 18.5 L20.5 18.5 M18 16 L20.5 18.5 L18 21" />
+  </Icon>
+)
+export const IconReadPause = () => (
+  <Icon>
+    <path d="M9 6 L9 18 M15 6 L15 18" />
+  </Icon>
+)
+export const IconReadPlay = () => (
+  <Icon>
+    <path d="M8 5.5 L18 12 L8 18.5 Z" />
+  </Icon>
+)
+export const IconReadStop = () => (
+  <Icon>
+    <rect x="6.5" y="6.5" width="11" height="11" rx="1.5" />
+  </Icon>
+)
 export const IconThumbs = () => (
   <Icon>
     <rect x="4.5" y="5" width="6" height="6.5" rx="1" />

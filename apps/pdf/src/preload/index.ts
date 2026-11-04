@@ -62,6 +62,10 @@ const api: PdfApi = {
   addSavedSignature: (data) => ipcRenderer.invoke(PDF_CHANNELS.addSignature, data),
   removeSavedSignature: (id) => ipcRenderer.invoke(PDF_CHANNELS.removeSignature, id),
   getUsername: () => ipcRenderer.invoke(PDF_CHANNELS.getUsername),
+  speechStart: (text) => ipcRenderer.invoke(PDF_CHANNELS.speechStart, text),
+  speechPause: () => ipcRenderer.invoke(PDF_CHANNELS.speechPause),
+  speechStop: () => ipcRenderer.invoke(PDF_CHANNELS.speechStop),
+  speechState: () => ipcRenderer.invoke(PDF_CHANNELS.speechState),
   setDirty: (dirty) => ipcRenderer.send(PDF_CHANNELS.dirtyChanged, dirty),
   onCloseSaveRequest: (handler) => {
     const listener = (_e: unknown, opts?: { flushAll?: boolean }) =>

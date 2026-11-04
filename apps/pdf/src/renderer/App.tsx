@@ -133,6 +133,7 @@ import {
   type CompareResult,
   type PageText,
 } from './compare-text'
+import { collectSpeechText } from './read-aloud'
 import { AttachmentsPanel, type AttachmentRow } from './AttachmentsPanel'
 import type { OutlineNode } from './OutlinePanel'
 import {
@@ -296,6 +297,11 @@ import type {
   AnnotSelection,
 } from './edit-state'
 import {
+  IconReadPage,
+  IconReadToEnd,
+  IconReadPause,
+  IconReadPlay,
+  IconReadStop,
   IconThumbs,
   IconHighlight,
   IconUnderline,
@@ -470,9 +476,31 @@ export default function App() {
     theirs: number
   } | null>(null)
   const compareSidesRef = useRef<{ mine: PageText[]; theirs: PageText[] } | null>(null)
+  /** Read Out Loud: 'preparing' while the text of the pages is gathered, then what the voice is doing */
+  const [speech, setSpeech] = useState<'idle' | 'preparing' | 'reading' | 'paused'>('idle')
+  /** bumped whenever a reading is started or stopped, so a slow start can tell it was overtaken */
+  const speechRunRef = useRef(0)
   const [sidebarW, setSidebarW] = useState(loadSidebarW)
   /** raster width for thumbnails — only updated when a drag ends (re-rastering every frame would jank) */
   const [thumbRasterW, setThumbRasterW] = useState(() => loadSidebarW() - SIDEBAR_CHROME)
+  // Read Out Loud follows the voice: it goes idle by itself when the text is done
+  useEffect(() => {
+    if (speech !== 'reading' && speech !== 'paused') return
+    const timer = window.setInterval(() => {
+      void window.pdfApi.speechState().then((state) => {
+        setSpeech((now) => (now === 'reading' || now === 'paused' ? state : now))
+      })
+    }, 600)
+    return () => window.clearInterval(timer)
+  }, [speech])
+  // ...and ends with the document it was reading (a different file, or the tab closing)
+  useEffect(
+    () => () => {
+      speechRunRef.current++
+      void window.pdfApi.speechStop()
+    },
+    [doc],
+  )
   // Re-clamp when the window shrinks (max is 40% of the window), same as slides
   useEffect(() => {
     const onResize = () => setSidebarW((w) => clampSidebarW(w))
@@ -4469,6 +4497,54 @@ export default function App() {
     }
   }
 
+  /** Read Out Loud: the current page, or from it to the end of the document */
+  const startReading = async (toEnd: boolean): Promise<void> => {
+    if (!doc || speech === 'preparing') return
+    const run = ++speechRunRef.current
+    setSpeech('preparing')
+    try {
+      const pages = toEnd
+        ? visList.slice(currentPage - 1)
+        : visList.slice(currentPage - 1, currentPage)
+      const text = await collectSpeechText(doc, pages, () => run !== speechRunRef.current)
+      if (run !== speechRunRef.current) return
+      const result =
+        text.trim() === ''
+          ? { ok: false as const, reason: 'no-text' as const }
+          : await window.pdfApi.speechStart(text)
+      if (run !== speechRunRef.current) return
+      if (result.ok) {
+        setSpeech('reading')
+        return
+      }
+      setSpeech('idle')
+      showNotice(
+        t(
+          result.reason === 'no-text'
+            ? 'readNoText'
+            : result.reason === 'unsupported'
+              ? 'readUnsupported'
+              : 'readFailed',
+        ),
+      )
+    } catch (err) {
+      if (run === speechRunRef.current) {
+        setSpeech('idle')
+        showNotice(err instanceof Error ? err.message : String(err))
+      }
+    }
+  }
+
+  const toggleReadingPause = async (): Promise<void> => {
+    setSpeech(await window.pdfApi.speechPause())
+  }
+
+  const stopReading = async (): Promise<void> => {
+    speechRunRef.current++
+    setSpeech('idle')
+    await window.pdfApi.speechStop()
+  }
+
   /**
    * The comparison of the chosen pages. Typed choices that are not a valid
    * selection flag the panel and return null, so the caller keeps the last
@@ -7793,6 +7869,52 @@ export default function App() {
     </div>
   )
 
+  const readingActive = speech === 'reading' || speech === 'paused'
+  const readAloudGroup = (
+    <div className="ribbon-group" role="group" aria-label={t('readAloudGroup')}>
+      <div className="ribbon-group-items">
+        <button
+          className="rb-big"
+          data-tip={t('readPageTip')}
+          disabled={!doc || speech === 'preparing'}
+          onClick={() => void startReading(false)}
+        >
+          <span className="rb-big-icon">
+            <IconReadPage />
+          </span>
+          <span>{t('readPage')}</span>
+        </button>
+        <button
+          className="rb-big"
+          data-tip={t('readToEndTip')}
+          disabled={!doc || speech === 'preparing'}
+          onClick={() => void startReading(true)}
+        >
+          <span className="rb-big-icon">
+            <IconReadToEnd />
+          </span>
+          <span>{t('readToEnd')}</span>
+        </button>
+        <button
+          className="rb-big"
+          disabled={!readingActive}
+          onClick={() => void toggleReadingPause()}
+        >
+          <span className="rb-big-icon">
+            {speech === 'paused' ? <IconReadPlay /> : <IconReadPause />}
+          </span>
+          <span>{speech === 'paused' ? t('readResume') : t('readPause')}</span>
+        </button>
+        <button className="rb-big" disabled={speech === 'idle'} onClick={() => void stopReading()}>
+          <span className="rb-big-icon">
+            <IconReadStop />
+          </span>
+          <span>{t('readStop')}</span>
+        </button>
+      </div>
+    </div>
+  )
+
   const pageZoomGroup = (
     <div className="ribbon-group">
       <div className="ribbon-group-items">
@@ -9092,6 +9214,8 @@ export default function App() {
           {ribbonTab === 'view' && (
             <>
               {viewNavGroup}
+              <div className="ribbon-sep" />
+              {readAloudGroup}
               <div className="ribbon-sep" />
               {pageZoomGroup}
             </>

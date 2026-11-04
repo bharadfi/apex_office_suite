@@ -54,6 +54,7 @@ import type {
   ReplacePagesResult,
   SetPageSizeRequest,
   SetPageSizeResult,
+  SpeechStartResult,
   SplitPagesRequest,
   SplitPagesResult,
   SplitPdfRequest,
@@ -94,6 +95,7 @@ import {
   splitPdfBytes,
 } from './save-pdf'
 import { readPdfText } from './read-text'
+import { Speaker } from './speech'
 import { shrinkDocument } from './pdf-shrink'
 import { PDFDocument } from 'pdf-lib'
 import {
@@ -1210,6 +1212,18 @@ function registerPdfIpc(): void {
       return ''
     }
   })
+
+  // Read Out Loud: one speaker for the process (one reading at a time), ended with the app
+  const speaker = new Speaker()
+  app.on('before-quit', () => speaker.stop())
+  ipcMain.handle(PDF_CHANNELS.speechStart, (_e, text: unknown) =>
+    typeof text === 'string'
+      ? speaker.start(text)
+      : ({ ok: false, reason: 'failed' } satisfies SpeechStartResult),
+  )
+  ipcMain.handle(PDF_CHANNELS.speechPause, () => speaker.togglePause())
+  ipcMain.handle(PDF_CHANNELS.speechStop, () => speaker.stop())
+  ipcMain.handle(PDF_CHANNELS.speechState, () => speaker.state())
 
   ipcMain.handle(PDF_CHANNELS.printers, async (e) => {
     const printers = await e.sender.getPrintersAsync()

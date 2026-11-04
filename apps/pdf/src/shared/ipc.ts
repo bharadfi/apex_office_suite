@@ -50,6 +50,10 @@ export const PDF_CHANNELS = {
   addSignature: 'pdf:add-signature',
   removeSignature: 'pdf:remove-signature',
   getUsername: 'pdf:get-username',
+  speechStart: 'pdf:speech-start',
+  speechPause: 'pdf:speech-pause',
+  speechStop: 'pdf:speech-stop',
+  speechState: 'pdf:speech-state',
   dirtyChanged: 'pdf:dirty-changed',
   closeSaveRequest: 'pdf:close-save-request',
   closeSaveResult: 'pdf:close-save-result',
@@ -222,6 +226,17 @@ export type SignWithCertificateResult =
       error: CertificateErrorCode | 'pdf-encrypted' | 'sign-failed'
       message?: string
     }
+
+/** Read Out Loud: what the speaking process is doing */
+export type SpeechState = 'idle' | 'reading' | 'paused'
+
+/**
+ * Starting a reading: `unsupported` means this system has no speech engine the
+ * main process can drive (the renderer may still have the browser's own),
+ * `no-text` that there was nothing to say.
+ */
+export type SpeechStartResult =
+  { ok: true } | { ok: false; reason: 'unsupported' | 'no-text' | 'failed'; detail?: string }
 
 /** A reusable signature persisted in userData (shared across documents, WPS-style) */
 export interface SavedSignature {
@@ -1181,6 +1196,14 @@ export interface PdfApi {
   removeSavedSignature(id: string): Promise<SavedSignature[]>
   /** OS account name, used as the default author of new note comments; '' when unavailable */
   getUsername(): Promise<string>
+  /** Read Out Loud: speak `text` with the system voice, replacing any reading in progress */
+  speechStart(text: string): Promise<SpeechStartResult>
+  /** Pause a reading, or resume a paused one; resolves to the state afterwards ('idle' when nothing is being read) */
+  speechPause(): Promise<SpeechState>
+  /** Stop reading */
+  speechStop(): Promise<void>
+  /** What the speaking process is doing now (it goes idle by itself when the text is done) */
+  speechState(): Promise<SpeechState>
   /** Mirror unsaved-changes state to the main process; drives the save prompt before closing a tab/window */
   setDirty(dirty: boolean): void
   /** Main process asks for a save (close prompt, menu Save, export flows) and waits for sendCloseSaveResult.
