@@ -100,9 +100,31 @@ const isSelfSigned = (cert: X509Certificate): boolean => {
   }
 }
 
+/**
+ * The certificate's email: the subject's emailAddress, else the first rfc822Name
+ * alternative name (Node prints those as `email:me@example.org` in a comma list).
+ */
+export function certificateEmail(
+  subject: string,
+  subjectAltName: string | undefined,
+): string | undefined {
+  const line = dnLines(subject).find((l) => /^emailAddress=/i.test(l))
+  const fromSubject = line?.slice(line.indexOf('=') + 1).trim()
+  if (fromSubject) return fromSubject
+  for (const part of (subjectAltName ?? '').split(',')) {
+    const entry = part.trim()
+    if (/^email:/i.test(entry)) {
+      const address = entry.slice('email:'.length).trim()
+      if (address) return address
+    }
+  }
+  return undefined
+}
+
 export function describeCertificate(cert: X509Certificate): CertificateInfo {
   const subject = fixDn(cert.subject)
   const issuer = fixDn(cert.issuer)
+  const email = certificateEmail(subject, cert.subjectAltName)
   return {
     commonName: commonNameOf(subject),
     subject,
@@ -114,6 +136,7 @@ export function describeCertificate(cert: X509Certificate): CertificateInfo {
     fingerprint: cert.fingerprint256,
     keyAlgorithm: keyAlgorithmOf(cert.publicKey),
     selfSigned: isSelfSigned(cert),
+    ...(email ? { email } : {}),
   }
 }
 
@@ -164,9 +187,18 @@ function buildChain(signer: X509Certificate, pool: X509Certificate[]): X509Certi
   return chain
 }
 
-const chainIsTrusted = (chain: X509Certificate[]): boolean => {
+/**
+ * Whether the chain reaches a root the system trusts, or holds a certificate the
+ * user chose to trust. `byUser` says the user's list is what vouches for it (or
+ * helps to), so the interface can offer to take that trust away again.
+ */
+function chainTrust(
+  chain: X509Certificate[],
+  userTrusted: ReadonlySet<string>,
+): { trusted: boolean; byUser: boolean } {
   const roots = trustedRootFingerprints()
-  return chain.some((cert) => roots.has(cert.fingerprint256))
+  const byUser = chain.some((cert) => userTrusted.has(cert.fingerprint256))
+  return { trusted: byUser || chain.some((cert) => roots.has(cert.fingerprint256)), byUser }
 }
 
 // ── PKCS#7 / CMS ────────────────────────────────────────────────────────────
@@ -400,7 +432,31 @@ const statusOf = (problems: PdfSignatureProblem[]): PdfSignatureInfo['status'] =
     : 'valid'
 }
 
-function verifyOne(bytes: Buffer, field: FieldWithValue, pageIndex: number): PdfSignatureInfo {
+/** The widget's box as [x0, y0, x1, y1] (normalised); undefined for an invisible signature (no box, or a zero-size one) */
+function widgetRect(widget: PDFDict): PdfSignatureInfo['rect'] {
+  const raw = widget.lookupMaybe(PDFName.of('Rect'), PDFArray)
+  if (!raw || raw.size() !== 4) return undefined
+  const nums = raw.asArray().map((entry) => {
+    const n = widget.context.lookup(entry)
+    return n instanceof PDFNumber ? n.asNumber() : Number.NaN
+  })
+  if (nums.some((n) => !Number.isFinite(n))) return undefined
+  const [ax, ay, bx, by] = nums as [number, number, number, number]
+  const rect: [number, number, number, number] = [
+    Math.min(ax, bx),
+    Math.min(ay, by),
+    Math.max(ax, bx),
+    Math.max(ay, by),
+  ]
+  return rect[2] - rect[0] > 0 && rect[3] - rect[1] > 0 ? rect : undefined
+}
+
+function verifyOne(
+  bytes: Buffer,
+  field: FieldWithValue,
+  pageIndex: number,
+  userTrusted: ReadonlySet<string>,
+): PdfSignatureInfo {
   const { value } = field
   const subFilterName = value.lookup(PDFName.of('SubFilter'))
   const subFilter = subFilterName instanceof PDFName ? subFilterName.decodeText() : ''
@@ -429,6 +485,7 @@ function verifyOne(bytes: Buffer, field: FieldWithValue, pageIndex: number): Pdf
     certifiedLevel: certifiedLevelOf(value),
     chain: [],
     trusted: false,
+    ...(widgetRect(field.widget) ? { rect: widgetRect(field.widget) } : {}),
   }
   const fail = (problem: PdfSignatureProblem): PdfSignatureInfo => {
     info.problems = [problem]
@@ -476,7 +533,9 @@ function verifyOne(bytes: Buffer, field: FieldWithValue, pageIndex: number): Pdf
   const chain = buildChain(signer, parsed.certificates)
   info.signer = describeCertificate(signer)
   info.chain = chain.map(describeCertificate)
-  info.trusted = chainIsTrusted(chain)
+  const trust = chainTrust(chain, userTrusted)
+  info.trusted = trust.trusted
+  if (trust.byUser) info.trustedByUser = true
 
   const supported =
     hashName !== undefined &&
@@ -547,8 +606,13 @@ function pageIndexOf(pdf: PDFDocument, field: FieldWithValue): number {
  * Read and check every certificate signature in a PDF. Nothing the file says about itself is
  * trusted: integrity comes from re-hashing the raw bytes the signature's /ByteRange names.
  * Encrypted or unparsable files report no signatures rather than throwing.
+ * `userTrusted` holds SHA-256 fingerprints of certificates the user chose to trust: a chain
+ * holding one counts as trusted, the same as one that reaches a system root.
  */
-export async function readPdfSignatures(input: Uint8Array): Promise<PdfSignatureInfo[]> {
+export async function readPdfSignatures(
+  input: Uint8Array,
+  userTrusted: ReadonlySet<string> = new Set(),
+): Promise<PdfSignatureInfo[]> {
   const bytes = Buffer.from(input.buffer, input.byteOffset, input.byteLength)
   if (!bytes.includes(BYTE_RANGE_MARKER)) return []
   let pdf: PDFDocument
@@ -558,6 +622,6 @@ export async function readPdfSignatures(input: Uint8Array): Promise<PdfSignature
     return []
   }
   return collectSignatureFields(pdf).map((field) =>
-    verifyOne(bytes, field, pageIndexOf(pdf, field)),
+    verifyOne(bytes, field, pageIndexOf(pdf, field), userTrusted),
   )
 }

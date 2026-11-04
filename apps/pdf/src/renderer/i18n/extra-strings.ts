@@ -27,6 +27,15 @@ const extraStrings = {
     'There is no text to read here. A scanned page has none: run OCR on it first to give it a text layer.',
   readUnsupported: 'Read Out Loud uses the voice built into Windows, which is not available here.',
   readFailed: 'The Windows voice could not be started.',
+
+  // Signatures: your own trusted list, and what is shown on the page
+  sigTrustAdd: 'Add to trusted certificates',
+  sigTrustRemove: 'Remove from trusted certificates',
+  sigTrustedByYou: 'Trusted by you',
+  sigTrustYours:
+    'Certificates you add to your trusted list count as trusted here, in every document.',
+  sigCertifiedBy: 'Document certified by {name}.',
+  sigCertifiedByEmail: 'Document certified by {name} <{email}>.',
 } as const
 
 const localizedExtraStrings = {
@@ -49,6 +58,12 @@ const localizedExtraStrings = {
     readNoText: '这里没有可朗读的文字。扫描页没有文字层：请先对它进行 OCR。',
     readUnsupported: '朗读使用 Windows 内置语音，此处不可用。',
     readFailed: '无法启动 Windows 语音。',
+    sigTrustAdd: '添加到受信任的证书',
+    sigTrustRemove: '从受信任的证书中移除',
+    sigTrustedByYou: '已由你信任',
+    sigTrustYours: '你加入受信任列表的证书，在所有文档中都会被视为可信。',
+    sigCertifiedBy: '文档由 {name} 认证。',
+    sigCertifiedByEmail: '文档由 {name} <{email}> 认证。',
   },
   'zh-TW': {
     compareRangeThis: '本文件的頁碼',
@@ -69,6 +84,12 @@ const localizedExtraStrings = {
     readNoText: '這裡沒有可朗讀的文字。掃描頁沒有文字層：請先對它進行 OCR。',
     readUnsupported: '朗讀使用 Windows 內建語音，此處無法使用。',
     readFailed: '無法啟動 Windows 語音。',
+    sigTrustAdd: '加入受信任的憑證',
+    sigTrustRemove: '從受信任的憑證中移除',
+    sigTrustedByYou: '已由你信任',
+    sigTrustYours: '你加入受信任清單的憑證，在所有文件中都會被視為可信。',
+    sigCertifiedBy: '文件由 {name} 認證。',
+    sigCertifiedByEmail: '文件由 {name} <{email}> 認證。',
   },
 } as const
 

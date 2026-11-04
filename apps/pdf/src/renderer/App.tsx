@@ -156,6 +156,7 @@ import { buildBatesInserts, type BatesConfig } from './bates'
 import { MeasureScaleDialog } from './MeasureScaleDialog'
 import { formatLength, type MeasureScale } from './measure'
 import { SignaturesDialog, overallSignatureStatus } from './SignaturesDialog'
+import { SignatureMarks, marksForPage } from './SignatureMarks'
 import { SignatureDialog, fileToCanvas } from './SignatureDialog'
 import type { SignatureData } from './SignatureDialog'
 import { signatureDrawingForField } from './signature-field'
@@ -7692,6 +7693,12 @@ export default function App() {
       cancelled = true
     }
   }, [doc, filePath])
+  /** Change the user's trusted list, then re-read the signatures so every verdict follows it */
+  const changeTrust = async (change: () => Promise<void>): Promise<void> => {
+    await change()
+    if (!filePath) return
+    setDigitalSignatures(await window.pdfApi.listDigitalSignatures(filePath).catch(() => []))
+  }
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
@@ -10838,6 +10845,14 @@ export default function App() {
                                   onGoToDest={(dest) => void goToDest(dest)}
                                 />
                               )}
+                              {!isBlankPage(origIdx) && (
+                                <SignatureMarks
+                                  marks={marksForPage(digitalSignatures, origIdx)}
+                                  geom={geom}
+                                  scale={scale}
+                                  t={t}
+                                />
+                              )}
                               <FormLayer
                                 widgets={liveFormCatalog?.byPage.get(origIdx) ?? []}
                                 geom={geom}
@@ -11538,6 +11553,12 @@ export default function App() {
                 signatures={digitalSignatures}
                 onClose={() => setSignaturesDlg(false)}
                 onGoToPage={(pageIndex) => scrollToPage(pageIndex + 1)}
+                onTrust={(fingerprint, name) =>
+                  void changeTrust(() => window.pdfApi.trustCertificate(fingerprint, name))
+                }
+                onUntrust={(fingerprint) =>
+                  void changeTrust(() => window.pdfApi.untrustCertificate(fingerprint))
+                }
               />
             )}
             {signDlg && (

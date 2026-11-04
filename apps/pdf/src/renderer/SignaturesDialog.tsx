@@ -59,15 +59,31 @@ function CertificateRows({ cert, t }: { cert: CertificateInfo; t: TFunc }): Reac
   )
 }
 
+/**
+ * What the user can do about the signer's trust: add the signing certificate to their own
+ * list, or take it off again. Nothing for a signature that no longer verifies (trust would not
+ * make it valid), and nothing when the system's own roots already vouch for the signer.
+ */
+export function trustAction(sig: PdfSignatureInfo): 'add' | 'remove' | null {
+  if (!sig.signer || sig.status === 'invalid') return null
+  if (sig.trustedByUser) return 'remove'
+  return sig.trusted ? null : 'add'
+}
+
 function SignatureCard({
   sig,
   t,
   onGoToPage,
+  onTrust,
+  onUntrust,
 }: {
   sig: PdfSignatureInfo
   t: TFunc
   onGoToPage: (pageIndex: number) => void
+  onTrust: (fingerprint: string, commonName: string) => void
+  onUntrust: (fingerprint: string) => void
 }): ReactElement {
+  const action = trustAction(sig)
   const name = sig.signer?.commonName ?? sig.signerName ?? sig.fieldName
   const detail = (label: string, value?: string): ReactElement | null =>
     value ? (
@@ -110,6 +126,23 @@ function SignatureCard({
         {sig.certifiedLevel &&
           detail(t('certSign'), t('sigCertified', { level: t(LEVEL_KEYS[sig.certifiedLevel]) }))}
       </div>
+      {action && sig.signer && (
+        <div className="pdf-sig-trust">
+          {sig.trustedByUser && (
+            <span className="pdf-sig-trusted-by-you">{t('sigTrustedByYou')}</span>
+          )}
+          <button
+            className="pdf-modal-btn"
+            onClick={() =>
+              action === 'add'
+                ? onTrust(sig.signer!.fingerprint, sig.signer!.commonName)
+                : onUntrust(sig.signer!.fingerprint)
+            }
+          >
+            {action === 'add' ? t('sigTrustAdd') : t('sigTrustRemove')}
+          </button>
+        </div>
+      )}
       {sig.chain.length > 0 && (
         <details className="pdf-sig-chain">
           <summary>
@@ -130,11 +163,16 @@ export function SignaturesDialog({
   signatures,
   onClose,
   onGoToPage,
+  onTrust,
+  onUntrust,
 }: {
   t: TFunc
   signatures: readonly PdfSignatureInfo[]
   onClose: () => void
   onGoToPage: (pageIndex: number) => void
+  /** trust the certificate with this SHA-256 fingerprint (the list is saved, then signatures are re-read) */
+  onTrust: (fingerprint: string, commonName: string) => void
+  onUntrust: (fingerprint: string) => void
 }): ReactElement {
   const dialogRef = useModalDialog(onClose)
   return (
@@ -157,10 +195,12 @@ export function SignaturesDialog({
               onGoToPage(index)
               onClose()
             }}
+            onTrust={onTrust}
+            onUntrust={onUntrust}
           />
         ))}
         <div className="pdf-modal-hint">
-          {t('sigTrustRoots')} {t('sigNoRevocation')}
+          {t('sigTrustRoots')} {t('sigTrustYours')} {t('sigNoRevocation')}
         </div>
         <div className="pdf-modal-actions">
           <button className="pdf-modal-btn primary" onClick={onClose}>

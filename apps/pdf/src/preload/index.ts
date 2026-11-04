@@ -61,6 +61,10 @@ const api: PdfApi = {
   listSavedSignatures: () => ipcRenderer.invoke(PDF_CHANNELS.listSignatures),
   addSavedSignature: (data) => ipcRenderer.invoke(PDF_CHANNELS.addSignature, data),
   removeSavedSignature: (id) => ipcRenderer.invoke(PDF_CHANNELS.removeSignature, id),
+  trustCertificate: (fingerprint, commonName) =>
+    ipcRenderer.invoke(PDF_CHANNELS.trustCertificate, fingerprint, commonName),
+  untrustCertificate: (fingerprint) =>
+    ipcRenderer.invoke(PDF_CHANNELS.untrustCertificate, fingerprint),
   getUsername: () => ipcRenderer.invoke(PDF_CHANNELS.getUsername),
   speechStart: (text) => ipcRenderer.invoke(PDF_CHANNELS.speechStart, text),
   speechPause: () => ipcRenderer.invoke(PDF_CHANNELS.speechPause),

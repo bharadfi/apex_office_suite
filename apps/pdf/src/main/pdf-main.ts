@@ -78,6 +78,7 @@ import type {
   SignWithCertificateRequest,
   SignWithCertificateResult,
   SignaturePosition,
+  TrustedCertificate,
 } from '../shared/ipc'
 import { writePdfAtomically } from './atomic-write'
 import {
@@ -110,6 +111,14 @@ import { validateRedactionRegions } from './redaction'
 import { SignError, openCertificate, openExternalCertificate, signPdf } from './pdf-sign'
 import type { ExternalSigner, SignPdfOptions } from './pdf-sign'
 import { readPdfSignatures } from './pdf-signatures'
+import {
+  addTrusted,
+  loadTrusted,
+  normalizeFingerprint,
+  removeTrusted,
+  saveTrusted,
+  trustedFingerprints,
+} from './trusted-certificate-store'
 import { SystemStoreError, openSystemSigner, listSystemCertificates } from './system-certificates'
 import type { SystemCertificateRef, SystemIdentity } from './system-certificates'
 /** the largest slice readFileChunk hands over IPC (the renderer loops) */
@@ -1150,6 +1159,26 @@ function withSignatures(
   return next
 }
 
+/** Certificates the user chose to trust live in userData too, shared by all documents and windows */
+const trustedCertificatesPath = () => join(app.getPath('userData'), 'pdf-trusted-certificates.json')
+
+/** Serialize the trusted list's read-modify-writes, like the saved signatures */
+let trustedQueue: Promise<unknown> = Promise.resolve()
+function withTrusted(
+  op: (list: TrustedCertificate[]) => TrustedCertificate[],
+): Promise<TrustedCertificate[]> {
+  const next = trustedQueue
+    .catch(() => undefined)
+    .then(async () => {
+      const before = await loadTrusted(trustedCertificatesPath())
+      const after = op(before)
+      if (after !== before) await saveTrusted(trustedCertificatesPath(), after)
+      return after
+    })
+  trustedQueue = next
+  return next
+}
+
 let ipcRegistered = false
 
 /** Filesystem seam for readMergeInputs; defaults to node:fs/promises */
@@ -2082,11 +2111,38 @@ function registerPdfIpc(): void {
     PDF_CHANNELS.listDigitalSignatures,
     async (e, path: unknown): Promise<PdfSignatureInfo[]> => {
       if (typeof path !== 'string' || !allowedByWc.get(e.sender.id)?.has(path)) return []
+      // the user's list only adds trust: a failure reading it must never hide the signatures
+      let userTrusted: ReadonlySet<string> = new Set()
       try {
-        return await readPdfSignatures(new Uint8Array(await readFile(path)))
+        userTrusted = trustedFingerprints(await loadTrusted(trustedCertificatesPath()))
+      } catch {
+        /* judged without it */
+      }
+      try {
+        return await readPdfSignatures(new Uint8Array(await readFile(path)), userTrusted)
       } catch {
         return []
       }
+    },
+  )
+
+  ipcMain.handle(
+    PDF_CHANNELS.trustCertificate,
+    async (_e, fingerprint: unknown, commonName: unknown): Promise<void> => {
+      const normalized = normalizeFingerprint(fingerprint)
+      if (!normalized) return
+      await withTrusted((list) =>
+        addTrusted(list, normalized, typeof commonName === 'string' ? commonName : ''),
+      )
+    },
+  )
+
+  ipcMain.handle(
+    PDF_CHANNELS.untrustCertificate,
+    async (_e, fingerprint: unknown): Promise<void> => {
+      const normalized = normalizeFingerprint(fingerprint)
+      if (!normalized) return
+      await withTrusted((list) => removeTrusted(list, normalized))
     },
   )
 

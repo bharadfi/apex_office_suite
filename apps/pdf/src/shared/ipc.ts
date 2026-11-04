@@ -49,6 +49,8 @@ export const PDF_CHANNELS = {
   listSignatures: 'pdf:list-signatures',
   addSignature: 'pdf:add-signature',
   removeSignature: 'pdf:remove-signature',
+  trustCertificate: 'pdf:trust-certificate',
+  untrustCertificate: 'pdf:untrust-certificate',
   getUsername: 'pdf:get-username',
   speechStart: 'pdf:speech-start',
   speechPause: 'pdf:speech-pause',
@@ -110,6 +112,8 @@ export interface CertificateInfo {
   /** e.g. "RSA 2048", "EC prime256v1" */
   keyAlgorithm: string
   selfSigned: boolean
+  /** The certificate's email: the subject's emailAddress, else the first rfc822Name alternative name */
+  email?: string
 }
 
 export type PdfSignatureProblem =
@@ -152,8 +156,21 @@ export interface PdfSignatureInfo {
   signer?: CertificateInfo
   /** Signer first, then each issuer found in the signature; the last entry may be a root */
   chain: CertificateInfo[]
-  /** Whether the chain ends at a root in the operating-system / Mozilla trust store */
+  /** Whether the chain ends at a root in the operating-system / Mozilla trust store, or holds a certificate the user trusts */
   trusted: boolean
+  /** Whether a certificate in the chain is on the user's own trusted list (so it can be taken off again) */
+  trustedByUser?: boolean
+  /** The signature box on its page, PDF user space [x0, y0, x1, y1]; absent for invisible signatures */
+  rect?: [number, number, number, number]
+}
+
+/** One certificate the user chose to trust (kept in userData, shared by all documents) */
+export interface TrustedCertificate {
+  /** SHA-256 fingerprint, "AA:BB:…" */
+  fingerprint: string
+  commonName: string
+  /** ms since epoch */
+  addedAt: number
 }
 
 export type CertificateErrorCode =
@@ -1194,6 +1211,10 @@ export interface PdfApi {
   addSavedSignature(data: SignatureData): Promise<SavedSignature[]>
   /** Delete one saved signature by id; returns the updated list */
   removeSavedSignature(id: string): Promise<SavedSignature[]>
+  /** Trust a certificate (by SHA-256 fingerprint) for judging signatures in every document */
+  trustCertificate(fingerprint: string, commonName: string): Promise<void>
+  /** Take a certificate off the user's trusted list again */
+  untrustCertificate(fingerprint: string): Promise<void>
   /** OS account name, used as the default author of new note comments; '' when unavailable */
   getUsername(): Promise<string>
   /** Read Out Loud: speak `text` with the system voice, replacing any reading in progress */
