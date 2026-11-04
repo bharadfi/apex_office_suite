@@ -54,6 +54,55 @@ describe('detectVectorRegions', () => {
     expect(regions).toHaveLength(0)
   })
 
+  // an app icon: a filled rounded tile and its glyph, two subpaths in all
+  const filledCurve = (x0: number, y0: number, x1: number, y1: number, alpha = 255): RawPath => ({
+    subpaths: [
+      {
+        points: [
+          { x: x0, y: y0 },
+          { x: x1, y: y0 },
+          { x: x1, y: y1 },
+          { x: x0, y: y1 },
+        ],
+        closed: true,
+        hasCurves: true,
+      },
+    ],
+    filled: true,
+    stroked: false,
+    fillColor: 'F26B4A',
+    strokeColor: '000000',
+    strokeWidth: 0,
+    fillAlpha: alpha,
+  })
+
+  it('keeps a small solid icon (a few filled curved shapes, no text) as an illustration', () => {
+    const icon = [filledCurve(100, 400, 150, 450), filledCurve(112, 412, 138, 438)]
+    const regions = detectVectorRegions(icon, [], PAGE)
+    expect(regions).toHaveLength(1)
+    expect(regions[0]!.x0).toBeLessThanOrEqual(100)
+    expect(regions[0]!.x1).toBeGreaterThanOrEqual(150)
+  })
+
+  it('keeps an icon made of two small filled tiles, each under the minimum size', () => {
+    const stack = [filledCurve(100, 400, 120, 428), filledCurve(112, 404, 132, 432)]
+    expect(detectVectorRegions(stack, [], PAGE)).toHaveLength(1)
+  })
+
+  it('leaves a small filled shape alone when text sits inside it (a labelled button)', () => {
+    const button = [filledCurve(100, 400, 220, 440)]
+    const chars = mkText('Buy now', 120, { y: 415, fontSize: 10 }).chars
+    expect(detectVectorRegions(button, chars, PAGE)).toHaveLength(0)
+  })
+
+  it('does not treat a faint filled shape as an icon', () => {
+    expect(detectVectorRegions([filledCurve(100, 400, 150, 450, 40)], [], PAGE)).toHaveLength(0)
+  })
+
+  it('does not treat a tiny filled dot as an icon', () => {
+    expect(detectVectorRegions([filledCurve(100, 400, 110, 410)], [], PAGE)).toHaveLength(0)
+  })
+
   it('bounds a 131072-point subpath without spreading it as call arguments', () => {
     // a single path can carry 100k+ points (maps, CAD, chart exports);
     // Math.min(...points) throws RangeError past the argument-count limit.

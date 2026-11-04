@@ -17,6 +17,17 @@ const ART_CLUSTER_TOL_PT = 10
 const ART_MIN_SUBPATHS = 6
 /** minimum region size (pt) */
 const ART_MIN_DIM_PT = 24
+/**
+ * A cluster below ART_MIN_SUBPATHS is still an illustration when it holds a
+ * solid filled shape of real size, or at least ART_SMALL_MIN_FILLED filled
+ * shapes, and no text: app icons, badges and spot artwork are two to five
+ * subpaths (a rounded tile and its glyph, a stack of page tiles), so the
+ * subpath count alone dropped them. Thin stroked flourishes stay stray.
+ */
+const ART_SMALL_MIN_FILLED = 2
+const ART_SOLID_MIN_DIM_PT = ART_MIN_DIM_PT
+/** fills fainter than this are tints and shadows, not artwork */
+const ART_SOLID_MIN_ALPHA = 128
 /** char-ink share of the region area above this = text region, leave it alone */
 const ART_TEXT_DENSITY_MAX = 0.15
 /**
@@ -148,22 +159,38 @@ export function detectVectorRegions(
 ): Rect[] {
   const artBoxes: Rect[] = []
   const allBoxes: Rect[] = []
+  /** art boxes that are solid, sizeable fills (the mark of an icon rather than a flourish) */
+  const solidArt = new Set<Rect>()
+  /** art boxes of any size that are opaque fills */
+  const filledArt = new Set<Rect>()
   for (const path of paths) {
     if (!path.filled && !path.stroked) continue
     for (const sub of path.subpaths) {
       const box = bboxOfSubpath(sub)
       if (!box) continue
       allBoxes.push(box)
-      if (isArtSubpath(path, sub)) artBoxes.push(box)
+      if (!isArtSubpath(path, sub)) continue
+      artBoxes.push(box)
+      if (path.filled && (path.fillAlpha ?? 255) >= ART_SOLID_MIN_ALPHA) {
+        filledArt.add(box)
+        if (box.x1 - box.x0 >= ART_SOLID_MIN_DIM_PT && box.y1 - box.y0 >= ART_SOLID_MIN_DIM_PT) {
+          solidArt.add(box)
+        }
+      }
     }
   }
-  if (artBoxes.length < ART_MIN_SUBPATHS) return []
+  if (
+    artBoxes.length < ART_MIN_SUBPATHS &&
+    solidArt.size === 0 &&
+    filledArt.size < ART_SMALL_MIN_FILLED
+  )
+    return []
 
   const visibleChars = chars.filter((c) => !c.isGenerated && c.code > 0x20)
   const pageBodySize = median(visibleChars.map((c) => c.fontSize)) || 12
 
   /** density + running-text gates; null = the candidate must not be rasterized */
-  const admit = (candidate: Rect): Rect | null => {
+  const admit = (candidate: Rect, textFree = false): Rect | null => {
     if (
       candidate.x1 - candidate.x0 < ART_MIN_DIM_PT ||
       candidate.y1 - candidate.y0 < ART_MIN_DIM_PT
@@ -180,6 +207,9 @@ export function detectVectorRegions(
         charCount++
       }
     }
+    // a small cluster has only its solid fill to vouch for it: any text inside
+    // means a button or labelled box, which must stay editable text
+    if (textFree && charCount > 0) return null
     if (charCount > ART_MONOGRAM_MAX_CHARS && charInk / area > ART_TEXT_DENSITY_MAX) return null
     // running-text veto: body paragraphs inside the box → not an illustration
     if (bodyTextLineCount(visibleChars, candidate, pageBodySize) >= ART_VETO_MIN_LINES) return null
@@ -188,7 +218,13 @@ export function detectVectorRegions(
 
   const regions: Rect[] = []
   for (const cluster of clusterRects(artBoxes, ART_CLUSTER_TOL_PT)) {
-    if (cluster.length < ART_MIN_SUBPATHS) continue
+    const small = cluster.length < ART_MIN_SUBPATHS
+    if (
+      small &&
+      !cluster.some((box) => solidArt.has(box)) &&
+      cluster.filter((box) => filledArt.has(box)).length < ART_SMALL_MIN_FILLED
+    )
+      continue
     const base = cluster.reduce(rectUnion)
     let region = base
 
@@ -205,7 +241,7 @@ export function detectVectorRegions(
     // furniture absorption swallowed a text area), fall back to the bare art
     // cluster; if that still contains paragraphs, the text pipeline wins and
     // nothing is rasterized here
-    const admitted = admit(region) ?? (region !== base ? admit(base) : null)
+    const admitted = admit(region, small) ?? (region !== base ? admit(base, small) : null)
     if (!admitted) continue
 
     regions.push({

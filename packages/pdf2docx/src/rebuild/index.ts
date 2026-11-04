@@ -15,6 +15,7 @@ import {
   parseDocx,
   saveDocx,
 } from '../../../docx-engine/src/index'
+import { addFontTable } from './font-table'
 import type {
   CustomNumberingLevel,
   GeneratedBlock,
@@ -170,9 +171,35 @@ function computeGeometry(pages: IrPage[]): PageGeometry {
     block.kind === 'image' &&
     block.float !== undefined &&
     (block.box.y1 <= 0.12 * page.heightPt || block.box.y0 >= 0.88 * page.heightPt)
+  /** An image that does not say where the text column starts: a floating one
+   * is pinned to absolute page coordinates (its anchor is the page, not the
+   * margin), and a full-bleed one is aligned and scaled to the content width,
+   * never indented. One full-width picture on one page used to pull the margin
+   * of the whole document to the page edge and shift every page's text left of
+   * its true column, under the floats that stayed put. Narrower inline images
+   * still measure a margin: a small picture at the edge keeps its room. */
+  const FULL_BLEED_WIDTH_RATIO = 0.8
+  const isMarginNeutralImage = (block: PageBlock, page: IrPage): boolean =>
+    block.kind === 'image' &&
+    (block.float !== undefined ||
+      block.box.x1 - block.box.x0 >= FULL_BLEED_WIDTH_RATIO * page.widthPt)
+  /** edges of the full-bleed inline images, used only when nothing else measured
+   * a margin (a document of page-sized pictures keeps its room, as before) */
+  let bleedLeft = Infinity
+  let bleedRight = Infinity
   for (const page of pages) {
     for (const block of page.blocks) {
-      if (!isEdgeBandFloat(block, page)) {
+      if (
+        block.kind === 'image' &&
+        block.float === undefined &&
+        isMarginNeutralImage(block, page) &&
+        !isEdgeBandFloat(block, page)
+      ) {
+        if (block.box.x0 >= 0) bleedLeft = Math.min(bleedLeft, block.box.x0)
+        if (block.box.x1 <= page.widthPt)
+          bleedRight = Math.min(bleedRight, page.widthPt - block.box.x1)
+      }
+      if (!isEdgeBandFloat(block, page) && !isMarginNeutralImage(block, page)) {
         // A block PAST the page edge is an off-page artifact, not a margin
         // measurement: `widthPt - x1` goes negative and clampMargin reads that
         // as "content TOUCHING the edge" (MARGIN_MIN_PT), so a full-bleed
@@ -186,6 +213,8 @@ function computeGeometry(pages: IrPage[]): PageGeometry {
       bottom = Math.min(bottom, block.box.y0)
     }
   }
+  if (!Number.isFinite(left)) left = bleedLeft
+  if (!Number.isFinite(right)) right = bleedRight
   // horizontal margins hug the measured content even when deep (P16 C): a
   // right-half column layout (Chromium print) has a true ~278pt left margin,
   // and capping it at 1.5in shifts every paragraph 170pt left. The cap only
@@ -2576,7 +2605,7 @@ export async function rebuildDocx(pages: IrPage[], opts: RebuildOptions = {}): P
   )
   const parsed = await parseDocx(await buildBlankDocx())
   const pageColor = dominantBgColor(pages)
-  return saveDocx(parsed, blocks, {
+  const saved = await saveDocx(parsed, blocks, {
     section,
     ...(sectionStartType !== undefined ? { sectionStartType } : {}),
     ...(numbering !== undefined ? { numbering } : {}),
@@ -2589,4 +2618,6 @@ export async function rebuildDocx(pages: IrPage[], opts: RebuildOptions = {}): P
     ...(hf?.titlePg === true ? { titlePg: true } : {}),
     ...(hf !== undefined ? { hfAllSections: true } : {}),
   })
+  // family hints so a viewer without the PDF's fonts substitutes a face of the same kind
+  return addFontTable(saved)
 }

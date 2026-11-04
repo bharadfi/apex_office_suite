@@ -85,25 +85,21 @@ describe('analyzePage absoluteLayout', () => {
   })
 })
 
-describe('graphics-lost page in absolute layout', () => {
-  it('docx still ships the bitmap; pptx keeps editable text over a text-free render', async () => {
+describe('slide decor art in absolute layout', () => {
+  it('keeps the decor circle as a picture and the text editable in docx and pptx', async () => {
     const pdfium = await loadPdfium()
     const pdf = await buildSlideDecorPdf()
 
+    // a lone solid shape of real size with no text inside is artwork to keep,
+    // not ink to lose: the page converts cleanly instead of shipping as a bitmap
     const docx = await convertPdfToDocx(pdf, { pdfium })
-    expect(docx.pageResults[0]).toMatchObject({ status: 'degraded', reason: 'graphics-lost' })
+    expect(docx.pageResults[0]).toMatchObject({ page: 1, status: 'ok' })
 
-    const { irPages, pageResults, warnings } = extractIrDocument(pdf, {
-      pdfium,
-      absoluteLayout: true,
-    })
+    const { irPages, pageResults } = extractIrDocument(pdf, { pdfium, absoluteLayout: true })
     expect(pageResults[0]).toMatchObject({ page: 1, status: 'ok' })
     const page = irPages[0]!
-    expect(page.bgRender).toBeDefined()
-    expect(page.bgColor).toBeUndefined()
-    expect(page.blocks.length).toBeGreaterThan(0)
-    expect(page.blocks.every((b) => b.kind === 'text')).toBe(true)
-    expect(warnings.some((w) => /painted as one image behind the text/.test(w))).toBe(true)
+    expect(page.blocks.some((b) => b.kind === 'text')).toBe(true)
+    expect(page.blocks.filter((b) => b.kind === 'image')).toHaveLength(1)
 
     const result = await convertPdfToPptx(pdf, { pdfium })
     expect(result.pageResults[0]!.status).toBe('ok')

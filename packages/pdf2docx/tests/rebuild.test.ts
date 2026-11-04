@@ -1382,4 +1382,30 @@ describe('pagesToSaveBlocks margins', () => {
   it('still clamps to the minimum when content merely touches the edge', () => {
     expect(rightMarginPt([body(540), shape(612)])).toBe(12)
   })
+
+  /** the emitted section's left margin, back in points */
+  const leftMarginPt = (blocks: IrPage['blocks']): number =>
+    pagesToSaveBlocks([page(blocks)]).section.marginLeft / 20
+
+  /** a picture as wide as the page, flush with both edges */
+  const fullBleed = (): ImageBlock => ({
+    kind: 'image',
+    box: { x0: 0, y0: 100, x1: 612, y1: 300 },
+    data: PNG(),
+    mime: 'image/png',
+    pixelWidth: 4,
+    pixelHeight: 4,
+  })
+
+  // One full-width picture on one page used to set the margin of the whole
+  // document to the floor, so every page's text started at the page edge while
+  // its floating pictures stayed where the source had them (text under icons).
+  it('does not let a full-bleed picture pull the text margin to the page edge', () => {
+    expect(leftMarginPt([body(540), fullBleed()])).toBe(72)
+    expect(rightMarginPt([body(540), fullBleed()])).toBe(72)
+  })
+
+  it('keeps the old margins for a document that is only page-sized pictures', () => {
+    expect(leftMarginPt([fullBleed()])).toBe(12)
+  })
 })
