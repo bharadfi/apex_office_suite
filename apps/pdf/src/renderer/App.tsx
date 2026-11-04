@@ -160,6 +160,7 @@ import { SignatureMarks, marksForPage } from './SignatureMarks'
 import { SignatureDialog, fileToCanvas } from './SignatureDialog'
 import { hasCustomLabels, labelOf } from '../shared/page-labels'
 import { PageLabelsDialog } from './PageLabelsDialog'
+import { ScanDialog } from './ScanDialog'
 import type { SignatureData } from './SignatureDialog'
 import { signatureDrawingForField } from './signature-field'
 import {
@@ -302,6 +303,7 @@ import type {
 } from './edit-state'
 import {
   IconPageLabels,
+  IconScan,
   IconReadPage,
   IconReadToEnd,
   IconReadPause,
@@ -967,6 +969,7 @@ export default function App() {
   /** The labels stored in the file, read when it is opened */
   const [fileLabels, setFileLabels] = useState<PageLabelRange[]>([])
   const [pageLabelsDlg, setPageLabelsDlg] = useState(false)
+  const [scanDlg, setScanDlg] = useState(false)
   /** Properties as stored in the file; the pending metadata overrides them until saved */
   const [docInfo, setDocInfo] = useState<MetadataInput>({})
   const [stampDlg, setStampDlg] = useState(false)
@@ -9289,6 +9292,21 @@ export default function App() {
                   </button>
                 </div>
               </div>
+              <div className="ribbon-sep" />
+              <div className="ribbon-group">
+                <div className="ribbon-group-items">
+                  <button
+                    className="rb-big"
+                    data-tip={t('scanToPdfTip')}
+                    onClick={() => setScanDlg(true)}
+                  >
+                    <span className="rb-big-icon">
+                      <IconScan />
+                    </span>
+                    <span>{t('scanToPdf')}</span>
+                  </button>
+                </div>
+              </div>
             </>
           )}
           {ribbonTab === 'view' && (
@@ -11643,6 +11661,7 @@ export default function App() {
                 }
               />
             )}
+            {scanDlg && <ScanDialog t={t} onClose={() => setScanDlg(false)} />}
             {signDlg && (
               <SignatureDialog
                 color={drawColor}

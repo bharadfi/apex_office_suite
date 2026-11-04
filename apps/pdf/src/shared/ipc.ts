@@ -8,6 +8,8 @@ export type { PageLabelRange }
 
 export const PDF_CHANNELS = {
   readPageLabels: 'pdf:read-page-labels',
+  scanPage: 'pdf:scan-page',
+  scanToPdf: 'pdf:scan-to-pdf',
   consumePending: 'pdf:consume-pending',
   readFile: 'pdf:read-file',
   readFileChunk: 'pdf:read-file-chunk',
@@ -905,6 +907,21 @@ export interface ExtractPagesRequest {
 
 export type ExtractPagesResult = { ok: true; savedPath: string } | { ok: false; error: string }
 
+/**
+ * One trip to the scanner. `cancelled`: the scan window was closed without scanning. `no-scanner`:
+ * Windows knows of none. `busy`: a scan window is already open. `unsupported`: not Windows.
+ */
+export type ScanResult =
+  | { ok: true; png: Uint8Array }
+  | {
+      ok: false
+      reason: 'cancelled' | 'no-scanner' | 'busy' | 'unsupported' | 'failed'
+      detail?: string
+    }
+
+/** The scanned pages made into a new PDF, written to the default save folder and opened in a new tab */
+export type ScanToPdfResult = { ok: true; savedPath: string } | { ok: false; error: string }
+
 /** Insert (merge) another PDF after a page of the current file: main process shows a picker and writes back immediately */
 export interface InsertPdfRequest {
   path: string
@@ -1202,6 +1219,10 @@ export interface PdfApi {
   listDigitalSignatures(path: string): Promise<PdfSignatureInfo[]>
   /** The page-label ranges of a granted PDF ([] when it has none, or is protected and cannot be read here) */
   readPageLabels(path: string): Promise<PageLabelRange[]>
+  /** Open the Windows scan window and return the picture it scans (PNG); one window at a time */
+  scanPage(): Promise<ScanResult>
+  /** Make a new PDF from scanned PNG pictures (one page each, in order) and open it in a new tab */
+  scanToPdf(pages: Uint8Array[]): Promise<ScanToPdfResult>
   /** Open the OS file picker for a PKCS#12 certificate (.p12/.pfx); the file is referenced by the returned opaque id */
   pickCertificate(): Promise<{ certId: string; fileName: string } | null>
   /** Decrypt the picked certificate with its password and describe the signer (nothing is signed) */

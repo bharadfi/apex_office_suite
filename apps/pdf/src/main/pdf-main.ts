@@ -53,6 +53,8 @@ import type {
   ReplacePagesRequest,
   ReplacePagesResult,
   SetPageSizeRequest,
+  ScanResult,
+  ScanToPdfResult,
   SetPageSizeResult,
   SpeechStartResult,
   SplitPagesRequest,
@@ -98,6 +100,8 @@ import {
 } from './save-pdf'
 import { readPdfText } from './read-text'
 import { Speaker } from './speech'
+import { Scanner } from './scanner'
+import { scansToPdf } from './scan-pdf'
 import { shrinkDocument } from './pdf-shrink'
 import { PDFDocument } from 'pdf-lib'
 import {
@@ -1255,6 +1259,30 @@ function registerPdfIpc(): void {
   ipcMain.handle(PDF_CHANNELS.speechPause, () => speaker.togglePause())
   ipcMain.handle(PDF_CHANNELS.speechStop, () => speaker.stop())
   ipcMain.handle(PDF_CHANNELS.speechState, () => speaker.state())
+
+  // Scanning: Windows' own scan window, one at a time; the pages are made into a PDF afterwards
+  const scanner = new Scanner()
+  ipcMain.handle(PDF_CHANNELS.scanPage, (e): Promise<ScanResult> | ScanResult =>
+    allowedByWc.has(e.sender.id) ? scanner.scan() : { ok: false, reason: 'failed' },
+  )
+  ipcMain.handle(PDF_CHANNELS.scanToPdf, async (e, pages: unknown): Promise<ScanToPdfResult> => {
+    if (!allowedByWc.has(e.sender.id)) {
+      return { ok: false, error: 'pdf: sender is not a registered PDF view' }
+    }
+    if (!Array.isArray(pages) || !pages.every((p) => p instanceof Uint8Array)) {
+      return { ok: false, error: 'pdf: invalid scanned pages' }
+    }
+    try {
+      const bytes = await scansToPdf(pages as Uint8Array[])
+      const stamp = new Date().toISOString().slice(0, 10)
+      const targetPath = uniqueGeneratedPdfPath(configuredDefaultSaveDir(app), `Scan ${stamp}.pdf`)
+      await writeFile(targetPath, bytes)
+      openGeneratedPdf(targetPath)
+      return { ok: true, savedPath: targetPath }
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    }
+  })
 
   ipcMain.handle(PDF_CHANNELS.printers, async (e) => {
     const printers = await e.sender.getPrintersAsync()

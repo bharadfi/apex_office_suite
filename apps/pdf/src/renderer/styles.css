@@ -5279,3 +5279,43 @@ button {
   color: var(--text-muted);
   font-size: 0.85em;
 }
+
+/* Scan to PDF: the pages scanned so far, as little previews */
+.pdf-scan-pages {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pdf-scan-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+
+.pdf-scan-page img {
+  width: 72px;
+  height: 96px;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.pdf-scan-page .rb-icon {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
