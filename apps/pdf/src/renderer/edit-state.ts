@@ -13,6 +13,7 @@ import type {
   MetadataInput,
   OutlineEntryInput,
   PageImageRef,
+  PageLabelRange,
 } from '../shared/ipc'
 
 /** pdf.js AnnotationType codes for the markup subtypes we can delete */
@@ -89,6 +90,8 @@ export interface EditSnapshot {
   deleted: Set<number>
   order: number[] | null
   metadata: MetadataInput | null
+  /** Edited page labels (null = the file's own, unchanged) */
+  pageLabels: PageLabelRange[] | null
 }
 
 /** What a running save wrote, captured when the save starts. The post-save reload
@@ -113,6 +116,8 @@ export interface SavedSnapshot {
   blankPageIds: Set<string>
   rotations: Map<number, number>
   metadata: MetadataInput | null
+  /** The edited page labels this save wrote (same array the pending edit holds), or null */
+  pageLabels: PageLabelRange[] | null
   /** The edited bookmark tree this save wrote (same object the pending edit holds), or null */
   outline: OutlineEntryInput[] | null
   /** Old original page index → its index in the saved file (saved deletions/reorder applied) */

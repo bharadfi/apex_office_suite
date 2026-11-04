@@ -34,6 +34,13 @@ export function Icon({
   )
 }
 
+export const IconPageLabels = () => (
+  <Icon>
+    <rect x="5.5" y="3.5" width="13" height="17" rx="1.5" />
+    <path d="M9 9.5 L9 14.5 M9 7.6 L9 7.7" />
+    <path d="M12.5 14.5 L15.5 14.5 M12.5 11.5 L15.5 11.5" />
+  </Icon>
+)
 export const IconReadPage = () => (
   <Icon>
     <path d="M4.5 9.5 L8.5 9.5 L13 5.5 L13 18.5 L8.5 14.5 L4.5 14.5 Z" />

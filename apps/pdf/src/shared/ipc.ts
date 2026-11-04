@@ -2,9 +2,12 @@ import type { AiPanelPrefs } from '@genoffice/ui'
 import type { Lang } from '@genoffice/i18n'
 import type { AiSettings, AiStreamChunk, AiStreamRequest } from '@genoffice/ai-provider'
 import type { PrintDuplex, PrintJobOptions, PrinterInfo } from '@genoffice/electron-utils/print-job'
+import type { PageLabelRange } from './page-labels'
 export type { PrintDuplex, PrintJobOptions, PrinterInfo }
+export type { PageLabelRange }
 
 export const PDF_CHANNELS = {
+  readPageLabels: 'pdf:read-page-labels',
   consumePending: 'pdf:consume-pending',
   readFile: 'pdf:read-file',
   readFileChunk: 'pdf:read-file-chunk',
@@ -836,6 +839,12 @@ export interface SavePdfRequest {
    * the writer cannot rebuild exactly make the save refuse the replacement
    * (the file's own /Outlines stay untouched). */
   outline?: OutlineEntryInput[]
+  /**
+   * Full page-label replacement, written when the user edited the labels. Ranges are counted by
+   * position in the SAVED file, so they are applied after deletions and reordering; an empty list
+   * removes the labels. Omitted keeps the file's own.
+   */
+  pageLabels?: PageLabelRange[]
 
   /** Embedded-file edits, applied after every content stage */
   attachments?: PdfAttachmentOps
@@ -1191,6 +1200,8 @@ export interface PdfApi {
   }>
   /** Read and verify the digital (certificate) signatures embedded in a granted PDF */
   listDigitalSignatures(path: string): Promise<PdfSignatureInfo[]>
+  /** The page-label ranges of a granted PDF ([] when it has none, or is protected and cannot be read here) */
+  readPageLabels(path: string): Promise<PageLabelRange[]>
   /** Open the OS file picker for a PKCS#12 certificate (.p12/.pfx); the file is referenced by the returned opaque id */
   pickCertificate(): Promise<{ certId: string; fileName: string } | null>
   /** Decrypt the picked certificate with its password and describe the signer (nothing is signed) */

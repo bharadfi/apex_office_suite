@@ -27,6 +27,7 @@ import {
   type OriginalProtection,
 } from './pdf-crypt'
 import { applyAttachments } from './pdf-attachments'
+import { applyPageLabels } from './page-labels-io'
 import type {
   BlankPageInput,
   DrawingInput,
@@ -1709,6 +1710,9 @@ export async function applySaveRequest(
       for (const p of target) pdfDoc.addPage(p)
     }
   }
+  // Page labels are counted by position in the saved file, so they go on once deletions and
+  // reordering have settled the final page count
+  if (request.pageLabels !== undefined) applyPageLabels(pdfDoc, request.pageLabels)
   const staticFormFills = resultingStaticFormFills(request, pages.length)
   if (staticFormFills !== undefined) {
     if (staticFormFills.length === 0) pdfDoc.catalog.delete(STATIC_FORM_FILLS_KEY)

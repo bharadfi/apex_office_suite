@@ -158,6 +158,8 @@ import { formatLength, type MeasureScale } from './measure'
 import { SignaturesDialog, overallSignatureStatus } from './SignaturesDialog'
 import { SignatureMarks, marksForPage } from './SignatureMarks'
 import { SignatureDialog, fileToCanvas } from './SignatureDialog'
+import { hasCustomLabels, labelOf } from '../shared/page-labels'
+import { PageLabelsDialog } from './PageLabelsDialog'
 import type { SignatureData } from './SignatureDialog'
 import { signatureDrawingForField } from './signature-field'
 import {
@@ -217,6 +219,7 @@ import type {
   MetadataInput,
   NoteEditInput,
   OutlineEntryInput,
+  PageLabelRange,
   PageImageRef,
   PdfConvertFormat,
   PdfSignatureInfo,
@@ -298,6 +301,7 @@ import type {
   AnnotSelection,
 } from './edit-state'
 import {
+  IconPageLabels,
   IconReadPage,
   IconReadToEnd,
   IconReadPause,
@@ -956,6 +960,13 @@ export default function App() {
   const [metadata, setMetadata] = useState<MetadataInput | null>(null)
   const metadataRef = useRef(metadata)
   metadataRef.current = metadata
+  /** Page labels the user edited (null = the file's own are kept) */
+  const [pageLabels, setPageLabels] = useState<PageLabelRange[] | null>(null)
+  const pageLabelsRef = useRef(pageLabels)
+  pageLabelsRef.current = pageLabels
+  /** The labels stored in the file, read when it is opened */
+  const [fileLabels, setFileLabels] = useState<PageLabelRange[]>([])
+  const [pageLabelsDlg, setPageLabelsDlg] = useState(false)
   /** Properties as stored in the file; the pending metadata overrides them until saved */
   const [docInfo, setDocInfo] = useState<MetadataInput>({})
   const [stampDlg, setStampDlg] = useState(false)
@@ -1192,6 +1203,10 @@ export default function App() {
     return base.filter((i) => !deleted.has(i))
   }, [allSizes, deleted, order])
   const pageCount = visList.length
+  // The labels in force: the user's pending ones, else the file's. They count by position, so
+  // on screen they follow reordering and deletions exactly as they will in the saved file.
+  const activeLabels = pageLabels ?? fileLabels
+  const labelsCustom = hasCustomLabels(activeLabels, pageCount)
   // AI tool calls within one turn run before React re-renders, so the order and
   // deletions they read and write go through these refs instead of the closed-over state
   const orderRef = useRef(order)
@@ -1515,6 +1530,7 @@ export default function App() {
         setDeleted(new Set())
         setOrder(null)
         setMetadata(null)
+        setPageLabels(null)
       } else {
         // Post-save reload: subtract exactly what the save wrote. Edits made while the
         // write was in flight stay pending, with page indices remapped through the
@@ -1642,6 +1658,8 @@ export default function App() {
         // it is in the file now, a new object means the user changed it during the save
         setStampCfg((prev) => (prev === saved.stampCfg ? null : prev))
         setMetadata((prev) => (prev === saved.metadata ? null : prev))
+        setPageLabels((prev) => (prev === saved.pageLabels ? null : prev))
+        if (saved.pageLabels !== null) setFileLabels(saved.pageLabels)
         // The tree this save wrote is in the file now: an open editing session keeps it
         // as its clean base, a committed one is done. The save may have deleted or
         // reordered pages, so the tree's page indices are the ones from before it —
@@ -2237,6 +2255,7 @@ export default function App() {
     deleted.size > 0 ||
     order !== null ||
     metadata !== null ||
+    pageLabels !== null ||
     protectionDirty ||
     (pendingOutline?.edited ?? false) ||
     pendingAttachmentAdds.length > 0 ||
@@ -2297,6 +2316,7 @@ export default function App() {
     deleted: deletedRef.current,
     order: orderRef.current,
     metadata: metadataRef.current,
+    pageLabels: pageLabelsRef.current,
   })
 
   const pushUndo = (coalesceKey?: string) => {
@@ -2305,6 +2325,14 @@ export default function App() {
     const snap = snapshot()
     setUndoStack((prev) => [...prev.slice(-49), snap])
     setRedoStack([])
+  }
+
+  /** Make `ranges` the document's page labels: a pending, undoable edit written on save ([] = none) */
+  const applyLabelRanges = (ranges: PageLabelRange[]) => {
+    pushUndo()
+    pageLabelsRef.current = ranges
+    setPageLabels(ranges)
+    setPageLabelsDlg(false)
   }
 
   const newId = () => `d${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
@@ -2460,6 +2488,8 @@ export default function App() {
     deletedRef.current = s.deleted
     orderRef.current = s.order
     metadataRef.current = s.metadata
+    pageLabelsRef.current = s.pageLabels
+    setPageLabels(s.pageLabels)
     setMarkups(s.markups)
     setAnnotDeletes(s.annotDeletes)
     setNoteEdits(s.noteEdits)
@@ -4717,6 +4747,7 @@ export default function App() {
     deletedPages: [...deleted],
     ...(order ? { pageOrder: visList } : {}),
     ...(metadata ? { metadata } : {}),
+    ...(pageLabels !== null ? { pageLabels } : {}),
     // false = keep the file's own /Encrypt entries, true = write the dialog's
     protectionDirty,
     ...(diskPasswordRef.current !== null
@@ -4811,6 +4842,7 @@ export default function App() {
       formWidgetEdits,
       rotations,
       metadata,
+      pageLabels,
       outline: pendingOutline?.edited ? pendingOutline.tree : null,
       pageMap: new Map(visList.map((origIdx, i) => [origIdx, i])),
     }
@@ -7673,6 +7705,26 @@ export default function App() {
   // renamed / moved from the shell: keep saving to the file's new location
   useEffect(() => window.pdfApi.onFileRenamed((next) => setFilePath(next)), [])
 
+  // The labels the file carries, read when the document on screen is (re)loaded
+  useEffect(() => {
+    if (!doc || !filePath) {
+      setFileLabels([])
+      return
+    }
+    let cancelled = false
+    void window.pdfApi
+      .readPageLabels(filePath)
+      .then((ranges) => {
+        if (!cancelled) setFileLabels(ranges)
+      })
+      .catch(() => {
+        if (!cancelled) setFileLabels([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [doc, filePath])
+
   // Re-read the signatures whenever the document on screen is (re)loaded: a save rewrites the
   // file, which is exactly when an old signature stops matching
   useEffect(() => {
@@ -7935,6 +7987,11 @@ export default function App() {
               onBlur={commitPageInput}
             />
             <span className="tb-page-total">{t('pageOf', { total: pageCount })}</span>
+            {labelsCustom && (
+              <span className="tb-page-label" data-tip={t('pageLabelsCurrent')}>
+                {labelOf(activeLabels, currentPage - 1)}
+              </span>
+            )}
           </div>
           <div className="rb-row">
             <button
@@ -9216,6 +9273,22 @@ export default function App() {
                   </button>
                 </div>
               </div>
+              <div className="ribbon-sep" />
+              <div className="ribbon-group">
+                <div className="ribbon-group-items">
+                  <button
+                    className="rb-big"
+                    data-tip={t('pageLabelsTip')}
+                    disabled={pageCount === 0 || readOnly}
+                    onClick={() => setPageLabelsDlg(true)}
+                  >
+                    <span className="rb-big-icon">
+                      <IconPageLabels />
+                    </span>
+                    <span>{t('pageLabels')}</span>
+                  </button>
+                </div>
+              </div>
             </>
           )}
           {ribbonTab === 'view' && (
@@ -9604,7 +9677,7 @@ export default function App() {
                             )
                           })()}
                       </div>
-                      <span className="pdf-thumb-no">{v + 1}</span>
+                      <span className="pdf-thumb-no">{labelOf(activeLabels, v)}</span>
                     </div>
                   )
                 })}
@@ -11545,6 +11618,15 @@ export default function App() {
                 hasSignatures={digitalSignatures.length > 0}
                 onCancel={() => setCertSignDlg(false)}
                 onSigned={(path) => void adoptSignedFile(path)}
+              />
+            )}
+            {pageLabelsDlg && (
+              <PageLabelsDialog
+                t={t}
+                pageCount={pageCount}
+                initial={activeLabels}
+                onApply={applyLabelRanges}
+                onClose={() => setPageLabelsDlg(false)}
               />
             )}
             {signaturesDlg && (

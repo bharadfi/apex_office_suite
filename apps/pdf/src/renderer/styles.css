@@ -5213,3 +5213,69 @@ button {
   color: var(--pdf-ok);
   font-size: 0.85em;
 }
+
+/* Page labels: the editor's table of ranges, and the current label beside the page box */
+.pdf-labels-grid {
+  display: grid;
+  grid-template-columns: 5.5em minmax(8em, 1fr) minmax(6em, 1fr) 6em 2em;
+  gap: 6px 8px;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.pdf-labels-row {
+  display: contents;
+}
+
+.pdf-labels-head {
+  font-size: 0.82em;
+  color: var(--text-muted);
+}
+
+.pdf-labels-grid input,
+.pdf-labels-grid select {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  min-width: 0;
+}
+
+.pdf-labels-grid input:focus,
+.pdf-labels-grid select:focus {
+  outline: none;
+  border-color: var(--pdf-input-focus);
+  box-shadow: 0 0 0 3px var(--pdf-input-ring);
+}
+
+.pdf-labels-grid input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.pdf-labels-grid input:disabled {
+  opacity: 0.5;
+}
+
+.pdf-labels-preview {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin: 10px 0 4px;
+  color: var(--text-muted);
+}
+
+.pdf-labels-preview strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.tb-page-label {
+  margin-inline-start: 6px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--hover);
+  color: var(--text-muted);
+  font-size: 0.85em;
+}

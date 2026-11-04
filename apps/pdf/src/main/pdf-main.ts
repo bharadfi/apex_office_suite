@@ -73,6 +73,7 @@ import type {
   CertificateInfo,
   InspectCertificateResult,
   ListSystemCertificatesResult,
+  PageLabelRange,
   PdfSignatureInfo,
   SavedSignature,
   SignWithCertificateRequest,
@@ -111,6 +112,7 @@ import { validateRedactionRegions } from './redaction'
 import { SignError, openCertificate, openExternalCertificate, signPdf } from './pdf-sign'
 import type { ExternalSigner, SignPdfOptions } from './pdf-sign'
 import { readPdfSignatures } from './pdf-signatures'
+import { readPageLabelRanges } from './page-labels-io'
 import {
   addTrusted,
   loadTrusted,
@@ -2103,6 +2105,23 @@ function registerPdfIpc(): void {
         ),
       },
     ),
+  )
+
+  ipcMain.handle(
+    PDF_CHANNELS.readPageLabels,
+    async (e, path: unknown): Promise<PageLabelRange[]> => {
+      if (typeof path !== 'string' || !allowedByWc.get(e.sender.id)?.has(path)) return []
+      try {
+        const pdf = await PDFDocument.load(new Uint8Array(await readFile(path)), {
+          updateMetadata: false,
+          throwOnInvalidObject: false,
+        })
+        return readPageLabelRanges(pdf)
+      } catch {
+        // protected or damaged: no labels to show, and the document still opens
+        return []
+      }
+    },
   )
 
   // ── Certificate (digital) signatures ──
