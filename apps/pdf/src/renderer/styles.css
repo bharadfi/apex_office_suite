@@ -5086,3 +5086,41 @@ button {
   color: var(--danger);
   font-size: 12px;
 }
+
+.pdf-compare-ranges {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pdf-compare-range {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+
+.pdf-compare-range input {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.pdf-compare-range input:focus {
+  outline: none;
+  border-color: var(--pdf-input-focus);
+  box-shadow: 0 0 0 3px var(--pdf-input-ring);
+}
+
+.pdf-compare-range input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.pdf-compare-range-error {
+  color: var(--danger);
+  font-size: 0.82em;
+}

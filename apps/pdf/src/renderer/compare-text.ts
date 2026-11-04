@@ -25,6 +25,12 @@ export interface PageDiff {
   removedCount: number
   /** the size cap hit: only the counts are meaningful, not the listed lines */
   truncated?: boolean
+  /**
+   * Set when only some pages were compared: the page of the OTHER document this
+   * row was paired with (zero-based). `pageIndex` then names the open document's
+   * page, not the position within the chosen pages.
+   */
+  otherPageIndex?: number
 }
 
 export interface CompareResult {
@@ -155,5 +161,58 @@ export function compareDocuments(left: PageText[], right: PageText[]): CompareRe
   return {
     pages,
     equal: pages.every((p) => p.addedCount === 0 && p.removedCount === 0),
+  }
+}
+
+/**
+ * A page selection such as "3-7", "5" or "2,4-6" as zero-based page indexes in
+ * the order written (so "6-4" reads backwards and "1,1" repeats a page, which
+ * is what a person typing it means). A blank selection means every page.
+ * Returns null when the text is not a selection or names a page outside 1..count.
+ */
+export function parsePageSelection(input: string, count: number): number[] | null {
+  const text = input.trim()
+  if (text === '') return Array.from({ length: count }, (_, i) => i)
+  const out: number[] = []
+  for (const part of text.split(',')) {
+    const m = /^\s*(\d+)\s*(?:[-–]\s*(\d+)\s*)?$/.exec(part)
+    if (!m) return null
+    const from = Number(m[1])
+    const to = m[2] === undefined ? from : Number(m[2])
+    if (from < 1 || to < 1 || from > count || to > count) return null
+    const step = from <= to ? 1 : -1
+    for (let n = from; n !== to + step; n += step) out.push(n - 1)
+  }
+  return out
+}
+
+/**
+ * Compare chosen pages of two documents: the k-th chosen page of one pairs with
+ * the k-th chosen page of the other. Rows come back numbered by the OPEN
+ * document's pages (`mine`), each carrying the page it was paired with in the
+ * other (`otherPageIndex`), so "go to page" still lands in the open document.
+ */
+export function compareSelected(
+  mine: PageText[],
+  mineSelection: number[],
+  theirs: PageText[],
+  theirSelection: number[],
+  swapped: boolean,
+): CompareResult {
+  const pick = (all: PageText[], selection: number[]): PageText[] =>
+    selection.map((index, position) => ({ pageIndex: position, text: all[index]?.text ?? '' }))
+  const mineSide = pick(mine, mineSelection)
+  const theirSide = pick(theirs, theirSelection)
+  const raw = swapped
+    ? compareDocuments(theirSide, mineSide)
+    : compareDocuments(mineSide, theirSide)
+  const last = mineSelection[mineSelection.length - 1] ?? 0
+  return {
+    equal: raw.equal,
+    pages: raw.pages.map((page) => ({
+      ...page,
+      pageIndex: mineSelection[page.pageIndex] ?? last,
+      otherPageIndex: theirSelection[page.pageIndex] ?? theirSelection[theirSelection.length - 1],
+    })),
   }
 }

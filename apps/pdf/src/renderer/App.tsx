@@ -127,7 +127,12 @@ import { LinkLayer } from './LinkLayer'
 import { OutlinePanel } from './OutlinePanel'
 import { CommentsPanel, type CommentEntry } from './CommentsPanel'
 import { ComparePanel } from './ComparePanel'
-import { compareDocuments, type CompareResult, type PageText } from './compare-text'
+import {
+  compareSelected,
+  parsePageSelection,
+  type CompareResult,
+  type PageText,
+} from './compare-text'
 import { AttachmentsPanel, type AttachmentRow } from './AttachmentsPanel'
 import type { OutlineNode } from './OutlinePanel'
 import {
@@ -457,6 +462,13 @@ export default function App() {
   const [compareName, setCompareName] = useState<string | null>(null)
   const [compareBusy, setCompareBusy] = useState(false)
   const [compareSwapped, setCompareSwapped] = useState(false)
+  /** page choices typed in the panel ('' = every page) */
+  const [compareRanges, setCompareRanges] = useState({ mine: '', theirs: '' })
+  /** page counts of both sides while the typed choices are not a valid selection */
+  const [compareRangeInvalid, setCompareRangeInvalid] = useState<{
+    mine: number
+    theirs: number
+  } | null>(null)
   const compareSidesRef = useRef<{ mine: PageText[]; theirs: PageText[] } | null>(null)
   const [sidebarW, setSidebarW] = useState(loadSidebarW)
   /** raster width for thumbnails — only updated when a drag ends (re-rastering every frame would jank) */
@@ -4446,7 +4458,10 @@ export default function App() {
       const theirs: PageText[] = picked.pages.map((text, pageIndex) => ({ pageIndex, text }))
       compareSidesRef.current = { mine: mineSide, theirs }
       setCompareName(picked.name)
-      setCompareResult(compareSides(mineSide, theirs, compareSwapped))
+      // a new second document starts from every page: the old choices named another file's pages
+      const everyPage = { mine: '', theirs: '' }
+      setCompareRanges(everyPage)
+      setCompareResult(compareSides(mineSide, theirs, compareSwapped, everyPage))
     } catch (err) {
       showNotice(err instanceof Error ? err.message : String(err))
     } finally {
@@ -4454,8 +4469,26 @@ export default function App() {
     }
   }
 
-  const compareSides = (mine: PageText[], theirs: PageText[], swapped: boolean): CompareResult =>
-    swapped ? compareDocuments(theirs, mine) : compareDocuments(mine, theirs)
+  /**
+   * The comparison of the chosen pages. Typed choices that are not a valid
+   * selection flag the panel and return null, so the caller keeps the last
+   * valid result on screen instead of clearing it mid-typing.
+   */
+  const compareSides = (
+    mine: PageText[],
+    theirs: PageText[],
+    swapped: boolean,
+    ranges: { mine: string; theirs: string },
+  ): CompareResult | null => {
+    const mineSelection = parsePageSelection(ranges.mine, mine.length)
+    const theirSelection = parsePageSelection(ranges.theirs, theirs.length)
+    if (!mineSelection || !theirSelection) {
+      setCompareRangeInvalid({ mine: mine.length, theirs: theirs.length })
+      return null
+    }
+    setCompareRangeInvalid(null)
+    return compareSelected(mine, mineSelection, theirs, theirSelection, swapped)
+  }
 
   const attachmentRows = (): AttachmentRow[] => {
     const rows: AttachmentRow[] = []
@@ -9246,9 +9279,36 @@ export default function App() {
                     const swapped = !compareSwapped
                     setCompareSwapped(swapped)
                     const sides = compareSidesRef.current
-                    setCompareResult(sides ? compareSides(sides.mine, sides.theirs, swapped) : null)
+                    if (!sides) {
+                      setCompareResult(null)
+                      return
+                    }
+                    const next = compareSides(sides.mine, sides.theirs, swapped, compareRanges)
+                    if (next) setCompareResult(next)
                   }}
                   onGoToPage={(pageNo) => scrollToPage(pageNo)}
+                  ranges={
+                    compareName
+                      ? {
+                          mine: compareRanges.mine,
+                          theirs: compareRanges.theirs,
+                          invalid: compareRangeInvalid,
+                          onChange: (which, value) => {
+                            const ranges = { ...compareRanges, [which]: value }
+                            setCompareRanges(ranges)
+                            const sides = compareSidesRef.current
+                            if (!sides) return
+                            const next = compareSides(
+                              sides.mine,
+                              sides.theirs,
+                              compareSwapped,
+                              ranges,
+                            )
+                            if (next) setCompareResult(next)
+                          },
+                        }
+                      : undefined
+                  }
                 />
               </div>
             )}

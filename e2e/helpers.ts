@@ -83,9 +83,10 @@ export async function launchShell(options: LaunchOptions): Promise<LaunchedApp> 
     },
     // Playwright's Electron screencast wedges the page CDP session on Linux
     // (page.url() stays empty, no lifecycle events, evaluate hangs) — record
-    // only where it works
+    // only where it works (set GENOFFICE_E2E_NO_VIDEO=1 where recording wedges the
+    // page too, as it does on some Windows setups)
     recordVideo:
-      process.platform === 'linux'
+      process.platform === 'linux' || process.env.GENOFFICE_E2E_NO_VIDEO
         ? undefined
         : {
             dir: join(ARTIFACTS_DIR, options.videoDir),
