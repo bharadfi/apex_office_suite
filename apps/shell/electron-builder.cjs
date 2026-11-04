@@ -144,6 +144,16 @@ function compileVisionOcr({ universalOnly } = { universalOnly: false }) {
 const WIN_OCR_HELPER = '../../packages/pdf2docx/ocr-helper/win-ocr.exe'
 
 function ensurePlatformHelpers() {
+  // the Tesseract engine ships on every platform (the system helpers below are its fallback)
+  try {
+    execFileSync(
+      process.execPath,
+      [join(__dirname, '../../packages/pdf2docx/ocr-helper/build-tesseract.mjs')],
+      { stdio: 'inherit' },
+    )
+  } catch (err) {
+    throw new Error(`tesseract assets failed to stage: ${err}`, { cause: err })
+  }
   if (process.platform === 'darwin' && !existsSync(join(__dirname, VISION_OCR_HELPER))) {
     compileVisionOcr()
   }
@@ -569,6 +579,10 @@ const config = {
     {
       from: '../../packages/pdf2docx/ocr-helper/win-ocr.exe',
       to: 'ocr/win-ocr.exe',
+    },
+    {
+      from: '../../packages/pdf2docx/ocr-helper/tesseract',
+      to: 'ocr/tesseract',
     },
     {
       from: '../../node_modules/@genspark/cli',

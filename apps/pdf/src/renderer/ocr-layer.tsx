@@ -173,7 +173,7 @@ export async function renderPageForOcr(
   geom: PageGeom,
 ): Promise<string | null> {
   const disp = geomDispSize(geom)
-  const scale = Math.min(4, Math.max(1.5, 2048 / Math.max(disp.width, disp.height, 1)))
+  const scale = Math.min(4, Math.max(1.5, 2400 / Math.max(disp.width, disp.height, 1)))
   try {
     const page = await doc.getPage(origIdx + 1)
     const viewport = page.getViewport({ scale, rotation: ((geom.rot % 360) + 360) % 360 })

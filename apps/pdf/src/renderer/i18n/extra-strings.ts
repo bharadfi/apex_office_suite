@@ -37,6 +37,7 @@ const extraStrings = {
   sigCertifiedBy: 'Document certified by {name}.',
   sigCertifiedByEmail: 'Document certified by {name} <{email}>.',
   sigViewTip: 'View signature details',
+  ocrNoEngine: 'Text recognition is not available, so scanned pages stay as pictures.',
   // Page labels
   pageLabels: 'Page labels',
   pageLabelsTip: 'Number pages i, ii, iii or A-1, A-2 instead of 1, 2, 3',

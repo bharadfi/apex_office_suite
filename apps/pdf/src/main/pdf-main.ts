@@ -1254,7 +1254,10 @@ function registerPdfIpc(): void {
 
   // Read Out Loud: one speaker for the process (one reading at a time), ended with the app
   const speaker = new Speaker()
-  app.on('before-quit', () => speaker.stop())
+  app.on('before-quit', () => {
+    speaker.stop()
+    void import('./ocr').then((ocr) => ocr.disposeOcr())
+  })
   ipcMain.handle(PDF_CHANNELS.speechStart, (_e, text: unknown) =>
     typeof text === 'string'
       ? speaker.start(text)

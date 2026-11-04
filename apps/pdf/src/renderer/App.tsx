@@ -2520,8 +2520,9 @@ export default function App() {
           // the document is gone or unreadable: nothing left to recognize
         }
         if (ocrAbortRef.current !== controller) return // a newer pass took over
-        // A finished pass and a platform without an OCR engine are not worth a
-        // toast; a cap or a user cancel is, and it says how far the pass got
+        if (result?.stop === 'noEngine') setNotice(t('ocrNoEngine'))
+        // A finished pass is not worth a toast; a cap or a user cancel is,
+        // and it says how far the pass got
         setOcrRun(
           result && (result.stop === 'cap' || result.stop === 'cancelled')
             ? {
