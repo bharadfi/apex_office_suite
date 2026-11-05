@@ -34,6 +34,7 @@ const api: PdfApi = {
     ipcRenderer.invoke(PDF_CHANNELS.compareReadOpen, path, password),
   reduceFileSize: (path) => ipcRenderer.invoke(PDF_CHANNELS.reduceFileSize, path),
   inspectHidden: (path) => ipcRenderer.invoke(PDF_CHANNELS.inspectHidden, path),
+  checkAccessibility: (path) => ipcRenderer.invoke(PDF_CHANNELS.checkAccessibility, path),
   removeHidden: (path, categories) =>
     ipcRenderer.invoke(PDF_CHANNELS.removeHidden, path, categories),
   insertBlankPage: (request) => ipcRenderer.invoke(PDF_CHANNELS.insertBlankPage, request),

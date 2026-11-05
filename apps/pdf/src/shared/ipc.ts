@@ -8,6 +8,21 @@ export type SanitizeCategory =
   'metadata' | 'attachments' | 'scripts' | 'comments' | 'bookmarks' | 'links' | 'thumbnails'
 export type HiddenInfoCounts = Record<SanitizeCategory, number>
 
+export interface AccessibilityCheck {
+  id:
+    | 'tagged'
+    | 'language'
+    | 'title'
+    | 'figureAlt'
+    | 'fieldTips'
+    | 'tabOrder'
+    | 'bookmarks'
+    | 'screenReaderAccess'
+  status: 'pass' | 'fail'
+  /** How many places failed (figures without alternate text, fields without a description, pages without a tab order) */
+  count: number
+}
+
 export const PDF_CHANNELS = {
   readPageLabels: 'pdf:read-page-labels',
   signatureDisplayCopy: 'pdf:signature-display-copy',
@@ -38,6 +53,7 @@ export const PDF_CHANNELS = {
   compareReadOpen: 'pdf:compare-read-open',
   reduceFileSize: 'pdf:reduce-file-size',
   inspectHidden: 'pdf:inspect-hidden',
+  checkAccessibility: 'pdf:check-accessibility',
   removeHidden: 'pdf:remove-hidden',
   insertBlankPage: 'pdf:insert-blank-page',
   splitPdf: 'pdf:split-pdf',
@@ -1145,6 +1161,10 @@ export interface PdfApi {
   inspectHidden(
     path: string,
   ): Promise<{ ok: true; counts: HiddenInfoCounts } | { ok: false; reason: string }>
+  /** Whether the file carries what assistive software reads (tags, language, title, alternate text, field descriptions, tab order) */
+  checkAccessibility(
+    path: string,
+  ): Promise<{ ok: true; checks: AccessibilityCheck[] } | { ok: false; reason: string }>
   /** Write a copy without the chosen categories to a path picked in a save dialog; the open document is untouched */
   removeHidden(
     path: string,

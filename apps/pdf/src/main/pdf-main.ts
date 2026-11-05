@@ -105,6 +105,7 @@ import { Speaker } from './speech'
 import { Scanner } from './scanner'
 import { scansToPdf } from './scan-pdf'
 import { shrinkDocument } from './pdf-shrink'
+import { checkAccessibility } from './pdf-accessibility'
 import { SANITIZE_CATEGORIES, inspectHidden, sanitizeHidden } from './pdf-sanitize'
 import { PDFDocument } from 'pdf-lib'
 import {
@@ -1974,6 +1975,21 @@ function registerPdfIpc(): void {
         ignoreEncryption: true,
       })
       return { ok: true as const, counts: inspectHidden(doc) }
+    } catch (err) {
+      return { ok: false as const, reason: err instanceof Error ? err.message : String(err) }
+    }
+  })
+
+  ipcMain.handle(PDF_CHANNELS.checkAccessibility, async (e, path: unknown) => {
+    if (typeof path !== 'string' || !allowedByWc.get(e.sender.id)?.has(path)) {
+      return { ok: false as const, reason: 'pdf: path not granted to this view' }
+    }
+    try {
+      const doc = await PDFDocument.load(new Uint8Array(await readFile(path)), {
+        updateMetadata: false,
+        ignoreEncryption: true,
+      })
+      return { ok: true as const, checks: checkAccessibility(doc) }
     } catch (err) {
       return { ok: false as const, reason: err instanceof Error ? err.message : String(err) }
     }

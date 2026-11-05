@@ -142,6 +142,7 @@ import {
 import { filterPageParity, printPdf, type PageParity } from './print'
 import { readFileBytes } from './file-bytes'
 import type {
+  AccessibilityCheck,
   HiddenInfoCounts,
   PdfEncryptionInput,
   PdfPermissions,
@@ -165,6 +166,7 @@ import { SignatureDialog, fileToCanvas } from './SignatureDialog'
 import { hasCustomLabels, labelOf } from '../shared/page-labels'
 import { PageLabelsDialog } from './PageLabelsDialog'
 import { HiddenInfoDialog } from './HiddenInfoDialog'
+import { AccessibilityDialog } from './AccessibilityDialog'
 import { ScanDialog } from './ScanDialog'
 import type { SignatureData } from './SignatureDialog'
 import { signatureDrawingForField } from './signature-field'
@@ -298,6 +300,7 @@ import type {
   AnnotSelection,
 } from './edit-state'
 import {
+  IconAccessibility,
   IconHiddenInfo,
   IconPageLabels,
   IconScan,
@@ -950,6 +953,10 @@ export default function App() {
   /** The labels stored in the file, read when it is opened */
   const [fileLabels, setFileLabels] = useState<PageLabelRange[]>([])
   const [pageLabelsDlg, setPageLabelsDlg] = useState(false)
+  const [a11yDlg, setA11yDlg] = useState<{
+    checks: AccessibilityCheck[] | null
+    failed: string | null
+  } | null>(null)
   const [hiddenDlg, setHiddenDlg] = useState<{
     counts: HiddenInfoCounts | null
     failed: string | null
@@ -6657,6 +6664,15 @@ export default function App() {
   }
 
   /** Remove Hidden Information: read what the file carries, let the user choose, save a clean copy */
+  const openAccessibilityCheck = async (): Promise<void> => {
+    if (!filePath) return
+    setA11yDlg({ checks: null, failed: null })
+    const found = await window.pdfApi.checkAccessibility(filePath)
+    setA11yDlg(
+      found.ok ? { checks: found.checks, failed: null } : { checks: null, failed: found.reason },
+    )
+  }
+
   const openHiddenInfo = async (): Promise<void> => {
     if (!filePath) return
     setHiddenDlg({ counts: null, failed: null, busy: false })
@@ -8899,6 +8915,17 @@ export default function App() {
                       <IconHiddenInfo />
                     </span>
                     <span>{t('hiddenInfo')}</span>
+                  </button>
+                  <button
+                    className="rb-big"
+                    data-tip={t('a11yCheckTip')}
+                    disabled={status !== 'ready' || !filePath}
+                    onClick={() => void openAccessibilityCheck()}
+                  >
+                    <span className="rb-big-icon">
+                      <IconAccessibility />
+                    </span>
+                    <span>{t('a11yCheck')}</span>
                   </button>
                 </div>
               </div>
@@ -11209,6 +11236,14 @@ export default function App() {
                 hasSignatures={digitalSignatures.length > 0}
                 onCancel={() => setCertSignDlg(false)}
                 onSigned={(path) => void adoptSignedFile(path)}
+              />
+            )}
+            {a11yDlg && (
+              <AccessibilityDialog
+                t={t}
+                checks={a11yDlg.checks}
+                failed={a11yDlg.failed}
+                onClose={() => setA11yDlg(null)}
               />
             )}
             {hiddenDlg && (

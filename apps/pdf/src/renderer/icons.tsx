@@ -724,3 +724,10 @@ export const IconHiddenInfo = () => (
     <path d="M5 19 L19 5" />
   </Icon>
 )
+export const IconAccessibility = () => (
+  <Icon>
+    <circle cx="12" cy="5" r="1.8" />
+    <path d="M5 8.5 L12 10 L19 8.5" />
+    <path d="M12 10 L12 15 M12 15 L9 20 M12 15 L15 20" />
+  </Icon>
+)

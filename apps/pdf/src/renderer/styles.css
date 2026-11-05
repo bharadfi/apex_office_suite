@@ -5406,3 +5406,36 @@ button {
   font-variant-numeric: tabular-nums;
   color: var(--text-secondary);
 }
+
+/* ---- Accessibility check dialog ---- */
+
+.pdf-a11y-list {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+}
+
+.pdf-a11y-row {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 8px;
+  padding: 6px 4px;
+}
+
+.pdf-a11y-mark {
+  font-weight: 700;
+  text-align: center;
+}
+
+.pdf-a11y-row.is-pass .pdf-a11y-mark {
+  color: var(--pdf-sigmark-ok);
+}
+
+.pdf-a11y-row.is-fail .pdf-a11y-mark {
+  color: var(--pdf-sigmark-bad);
+}
+
+.pdf-a11y-state {
+  color: var(--text-muted);
+  font-size: 12px;
+}
