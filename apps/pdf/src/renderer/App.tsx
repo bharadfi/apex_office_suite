@@ -141,7 +141,14 @@ import {
 } from './heading-outline'
 import { filterPageParity, printPdf, type PageParity } from './print'
 import { readFileBytes } from './file-bytes'
-import type { PdfEncryptionInput, PdfPermissions, PrintDuplex, PrinterInfo } from '../shared/ipc'
+import type {
+  HiddenInfoCounts,
+  PdfEncryptionInput,
+  PdfPermissions,
+  PrintDuplex,
+  PrinterInfo,
+  SanitizeCategory,
+} from '../shared/ipc'
 import { mayChangeProtection } from './protection-gate'
 import { PasswordDialog } from './PasswordDialog'
 import { PropertiesDialog } from './PropertiesDialog'
@@ -157,6 +164,7 @@ import { SignatureMarks, marksForPage } from './SignatureMarks'
 import { SignatureDialog, fileToCanvas } from './SignatureDialog'
 import { hasCustomLabels, labelOf } from '../shared/page-labels'
 import { PageLabelsDialog } from './PageLabelsDialog'
+import { HiddenInfoDialog } from './HiddenInfoDialog'
 import { ScanDialog } from './ScanDialog'
 import type { SignatureData } from './SignatureDialog'
 import { signatureDrawingForField } from './signature-field'
@@ -290,6 +298,7 @@ import type {
   AnnotSelection,
 } from './edit-state'
 import {
+  IconHiddenInfo,
   IconPageLabels,
   IconScan,
   IconReadPage,
@@ -941,6 +950,11 @@ export default function App() {
   /** The labels stored in the file, read when it is opened */
   const [fileLabels, setFileLabels] = useState<PageLabelRange[]>([])
   const [pageLabelsDlg, setPageLabelsDlg] = useState(false)
+  const [hiddenDlg, setHiddenDlg] = useState<{
+    counts: HiddenInfoCounts | null
+    failed: string | null
+    busy: boolean
+  } | null>(null)
   const [scanDlg, setScanDlg] = useState(false)
   const [stampDlg, setStampDlg] = useState(false)
   const [propsDlg, setPropsDlg] = useState(false)
@@ -6642,6 +6656,35 @@ export default function App() {
     showNotice(savedPct > 0 ? t('reduceDone', { pct: savedPct }) : t('reduceAlreadySmall'))
   }
 
+  /** Remove Hidden Information: read what the file carries, let the user choose, save a clean copy */
+  const openHiddenInfo = async (): Promise<void> => {
+    if (!filePath) return
+    setHiddenDlg({ counts: null, failed: null, busy: false })
+    const found = await window.pdfApi.inspectHidden(filePath)
+    setHiddenDlg(
+      found.ok
+        ? { counts: found.counts, failed: null, busy: false }
+        : { counts: null, failed: found.reason, busy: false },
+    )
+  }
+
+  const removeHiddenInfo = async (categories: SanitizeCategory[]): Promise<void> => {
+    if (!filePath) return
+    setHiddenDlg((d) => (d ? { ...d, busy: true } : d))
+    const outcome = await window.pdfApi.removeHidden(filePath, categories)
+    if (outcome.ok) {
+      const count = Object.values(outcome.removed).reduce((sum, n) => sum + n, 0)
+      setHiddenDlg(null)
+      showNotice(t('hiddenInfoDone', { name: outcome.targetPath.replace(/^.*[\\/]/, ''), count }))
+      return
+    }
+    if ('canceled' in outcome) {
+      setHiddenDlg((d) => (d ? { ...d, busy: false } : d))
+      return
+    }
+    setHiddenDlg((d) => (d ? { ...d, busy: false, failed: outcome.reason } : d))
+  }
+
   const insertPdf = (afterOrigIdx: number) => {
     // the flush bakes the visible order into the file, so the anchor becomes its visible position
     const afterPageIndex = visListOf(orderRef.current).indexOf(afterOrigIdx)
@@ -8840,6 +8883,22 @@ export default function App() {
                       <IconPageLabels />
                     </span>
                     <span>{t('pageLabels')}</span>
+                  </button>
+                </div>
+              </div>
+              <div className="ribbon-sep" />
+              <div className="ribbon-group">
+                <div className="ribbon-group-items">
+                  <button
+                    className="rb-big"
+                    data-tip={t('hiddenInfoTip')}
+                    disabled={status !== 'ready' || !filePath}
+                    onClick={() => void openHiddenInfo()}
+                  >
+                    <span className="rb-big-icon">
+                      <IconHiddenInfo />
+                    </span>
+                    <span>{t('hiddenInfo')}</span>
                   </button>
                 </div>
               </div>
@@ -11150,6 +11209,16 @@ export default function App() {
                 hasSignatures={digitalSignatures.length > 0}
                 onCancel={() => setCertSignDlg(false)}
                 onSigned={(path) => void adoptSignedFile(path)}
+              />
+            )}
+            {hiddenDlg && (
+              <HiddenInfoDialog
+                t={t}
+                counts={hiddenDlg.counts}
+                failed={hiddenDlg.failed}
+                busy={hiddenDlg.busy}
+                onRemove={(categories) => void removeHiddenInfo(categories)}
+                onClose={() => setHiddenDlg(null)}
               />
             )}
             {pageLabelsDlg && (

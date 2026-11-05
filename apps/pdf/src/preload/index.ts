@@ -33,6 +33,9 @@ const api: PdfApi = {
   compareReadOpen: (path: string, password?: string) =>
     ipcRenderer.invoke(PDF_CHANNELS.compareReadOpen, path, password),
   reduceFileSize: (path) => ipcRenderer.invoke(PDF_CHANNELS.reduceFileSize, path),
+  inspectHidden: (path) => ipcRenderer.invoke(PDF_CHANNELS.inspectHidden, path),
+  removeHidden: (path, categories) =>
+    ipcRenderer.invoke(PDF_CHANNELS.removeHidden, path, categories),
   insertBlankPage: (request) => ipcRenderer.invoke(PDF_CHANNELS.insertBlankPage, request),
   splitPdf: (request) => ipcRenderer.invoke(PDF_CHANNELS.splitPdf, request),
   mergePdf: (request) => ipcRenderer.invoke(PDF_CHANNELS.mergePdf, request),

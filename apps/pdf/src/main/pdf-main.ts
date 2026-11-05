@@ -30,7 +30,7 @@ import {
   rendererUrl,
 } from '@genoffice/electron-utils'
 import { createI18n, getUiLang } from '@genoffice/i18n'
-import { PDF_CHANNELS } from '../shared/ipc'
+import { PDF_CHANNELS, type SanitizeCategory } from '../shared/ipc'
 import { printJobOptions, printOutcome } from '@genoffice/electron-utils/print-job'
 import { printPdfViaCups, printToPdfOptionsFor } from '@genoffice/electron-utils/print-cups'
 import { CertificateEncryptionError, WrongPasswordError, decryptDocument } from './pdf-crypt'
@@ -105,6 +105,7 @@ import { Speaker } from './speech'
 import { Scanner } from './scanner'
 import { scansToPdf } from './scan-pdf'
 import { shrinkDocument } from './pdf-shrink'
+import { SANITIZE_CATEGORIES, inspectHidden, sanitizeHidden } from './pdf-sanitize'
 import { PDFDocument } from 'pdf-lib'
 import {
   addSignature,
@@ -1958,6 +1959,55 @@ function registerPdfIpc(): void {
         streamsRecompressed: result.streamsRecompressed,
         imagesDownsampled: result.imagesDownsampled,
       }
+    } catch (err) {
+      return { ok: false as const, reason: err instanceof Error ? err.message : String(err) }
+    }
+  })
+
+  ipcMain.handle(PDF_CHANNELS.inspectHidden, async (e, path: unknown) => {
+    if (typeof path !== 'string' || !allowedByWc.get(e.sender.id)?.has(path)) {
+      return { ok: false as const, reason: 'pdf: path not granted to this view' }
+    }
+    try {
+      const doc = await PDFDocument.load(new Uint8Array(await readFile(path)), {
+        updateMetadata: false,
+        ignoreEncryption: true,
+      })
+      return { ok: true as const, counts: inspectHidden(doc) }
+    } catch (err) {
+      return { ok: false as const, reason: err instanceof Error ? err.message : String(err) }
+    }
+  })
+
+  // Remove Hidden Information: the chosen categories are stripped from a copy picked through the
+  // save dialog; the open document is untouched
+  ipcMain.handle(PDF_CHANNELS.removeHidden, async (e, path: unknown, chosen: unknown) => {
+    if (typeof path !== 'string' || !allowedByWc.get(e.sender.id)?.has(path)) {
+      return { ok: false as const, reason: 'pdf: path not granted to this view' }
+    }
+    const categories = new Set(
+      (Array.isArray(chosen) ? chosen : []).filter((c): c is SanitizeCategory =>
+        SANITIZE_CATEGORIES.includes(c as SanitizeCategory),
+      ),
+    )
+    if (categories.size === 0) return { ok: false as const, reason: 'pdf: nothing selected' }
+    const parent = BrowserWindow.fromWebContents(e.sender)
+    const base = basename(path).replace(/\.pdf$/i, '')
+    const filters = [{ name: tm('filterPdf'), extensions: ['pdf'] }]
+    const picked = parent
+      ? await dialog.showSaveDialog(parent, { defaultPath: base + '-clean.pdf', filters })
+      : await dialog.showSaveDialog({ defaultPath: base + '-clean.pdf', filters })
+    if (picked.canceled || !picked.filePath) return { ok: false as const, canceled: true }
+    try {
+      const doc = await PDFDocument.load(new Uint8Array(await readFile(path)), {
+        updateMetadata: false,
+      })
+      const removed = sanitizeHidden(doc, categories, true)
+      await writePdfAtomically(
+        picked.filePath,
+        await doc.save({ useObjectStreams: true, updateFieldAppearances: false }),
+      )
+      return { ok: true as const, targetPath: picked.filePath, removed }
     } catch (err) {
       return { ok: false as const, reason: err instanceof Error ? err.message : String(err) }
     }

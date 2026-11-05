@@ -717,3 +717,10 @@ export function IconLink({ size = 16 }: { size?: number }): ReactElement {
     </Icon>
   )
 }
+export const IconHiddenInfo = () => (
+  <Icon>
+    <path d="M3.5 12 C6 7.5 9 6 12 6 C15 6 18 7.5 20.5 12 C18 16.5 15 18 12 18 C9 18 6 16.5 3.5 12 Z" />
+    <circle cx="12" cy="12" r="2.6" />
+    <path d="M5 19 L19 5" />
+  </Icon>
+)

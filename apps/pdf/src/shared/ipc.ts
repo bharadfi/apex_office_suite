@@ -4,6 +4,10 @@ import type { PageLabelRange } from './page-labels'
 export type { PrintDuplex, PrintJobOptions, PrinterInfo }
 export type { PageLabelRange }
 
+export type SanitizeCategory =
+  'metadata' | 'attachments' | 'scripts' | 'comments' | 'bookmarks' | 'links' | 'thumbnails'
+export type HiddenInfoCounts = Record<SanitizeCategory, number>
+
 export const PDF_CHANNELS = {
   readPageLabels: 'pdf:read-page-labels',
   signatureDisplayCopy: 'pdf:signature-display-copy',
@@ -33,6 +37,8 @@ export const PDF_CHANNELS = {
   compareReadPdf: 'pdf:compare-read-pdf',
   compareReadOpen: 'pdf:compare-read-open',
   reduceFileSize: 'pdf:reduce-file-size',
+  inspectHidden: 'pdf:inspect-hidden',
+  removeHidden: 'pdf:remove-hidden',
   insertBlankPage: 'pdf:insert-blank-page',
   splitPdf: 'pdf:split-pdf',
   mergePdf: 'pdf:merge-pdf',
@@ -1132,6 +1138,19 @@ export interface PdfApi {
         streamsRecompressed: number
         imagesDownsampled: number
       }
+    | { ok: false; canceled: true }
+    | { ok: false; reason: string }
+  >
+  /** What the file carries that is not on its pages (metadata, attachments, scripts, comments, bookmarks, links, thumbnails), counted */
+  inspectHidden(
+    path: string,
+  ): Promise<{ ok: true; counts: HiddenInfoCounts } | { ok: false; reason: string }>
+  /** Write a copy without the chosen categories to a path picked in a save dialog; the open document is untouched */
+  removeHidden(
+    path: string,
+    categories: SanitizeCategory[],
+  ): Promise<
+    | { ok: true; targetPath: string; removed: HiddenInfoCounts }
     | { ok: false; canceled: true }
     | { ok: false; reason: string }
   >
