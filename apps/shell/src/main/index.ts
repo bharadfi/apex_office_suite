@@ -105,8 +105,6 @@ import {
 import { startControlServer, type ControlServer } from './control-server'
 import { controlHandler } from './control-handlers'
 import { createDefaultAppService, execFileRunner } from './default-app'
-import { registerIntegrationsIpc } from './integrations-ipc'
-import { makeUserCliRunner, registerUserSkillsIpc } from './user-cli'
 import {
   ANALYTICS_ENABLED_KEY,
   analyticsEnabledFrom,
@@ -188,7 +186,7 @@ import {
   mcpLogFilePath,
   mcpStatus,
   revealMcpLogFile,
-  startMcpFromSettings,
+  
   stopMcpSync,
   type McpSettings,
 } from './mcp/app-mcp'
@@ -385,7 +383,7 @@ import {
   activateDetached,
   closeDetachedWithoutPrompt,
   createDetachedEditorWindow,
-  detachedFileForWebContents,
+  
   detachedFilePaths,
   detachedOpenDocuments,
   detachedRenameFile,
@@ -7020,30 +7018,8 @@ registerAiNamingIpc(() => currentLang())
 registerProjectIpc()
 registerDocsIpc()
 registerHomeIpc()
-registerIntegrationsIpc({
-  settingsPath: APP_SETTINGS_PATH,
-  window: () => shellWindow,
-  cliDir: app.isPackaged
-    ? join(process.resourcesPath, 'cli')
-    : join(APPS_ROOT, '..', 'packages', 'cli', 'bin'),
-  skillPath: app.isPackaged
-    ? join(process.resourcesPath, 'cli', 'skills', 'genoffice', 'SKILL.md')
-    : join(APPS_ROOT, '..', 'skills', 'genoffice', 'SKILL.md'),
-  cliPackageJson: app.isPackaged
-    ? join(process.resourcesPath, 'cli', 'package.json')
-    : join(APPS_ROOT, '..', 'packages', 'cli', 'package.json'),
-  recommendedSkillsDir: app.isPackaged
-    ? join(process.resourcesPath, 'cli', 'skills', 'recommended')
-    : join(APPS_ROOT, '..', 'skills', 'recommended'),
-})
 registerTabsIpc()
 registerDroppedFilesIpc()
-registerUserSkillsIpc({
-  cliRunner: makeUserCliRunner,
-  folderRoots: folderRootPaths,
-  senderFile: (wcId) =>
-    tabManager?.describeWebContents(wcId)?.filePath ?? detachedFileForWebContents(wcId),
-})
 
 // sheets' project:resolveChat goes through the handler registered by docs-main; the sessionId reverse lookup hooks in here
 setSessionPathResolver(resolveSheetsSessionPath)

@@ -16,8 +16,6 @@
   --shadow-pill: 0 1px 2px rgb(0 0 0 / 8%);
   --shadow-composer: 0 6px 30px rgb(0 0 0 / 8%);
 
-  /* genoffice-logo.svg is pure black-and-white; dark themes flip it to 1 */
-  --logo-invert: 0;
   /* lift for the kb-ask composer box */
 }
 
@@ -132,11 +130,22 @@ body.vib .home {
   margin-bottom: 20px;
 }
 
-.logo-lockup {
+.logo-shield {
   display: block;
-  height: 28px;
+  height: 30px;
   width: auto;
-  filter: invert(var(--logo-invert));
+}
+
+.logo-word {
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+}
+
+.logo-word b {
+  font-weight: 700;
+  color: var(--accent, #1d4ed8);
 }
 
 .sidebar-nav {

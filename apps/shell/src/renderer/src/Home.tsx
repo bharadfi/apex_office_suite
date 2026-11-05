@@ -4,13 +4,13 @@ import type {
   PointerEvent as ReactPointerEvent,
   ReactElement,
 } from 'react'
-import logoLockup from './assets/genoffice-logo.svg'
+import apexShield from './assets/apex-shield.png'
 import { FileBadge } from './file-badge'
 import { placeFolderMenu } from './folder-menu-position'
 import type {
-  AccountStatus,
-  CloudProjectKind,
-  CloudProjectsSnapshot,
+  
+  
+  
   FolderEntry,
   FolderListing,
   FolderRoot,
@@ -19,9 +19,8 @@ import type {
   RecentEntry,
   FileSearchHit,
   FileSearchPage,
-  FileSearchRerank,
+  
 } from '../../shared/home-api'
-import type { IntegrationsApi } from '../../shared/integrations-api'
 import { markText } from '../../shared/text-marks'
 import { useDismissablePopover, useEscapeToClose } from '@genoffice/ui'
 import { fileCountLabel, visiblePageCount } from './counts'
@@ -29,7 +28,6 @@ import { useI18n } from './locale'
 import type { I18n, StringKey } from './locale'
 import { SettingsModal } from './SettingsModal'
 import type { SettingsTarget } from './SettingsModal'
-import { skillUpdateDue } from './IntegrationsPane'
 import { onFilesChanged } from './file-events'
 
 import type { ProjectApi } from '@genoffice/project-store'
@@ -37,7 +35,6 @@ import type { ProjectApi } from '@genoffice/project-store'
 declare global {
   interface Window {
     aiOffice: HomeApi
-    aiOfficeIntegrations?: IntegrationsApi
     /** Optional: a build without the project bridge keeps the panel in memory. */
     projectApi?: ProjectApi
   }
@@ -2759,7 +2756,10 @@ export function Home() {
         style={sidebarWidth === null ? undefined : { width: sidebarWidth }}
       >
         <div className="sidebar-logo">
-          <img className="logo-lockup" src={logoLockup} alt="Apex Office" />
+          <img className="logo-shield" src={apexShield} alt="" />
+          <span className="logo-word">
+            <b>Apex</b> Office
+          </span>
         </div>
         <nav className="sidebar-nav">
           <button

@@ -30,14 +30,6 @@ import type {
 } from '../shared/home-api'
 import type { ProjectApi } from '@genoffice/project-store'
 import { HOME_CHANNELS } from '../shared/home-api'
-import { INTEGRATIONS_CHANNELS } from '../shared/integrations-api'
-import type {
-  IntegrationsApi,
-  IntegrationsStatus,
-  LegacySweepResult,
-  SkillInstallState,
-} from '../shared/integrations-api'
-import type { FoundSkill, RecommendedSkill } from '../shared/found-skill'
 import type { TabsApi, TabSummary } from '../shared/tabs-api'
 import { TABS_CHANNELS } from '../shared/tabs-api'
 
@@ -732,69 +724,6 @@ const projectApi: ProjectApi = {
 }
 
 contextBridge.exposeInMainWorld('projectApi', projectApi)
-
-const integrationsApi: IntegrationsApi = {
-  async status() {
-    return (await ipcRenderer.invoke(INTEGRATIONS_CHANNELS.status)) as IntegrationsStatus
-  },
-  async installSkill(target) {
-    return (await ipcRenderer.invoke(
-      INTEGRATIONS_CHANNELS.installSkill,
-      target,
-    )) as SkillInstallState
-  },
-  async uninstallSkill(agentId) {
-    return (await ipcRenderer.invoke(
-      INTEGRATIONS_CHANNELS.uninstallSkill,
-      agentId,
-    )) as SkillInstallState
-  },
-  async sweepLegacySkillCopies() {
-    return (await ipcRenderer.invoke(
-      INTEGRATIONS_CHANNELS.sweepLegacySkillCopies,
-    )) as LegacySweepResult
-  },
-  async pickSkillDir(title) {
-    const r: unknown = await ipcRenderer.invoke(INTEGRATIONS_CHANNELS.pickSkillDir, title)
-    return typeof r === 'string' ? r : null
-  },
-  async saveSkillZip(title) {
-    const r: unknown = await ipcRenderer.invoke(INTEGRATIONS_CHANNELS.saveSkillZip, title)
-    return typeof r === 'string' ? r : null
-  },
-  async copyText(text) {
-    await ipcRenderer.invoke(INTEGRATIONS_CHANNELS.copyText, text)
-  },
-  async listSkills() {
-    return (await ipcRenderer.invoke(INTEGRATIONS_CHANNELS.listSkills)) as FoundSkill[]
-  },
-  async skillBody(path) {
-    return (await ipcRenderer.invoke(INTEGRATIONS_CHANNELS.skillBody, path)) as string
-  },
-  async importSkillFolder(title) {
-    const r: unknown = await ipcRenderer.invoke(INTEGRATIONS_CHANNELS.importSkillFolder, title)
-    return (r as FoundSkill | null) ?? null
-  },
-  async importSkillZip(title) {
-    const r: unknown = await ipcRenderer.invoke(INTEGRATIONS_CHANNELS.importSkillZip, title)
-    return (r as FoundSkill | null) ?? null
-  },
-  async listRecommendedSkills() {
-    return (await ipcRenderer.invoke(
-      INTEGRATIONS_CHANNELS.listRecommendedSkills,
-    )) as RecommendedSkill[]
-  },
-  async removeSkill(name) {
-    await ipcRenderer.invoke(INTEGRATIONS_CHANNELS.removeSkill, name)
-  },
-  async installRecommendedSkill(name) {
-    return (await ipcRenderer.invoke(
-      INTEGRATIONS_CHANNELS.installRecommendedSkill,
-      name,
-    )) as FoundSkill
-  },
-}
-contextBridge.exposeInMainWorld('aiOfficeIntegrations', integrationsApi)
 
 const tabsApi: TabsApi = {
   async list() {

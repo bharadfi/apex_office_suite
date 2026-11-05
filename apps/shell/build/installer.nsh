@@ -88,7 +88,46 @@
   ${EndIf}
 !macroend
 
+; Explorer thumbnails: apex_thumbs.dll (beside the program) draws page 1 of documents, spreadsheets,
+; presentations, PDFs, Markdown and HTML pages with the Apex Office badge in the corner. Registered
+; like the file types (per user or per machine, whichever the installer runs as). The shell asks for
+; a thumbnail handler through the {e357fccd-...} key of the extension; SystemFileAssociations is the
+; fallback when another program owns the extension's ProgID.
+!define APEX_THUMB_CLSID "{6F3A2B9E-5D14-4E0B-8C7A-1B2D9E4F7A30}"
+!define APEX_THUMB_IFACE "{e357fccd-a995-4576-b01f-234630154e96}"
+
+!macro ApexRegisterThumbnails EXT
+  WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}\ShellEx\${APEX_THUMB_IFACE}" "" "${APEX_THUMB_CLSID}"
+  WriteRegStr SHELL_CONTEXT "Software\Classes\SystemFileAssociations\.${EXT}\ShellEx\${APEX_THUMB_IFACE}" "" "${APEX_THUMB_CLSID}"
+!macroend
+
+!macro ApexUnregisterThumbnails EXT
+  ; only our own registration
+  ReadRegStr $0 SHELL_CONTEXT "Software\Classes\.${EXT}\ShellEx\${APEX_THUMB_IFACE}" ""
+  ${If} $0 == "${APEX_THUMB_CLSID}"
+    DeleteRegKey SHELL_CONTEXT "Software\Classes\.${EXT}\ShellEx\${APEX_THUMB_IFACE}"
+    DeleteRegKey /ifempty SHELL_CONTEXT "Software\Classes\.${EXT}\ShellEx"
+  ${EndIf}
+  ReadRegStr $0 SHELL_CONTEXT "Software\Classes\SystemFileAssociations\.${EXT}\ShellEx\${APEX_THUMB_IFACE}" ""
+  ${If} $0 == "${APEX_THUMB_CLSID}"
+    DeleteRegKey SHELL_CONTEXT "Software\Classes\SystemFileAssociations\.${EXT}\ShellEx\${APEX_THUMB_IFACE}"
+    DeleteRegKey /ifempty SHELL_CONTEXT "Software\Classes\SystemFileAssociations\.${EXT}\ShellEx"
+  ${EndIf}
+!macroend
+
 !macro customInstall
+  WriteRegStr SHELL_CONTEXT "Software\Classes\CLSID\${APEX_THUMB_CLSID}" "" "Apex Office thumbnail handler"
+  WriteRegStr SHELL_CONTEXT "Software\Classes\CLSID\${APEX_THUMB_CLSID}\InprocServer32" "" "$INSTDIR\apex_thumbs.dll"
+  WriteRegStr SHELL_CONTEXT "Software\Classes\CLSID\${APEX_THUMB_CLSID}\InprocServer32" "ThreadingModel" "Apartment"
+  !insertmacro ApexRegisterThumbnails "docx"
+  !insertmacro ApexRegisterThumbnails "xlsx"
+  !insertmacro ApexRegisterThumbnails "xlsm"
+  !insertmacro ApexRegisterThumbnails "pptx"
+  !insertmacro ApexRegisterThumbnails "pdf"
+  !insertmacro ApexRegisterThumbnails "md"
+  !insertmacro ApexRegisterThumbnails "markdown"
+  !insertmacro ApexRegisterThumbnails "html"
+  !insertmacro ApexRegisterThumbnails "htm"
   Push "$INSTDIR\resources\cli"
   Call GenOfficeAddToUserPath
   !insertmacro GenOfficeRegisterShellNew "docx" "Word Document"
@@ -104,6 +143,16 @@
   !insertmacro GenOfficeUnregisterShellNew "docx" "Word Document"
   !insertmacro GenOfficeUnregisterShellNew "xlsx" "Excel Workbook"
   !insertmacro GenOfficeUnregisterShellNew "pptx" "PowerPoint Presentation"
+  !insertmacro ApexUnregisterThumbnails "docx"
+  !insertmacro ApexUnregisterThumbnails "xlsx"
+  !insertmacro ApexUnregisterThumbnails "xlsm"
+  !insertmacro ApexUnregisterThumbnails "pptx"
+  !insertmacro ApexUnregisterThumbnails "pdf"
+  !insertmacro ApexUnregisterThumbnails "md"
+  !insertmacro ApexUnregisterThumbnails "markdown"
+  !insertmacro ApexUnregisterThumbnails "html"
+  !insertmacro ApexUnregisterThumbnails "htm"
+  DeleteRegKey SHELL_CONTEXT "Software\Classes\CLSID\${APEX_THUMB_CLSID}"
   Pop $0
   !insertmacro UPDATEFILEASSOC
 !macroend
