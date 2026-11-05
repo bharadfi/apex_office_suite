@@ -60,7 +60,7 @@ import { installSheetsMcpBridge, type McpSheetHandlers } from './mcp-bridge'
 import { renameChartRefsForSheet } from './workbook-ops'
 import {
   proposeOperations as proposeOperationsImpl,
-  runDeterministicPlan as runDeterministicPlanImpl,
+  
   structuralDeleteFormulaErrorSync,
   type PlanContext,
 } from './plan-operations'
@@ -145,8 +145,8 @@ import {
   AgentLoop,
   COMPLETED_VIA_TOOLS_TEXT,
   composeSkills,
-  withAttachedSkills,
-  type AgentImage,
+  
+  
 } from '@genoffice/agent-core'
 import { imageGenerationAvailable, type AiSettings } from '@genoffice/ai-provider/browser'
 import { type WorkbookOperation } from '@genoffice/xlsx-gateway/domain/workbook-dsl'
@@ -197,14 +197,12 @@ import {
   type FrozenSelection,
   type SheetsSkillDeps,
 } from './ai/tools'
-import { scopeLabel, type AiChatMessage } from './ai/AiChatPanel'
-import { pruneFailedExchange } from './ai/retry-prune'
-import { parseSheetNavHref } from './ai/sheet-nav'
+import { type AiChatMessage } from './ai/AiChatPanel'
 import {
   boundsToA1,
   clampBoundsToExtent,
   columnScopeHeaders,
-  resolveScopeChip,
+  
   type DataExtent,
 } from './ai/selection-scope'
 import { isSelectionDrag, type Point, type SelectionAskAnchor } from './ai/selection-ask'
@@ -221,9 +219,8 @@ import { createMergeSkill } from './ai/merge-skill'
 import { mergeAttachedWorkbooks } from './merge-workbooks'
 import { createSearchSkill } from './ai/search-skill'
 import { createImageSkill } from './ai/image-skill'
-import { ATTACHMENT_IMAGE_EXTS } from '../shared/desktop-api'
 import type {
-  AttachmentAddResult,
+  
   AttachmentMeta,
   WorkbookConnection as QueryConnection,
   ExternalLinkOps,
@@ -291,7 +288,6 @@ import {
   type WorkbookReadContext,
 } from './ai/workbook-readers'
 import { NO_REDACTIONS, sanitizeLabel, type RedactionIndex } from './ai/redact'
-import { modelSaveAsName } from './file-naming'
 import { redactionSessionFor } from './ai/redact-load'
 import { RedactDialog } from './components/RedactDialog'
 import { installRedactMenu, type SelectionRequest } from './redact-menu'
@@ -704,8 +700,7 @@ export function App({
   const visualViewportKeyRef = useRef('')
   const demoVisualDisposablesRef = useRef<{ dispose(): void }[]>([])
   const demoVisualInstallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [prompt, setPrompt] = useState('')
-  const [preview, setPreview] = useState<ChangePlan | null>(null)
+  const [, setPreview] = useState<ChangePlan | null>(null)
   const [_revision, setRevision] = useState(0)
   const [workbookFile, setWorkbookFile] = useState<WorkbookFile | null>(null)
   /// The workbook's refreshable data connections (web queries for now).
@@ -888,8 +883,8 @@ export function App({
   /// The multi-cell selection the AI composer shows as its scope chip, or null.
   /// A resting single-cell selection carries no intent, so it gets no chip —
   /// only a range the user deliberately dragged or shift-selected does.
-  const [aiScope, setAiScope] = useState<FrozenSelection | null>(null)
-  const [aiSelectionAskAnchor, setAiSelectionAskAnchor] = useState<SelectionAskAnchor | null>(null)
+  const [, setAiScope] = useState<FrozenSelection | null>(null)
+  const [, setAiSelectionAskAnchor] = useState<SelectionAskAnchor | null>(null)
   const selectionDragRef = useRef<{
     start: Point
     initialRangeKey: string | null
@@ -898,13 +893,13 @@ export function App({
   } | null>(null)
   /// The user clicked × on the scope chip: this run targets the sheet at large.
   /// Re-arms on the next selection change, so a fresh drag means a fresh scope.
-  const [aiScopeDismissed, setAiScopeDismissed] = useState(false)
+  const [, setAiScopeDismissed] = useState(false)
   /// Selection scope of the run in flight. undefined = no run owns a scope
   /// (report the live selection); null = the user dropped it. The ref is what
   /// the skill's getActiveSheetInfo reads mid-run; the state is what the chip
   /// renders from, so both are written together by setAiRunScope.
   const aiRunScopeRef = useRef<FrozenSelection | null | undefined>(undefined)
-  const [aiRunScope, setAiRunScopeState] = useState<FrozenSelection | null | undefined>(undefined)
+  const [, setAiRunScopeState] = useState<FrozenSelection | null | undefined>(undefined)
   /// `sheetId!A1` of the scope currently on the chip; the refresh compares
   /// against it so an unchanged selection never resets the dismissed flag.
   const aiScopeKeyRef = useRef<string | null>(null)
@@ -1256,9 +1251,6 @@ export function App({
     return proposeOperationsImpl(planContext(), operations, summary)
   }
 
-  function runDeterministicPlan(instruction: string): { text: string; isError?: boolean } {
-    return runDeterministicPlanImpl(planContext(), instruction)
-  }
 
   // ---- AI: real LLM agent (falls back to the deterministic planner above
   // when no provider is configured — see isAgentConfigured/handleSend) ----
@@ -1285,25 +1277,20 @@ export function App({
       window.removeEventListener('focus', refresh)
     }
   }, [])
-  const [aiBusy, setAiBusy] = useState(false)
+  const [, setAiBusy] = useState(false)
   // Display history survives restarts via localStorage; the AgentLoop's model
   // context does not, so restored turns are read-only transcript.
-  const [chat, setChat] = useState<readonly AiChatMessage[]>([])
+  const [, setChat] = useState<readonly AiChatMessage[]>([])
   /** History loaded from project-store (read-only transcript, not fed to the model) */
-  const [historicChat, setHistoricChat] = useState<readonly AiChatMessage[]>([])
+  const [, setHistoricChat] = useState<readonly AiChatMessage[]>([])
   // ── Chat attachments (same structure as docs/slides: text types go through the
   // read_attachment tool, images go multimodal) ──
-  const [attachments, setAttachments] = useState<readonly AttachmentMeta[]>([])
-  const [attachNotice, setAttachNotice] = useState<string | null>(null)
+  const [attachments, ] = useState<readonly AttachmentMeta[]>([])
   const attachmentsRef = useRef(attachments)
   attachmentsRef.current = attachments
-  const [attachedSkills, setAttachedSkills] = useState<readonly string[]>([])
+  const [attachedSkills, ] = useState<readonly string[]>([])
   const attachedSkillsRef = useRef(attachedSkills)
   attachedSkillsRef.current = attachedSkills
-  const toggleSkill = (name: string) =>
-    setAttachedSkills((prev) =>
-      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
-    )
   /** Attachments consumed by earlier sends this session: sending clears the composer, but the
       files skill must keep reading them mid-run and in follow-up turns. Deduped by path. */
   const sentAttachmentsRef = useRef<readonly AttachmentMeta[]>([])
@@ -1314,9 +1301,6 @@ export function App({
       seen.has(a.path) ? false : (seen.add(a.path), true),
     )
   }
-  /** Synchronous re-entrancy guard between runAgent trigger and loop.run
-   * (loop.busy is still false while attachment images load asynchronously) */
-  const runStartingRef = useRef(false)
   /** The shell can repeat its queued-open nudge while the renderer starts.
    * Only one picker/open request may own the workbook session at a time. */
   const workbookOpeningRef = useRef(false)
@@ -1550,9 +1534,6 @@ export function App({
     return true
   }
 
-  function appendChat(entry: AiChatMessage): void {
-    setChat((previous) => [...previous, entry])
-  }
 
   function patchLastAssistant(patch: (entry: AiChatMessage) => AiChatMessage): void {
     setChat((previous) => {
@@ -1573,7 +1554,7 @@ export function App({
   /** tokens billed so far in the in-flight run (summed across turns) */
   const runUsageRef = useRef<AiTokenUsageView | undefined>(undefined)
   /** tokens billed across the session (the composer chip) */
-  const [sessionUsage, setSessionUsage] = useState<AiTokenUsageView | undefined>(undefined)
+  const [, setSessionUsage] = useState<AiTokenUsageView | undefined>(undefined)
   /** AI plans apply asynchronously after propose_operations returns. Run
    * completion waits for these before doing the run's single auto-save. */
   const aiApplyPromisesRef = useRef<Promise<boolean>[]>([])
@@ -1769,155 +1750,17 @@ export function App({
     })
   }
 
-  function isAgentConfigured(): boolean {
-    const settings = aiSettingsRef.current
-    if (!settings) return false
-    const config = settings.providers[settings.provider]
-    if (!config?.model) return false
-    // Genspark's key never lands in the settings file; the main process injects
-    // it from the gsk login state. When logged out, requests return an error
-    // guiding sign-in — not intercepted here.
-    return settings.provider === 'genspark' || !!config.apiKey
-  }
 
-  /** Image attachments read as base64 and sent multimodal with this user message
-   * (≤5MB each, max 20; same structure as docs/slides) */
-  const MAX_IMAGES_PER_MESSAGE = 20
-  async function collectImageAttachments(atts: readonly AttachmentMeta[]): Promise<AgentImage[]> {
-    const imageAtts = atts.filter((a) => ATTACHMENT_IMAGE_EXTS.has(a.ext))
-    const images: AgentImage[] = []
-    const failures: string[] = []
-    for (const att of imageAtts.slice(0, MAX_IMAGES_PER_MESSAGE)) {
-      const result = await window.desktopApi.readAttachmentImage(att.path)
-      if (result.ok && result.base64 && result.mime) {
-        images.push({ base64: result.base64, mime: result.mime })
-      } else {
-        failures.push(result.error ?? t('appAttachmentReadFailed', { name: att.name }))
-      }
-    }
-    if (imageAtts.length > MAX_IMAGES_PER_MESSAGE) {
-      failures.push(t('appTooManyImages', { max: MAX_IMAGES_PER_MESSAGE }))
-    }
-    if (failures.length > 0) {
-      setAttachNotice(failures.join('；'))
-      window.setTimeout(() => setAttachNotice(null), 5000)
-    }
-    return images
-  }
 
-  /** the attached skills' full text in front of the request; a skill that vanished is skipped */
-  const withSkillBodies = async (instruction: string, names: readonly string[]) => {
-    if (names.length === 0) return instruction
-    const bodies = await Promise.all(
-      names.map(async (name) => {
-        try {
-          return { name, body: await window.desktopApi.skillText(name) }
-        } catch {
-          return null
-        }
-      }),
-    )
-    return withAttachedSkills(
-      instruction,
-      bodies.filter((b): b is { name: string; body: string } => b !== null),
-    )
-  }
 
-  function runAgent(
-    instruction: string,
-    sentAttachments: readonly AttachmentMeta[],
-    sentSkills: readonly string[] = [],
-  ): void {
-    const loop = agentLoopRef.current
-    if (!instruction.trim() || !loop || loop.busy || runStartingRef.current) return
-    runStartingRef.current = true
-    // Freeze the selection scope for the whole run: users go on clicking around
-    // while the AI works, so a live read would retarget "this column" mid-run.
-    // Released in onDone/onError, which own the rest of the run teardown.
-    setAiRunScope(aiScopeDismissed ? null : aiScope)
-    aiApplyPromisesRef.current = []
-    runLastTextRef.current = ''
-    runMutatedRef.current = false
-    setAiBusy(true)
-    setMessage(t('appAiThinking'))
-    appendChat({ role: 'assistant', text: '', tools: [], streaming: true })
-    void collectImageAttachments(sentAttachments)
-      .then(async (images) => {
-        const modelInstruction = await withSkillBodies(instruction, sentSkills)
-        runStartingRef.current = false
-        loop.run(modelInstruction, images)
-      })
-      .catch(async () => {
-        // an unreadable image must not strand the run, nor drop the skills the user attached
-        const modelInstruction = await withSkillBodies(instruction, sentSkills).catch(
-          () => instruction,
-        )
-        runStartingRef.current = false
-        loop.run(modelInstruction)
-      })
-  }
 
-  const mergeAttachments = (result: AttachmentAddResult | null): void => {
-    if (!result) return
-    if (result.accepted.length > 0) {
-      setAttachments((prev) => {
-        const seen = new Set(prev.map((a) => a.path))
-        return [...prev, ...result.accepted.filter((a) => !seen.has(a.path))]
-      })
-    }
-    if (result.rejected.length > 0) {
-      setAttachNotice(result.rejected.join('；'))
-      window.setTimeout(() => setAttachNotice(null), 5000)
-    }
-  }
 
-  async function handlePickAttachments(): Promise<void> {
-    mergeAttachments(await window.desktopApi.pickAttachments())
-  }
 
-  async function handleAddAttachmentPaths(paths: readonly string[]): Promise<void> {
-    if (paths.length === 0) return
-    mergeAttachments(await window.desktopApi.addAttachmentPaths([...paths]))
-  }
 
-  async function handleAddPastedImage(data: ArrayBuffer, ext: string): Promise<void> {
-    mergeAttachments(await window.desktopApi.addPastedImage(data, ext))
-  }
 
-  function handleRemoveAttachment(path: string): void {
-    setAttachments((prev) => prev.filter((a) => a.path !== path))
-  }
 
-  function handleStopAgent(): void {
-    agentLoopRef.current?.cancel()
-  }
 
-  /// A citation link in an AI answer ([B12](sheetnav://B12)): jump the grid to
-  /// the cited cell or range through the same path the Name Box uses.
-  function handleAiCitation(href: string): void {
-    const ref = parseSheetNavHref(href)
-    if (ref === null) return
-    const error = goToReferenceImpl(dataToolsContext(), ref)
-    if (error !== null) setMessage(error)
-  }
 
-  function handleNewChat(): void {
-    agentLoopRef.current?.reset()
-    setAiRunScope(undefined)
-    setAiBusy(false)
-    setChat([])
-    setHistoricChat([])
-    // Unsent composer attachments would otherwise ride into the next chat's
-    // file context (availableAttachments merges sent + live) — same as docs
-    // (#224) and slides. The typed draft itself is kept.
-    setAttachments([])
-    setAttachedSkills([])
-    setAttachNotice(null)
-    sentAttachmentsRef.current = []
-    setPreview(null)
-    lazyPreviewRef.current = null
-    setMessage(t('appNewConversation'))
-  }
 
   /** DSL context the AgentSkill reads/writes through — reuses the exact same
    * preview-then-apply path handlePlan/handleLazyPlan already exercise. */
@@ -3933,72 +3776,6 @@ export function App({
     crossHighlightRef.current?.setVisible(crossHighlightVisible)
   }, [crossHighlightVisible])
 
-  function handleSend(
-    overrideInstruction?: string,
-    overrideAttachments?: readonly AttachmentMeta[],
-    retryIndex?: number,
-  ): void {
-    const instruction = (overrideInstruction ?? prompt).trim()
-    if (!instruction || aiBusy) return
-    runToolsRef.current = []
-    runUsageRef.current = undefined
-    // The message consumes the composer attachments: they ride along (echoed on the
-    // bubble, images multimodal, files via the files skill) and the composer clears.
-    // Retry passes the failed message's original set instead.
-    const sentAtts = overrideAttachments ?? attachmentsRef.current
-    // skills ride with this one message only: the chips clear like attachments do
-    const sentSkills = overrideInstruction ? [] : attachedSkillsRef.current
-    if (sentSkills.length > 0) setAttachedSkills([])
-    const agentConfigured = isAgentConfigured()
-    // Retry re-sends in place: drop the failed bubble and its error reply instead
-    // of stacking a "Not sent" duplicate above the resent copy.
-    const alreadyPersisted = retryIndex !== undefined && chat[retryIndex]?.persisted === true
-    if (retryIndex !== undefined) {
-      setChat((previous) => pruneFailedExchange(previous, retryIndex))
-    }
-    // A retried message was usually persisted by its original send — but that
-    // write is skipped while the chat refs are still resolving, so re-issue it
-    // then instead of dropping the question from the stored transcript.
-    // a retry quotes what the failed message quoted; a fresh send the live scope runAgent freezes for the run
-    const scope =
-      retryIndex !== undefined
-        ? chat[retryIndex]?.scope
-        : aiScope && !aiScopeDismissed
-          ? { label: scopeLabel(aiScope.a1, aiScope.columns ?? null, t) }
-          : undefined
-    const persisted =
-      alreadyPersisted || persistChatMessage('user', instruction, undefined, sentAtts, scope)
-    appendChat({
-      role: 'user',
-      text: instruction,
-      tools: [],
-      persisted,
-      ...(sentAtts.length > 0 ? { attachments: sentAtts } : {}),
-      ...(sentSkills.length > 0 ? { skills: sentSkills } : {}),
-      ...(scope ? { scope } : {}),
-    })
-    if (!overrideInstruction) setPrompt('')
-    // the deterministic path consumes the composer too — the bubble already echoes the set
-    if (!overrideAttachments && sentAtts.length > 0) {
-      const seen = new Set(sentAttachmentsRef.current.map((a) => a.path))
-      sentAttachmentsRef.current = [
-        ...sentAttachmentsRef.current,
-        ...sentAtts.filter((a) => !seen.has(a.path)),
-      ]
-      setAttachments([])
-    }
-    // real LLM configured → let the agent read context and propose operations;
-    // otherwise fall back to the local, deterministic regex planner
-    // (kept for offline use and for the fixed micro-DSL it still supports).
-    if (agentConfigured) {
-      runAgent(instruction, sentAtts, sentSkills)
-      return
-    }
-    const outcome = runDeterministicPlan(instruction)
-    setMessage(outcome.text)
-    appendChat({ role: 'assistant', text: outcome.text, tools: [], isError: outcome.isError })
-    persistChatMessage('assistant', outcome.text)
-  }
 
   /// AI edits on imported workbooks preview against the live sheet, then
   /// apply through Univer commands so they enter the edit journal exactly
@@ -5440,21 +5217,6 @@ export function App({
     }
   }
 
-  /**
-   * Ask the model to name this workbook, on request, then open Save As with its
-   * answer prefilled.
-   *
-   * The stem goes into the dialog rather than renaming the file on disk: a
-   * workbook that may be open in another window, referenced from a note, or
-   * synced is not something to move behind the reader's back. A declined or
-   * empty answer leaves the dialog on the workbook's current name, so this is a
-   * no-op rather than a failure.
-   */
-  async function nameWithAi(): Promise<void> {
-    const stem = await modelSaveAsName(readContext())
-    if (!stem) return
-    await handleSave('save-as', false, undefined, stem)
-  }
   closeSaveRef.current = async () => {
     if (!(await commitActiveEditor())) {
       window.desktopApi?.reportCloseSaveResult?.(false)
@@ -5800,7 +5562,6 @@ export function App({
       )
   })
 
-  const aiScopeChip = resolveScopeChip(aiRunScope, aiScope, aiScopeDismissed)
 
   return (
     <>
@@ -5919,8 +5680,6 @@ export function App({
       )}
       <ExcelShell
         openingWorkbook={openingWorkbook}
-        prompt={prompt}
-        preview={preview}
         sheetHasContent={sheetHasContent}
         pageLayout={activePageLayout}
         printHost={printHost}
@@ -5957,33 +5716,7 @@ export function App({
         emptyCsvNotice={emptyCsvNotice}
         onOpenWorkbook={() => void handleInspectWorkbook()}
         onDismissEmptyCsvNotice={() => setEmptyCsvNotice(false)}
-        aiBusy={aiBusy}
-        {...(sessionUsage !== undefined ? { sessionUsage } : {})}
-        chat={chat}
-        historicChat={historicChat}
-        attachments={attachments}
-        attachedSkills={attachedSkills}
-        onToggleSkill={toggleSkill}
-        attachNotice={attachNotice}
-        onPickAttachments={() => void handlePickAttachments()}
-        onAddAttachmentPaths={(paths) => void handleAddAttachmentPaths(paths)}
-        onAddPastedImage={(data, ext) => void handleAddPastedImage(data, ext)}
-        onRemoveAttachment={handleRemoveAttachment}
-        onPromptChange={setPrompt}
-        onSend={handleSend}
-        onStop={handleStopAgent}
-        onNewChat={handleNewChat}
         onUndo={handleUndo}
-        aiScopeRange={aiScopeChip.range}
-        aiScopeColumns={aiScopeChip.columns ?? null}
-        aiScopeLocked={aiScopeChip.locked}
-        aiSelectionAskAnchor={aiSelectionAskAnchor}
-        onAiSelectionAskDismiss={() => setAiSelectionAskAnchor(null)}
-        onAiScopeDismiss={() => {
-          setAiScopeDismissed(true)
-          setAiSelectionAskAnchor(null)
-        }}
-        onAiCitation={handleAiCitation}
         canUndo={univerHist.canUndo || (!lazyWorkbookRef.current && adapterRef.current.canUndo)}
         canRedo={univerHist.canRedo}
         onCommand={handleRibbonCommandFromRibbon}
@@ -5995,7 +5728,6 @@ export function App({
         onSave={() => void handleSave('save')}
         canSaveAs={workbookFile !== null}
         onSaveAs={() => void handleSave('save-as')}
-        onNameWithAi={() => void nameWithAi()}
         onRedo={handleRedo}
         autoSave={autoSave}
         onAutoSaveChange={setAutoSave}
