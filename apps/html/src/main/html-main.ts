@@ -43,7 +43,6 @@ import {
   type PrintDialogOutcome,
 } from '@genoffice/electron-utils'
 import { createI18n, getUiLang } from '@genoffice/i18n'
-import { generateImageTool, documentMediaRoots } from '@genoffice/ai-search'
 import { parseFileToText } from '@genoffice/file-parse'
 import { convertHtmlToDocx } from '../../../../packages/html2docx/src'
 import { atomicWriteFile } from './atomic-write'
@@ -74,7 +73,6 @@ import {
 } from './asset-mime'
 import { buildPreviewDocument } from './preview-document'
 import { inlineImagesForSingleFile, singleFileExportBaseName } from './single-file-html'
-import { registerHtmlAiSearchIpc } from './ai-search-ipc'
 import {
   assetBaseHref,
   previewUrlFor,
@@ -1622,26 +1620,6 @@ function registerHtmlIpc(): void {
     },
   )
 
-  // html-owned (like docs:ai-generate-image): the shared ai:* handlers are
-  // shell-registered, but image generation is gated per app
-  ipcMain.handle(
-    HTML_CHANNELS.aiGenerateImage,
-    (e, op: { prompt?: unknown; aspectRatio?: unknown }) =>
-      generateImageTool(
-        join(app.getPath('userData'), 'ai-settings.json'),
-        {
-          prompt: String(op?.prompt ?? ''),
-          aspectRatio: op?.aspectRatio ? String(op.aspectRatio) : undefined,
-        },
-        {
-          mediaRoots: documentMediaRoots(
-            htmlFilePath(e.sender.id),
-            join(app.getPath('temp'), 'genoffice-pasted'),
-          ),
-        },
-      ),
-  )
-
   const MIME_BY_EXT: Record<string, ImageData['mime']> = {
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
@@ -2029,8 +2007,6 @@ export function startHtmlStandalone(): void {
   void app.whenReady().then(() => {
     installRendererProtocol({ html: join(__dirname, '../renderer') })
     registerHtmlIpc()
-    // shell mode leaves the shared ai:* search channels to docs-main registerAiIpc
-    registerHtmlAiSearchIpc()
     const win = new BrowserWindow({
       width: 1200,
       height: 850,
