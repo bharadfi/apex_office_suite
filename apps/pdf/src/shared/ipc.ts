@@ -926,13 +926,16 @@ export interface PrintVectorRequest {
   path: string
   pages?: number[]
   job?: PrintJobOptions
+  /** Write the pages to a PDF file the user picks, instead of sending them to a printer */
+  toPdf?: boolean
 }
 
 /**
  * `fallback`: this system cannot print the PDF itself (not Windows, or its viewer did not load), so the
  * caller should print the pages as pictures instead. No `error` with `ok: false` is a print the user cancelled.
  */
-export type PrintVectorResult = { ok: true } | { ok: false; error?: string; fallback?: boolean }
+export type PrintVectorResult =
+  { ok: true; savedPath?: string } | { ok: false; error?: string; fallback?: boolean }
 
 /** The scanned pages made into a new PDF, written to the default save folder and opened in a new tab */
 export type ScanToPdfResult = { ok: true; savedPath: string } | { ok: false; error: string }

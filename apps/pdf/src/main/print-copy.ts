@@ -49,3 +49,22 @@ export async function buildPrintCopy(
   }
   return doc.save({ useObjectStreams: false })
 }
+
+/** The first page's size in inches as the page is shown (rotation applied), for a print job that
+    must lay its sheets out at the document's own paper size. Null when no page can be read. */
+export async function firstPageSizeIn(
+  bytes: Uint8Array,
+): Promise<{ width: number; height: number } | null> {
+  try {
+    const doc = await PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false })
+    const page = doc.getPages()[0]
+    if (!page) return null
+    const { width, height } = page.getSize()
+    const turned = Math.abs(page.getRotation().angle) % 180 === 90
+    const w = (turned ? height : width) / 72
+    const h = (turned ? width : height) / 72
+    return w > 0 && h > 0 ? { width: w, height: h } : null
+  } catch {
+    return null
+  }
+}

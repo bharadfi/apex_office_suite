@@ -37,6 +37,10 @@ const extraStrings = {
   sigCertifiedBy: 'Document certified by {name}.',
   sigCertifiedByEmail: 'Document certified by {name} <{email}>.',
   sigViewTip: 'View signature details',
+  printToPdf: 'Save as PDF (built in)',
+  printToPdfHint:
+    'Writes the pages to a new PDF with the text kept as text. A PDF printer driver redraws each line letter by letter, which reads badly.',
+  printToPdfSaved: 'Saved {name}.',
   ocrNoEngine: 'Text recognition is not available, so scanned pages stay as pictures.',
   // Page labels
   pageLabels: 'Page labels',
@@ -84,6 +88,10 @@ const extraStrings = {
 
 const localizedExtraStrings = {
   zh: {
+    printToPdf: '另存为 PDF（内置）',
+    printToPdfHint:
+      '把页面写成新的 PDF，文字保持为文字。PDF 打印机驱动会把每行文字逐字重绘，读起来很差。',
+    printToPdfSaved: '已保存 {name}。',
     compareRangeThis: '本文件的页码',
     compareRangeOther: '另一个文件的页码',
     compareRangePlaceholder: '全部，或如 3-7',
@@ -147,6 +155,10 @@ const localizedExtraStrings = {
     scanCreateFailed: '无法创建 PDF。',
   },
   'zh-TW': {
+    printToPdf: '另存為 PDF（內建）',
+    printToPdfHint:
+      '把頁面寫成新的 PDF，文字保持為文字。PDF 印表機驅動程式會把每行文字逐字重繪，讀起來很差。',
+    printToPdfSaved: '已儲存 {name}。',
     compareRangeThis: '本文件的頁碼',
     compareRangeOther: '另一個文件的頁碼',
     compareRangePlaceholder: '全部，或如 3-7',

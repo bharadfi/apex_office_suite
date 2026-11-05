@@ -66,6 +66,8 @@ type Arrange =
 const PASTE_OFFSET_PTS = 12
 /// Printer option that is not a device name (Electron: '' = OS default printer)
 const PRINT_SYSTEM_DIALOG = '\u0000system-dialog'
+/// Printer option that writes a PDF file with the app's own PDF writer instead of printing
+const PRINT_TO_PDF = '\u0000save-pdf'
 // macOS's print sheet already carries copies/duplex, so it stays the default there
 const IS_MAC = navigator.platform.toLowerCase().includes('mac')
 const PRINT_DUPLEX_MODES: PrintDuplex[] = ['simplex', 'longEdge', 'shortEdge']
@@ -6809,8 +6811,9 @@ export default function App() {
   const printDoc = async (pages?: number[]) => {
     if (printBusyRef.current) return
     printBusyRef.current = true
+    const toPdf = printDevice === PRINT_TO_PDF
     const job =
-      printDevice === PRINT_SYSTEM_DIALOG
+      printDevice === PRINT_SYSTEM_DIALOG || toPdf
         ? undefined
         : {
             deviceName: printDevice,
@@ -6825,8 +6828,23 @@ export default function App() {
           // Print the real file where this system can: text stays text (so a "Print to PDF" is not a
           // flat picture) and each signature box carries its verdict mark. Where it cannot, or the
           // viewer does not load, the pages are printed as pictures, as before.
-          const vector = await window.pdfApi.printVector({ path: filePath, pages, job })
-          if (vector.ok) return
+          const vector = await window.pdfApi.printVector({
+            path: filePath,
+            pages,
+            job,
+            ...(toPdf ? { toPdf: true } : {}),
+          })
+          if (vector.ok) {
+            if (vector.savedPath) {
+              showNotice(t('printToPdfSaved', { name: vector.savedPath.replace(/^.*[\\/]/, '') }))
+            }
+            return
+          }
+          if (toPdf) {
+            // there is no picture route for a file: say why it could not be written
+            if (vector.error) throw new Error(vector.error)
+            return
+          }
           if (!vector.fallback) {
             if (vector.error) throw new Error(vector.error)
             return // the user cancelled the system print dialog
@@ -11350,8 +11368,12 @@ export default function App() {
                         </option>
                       ))}
                       <option value={PRINT_SYSTEM_DIALOG}>{t('printSystemDialog')}</option>
+                      <option value={PRINT_TO_PDF}>{t('printToPdf')}</option>
                     </select>
                   </label>
+                  {printDevice === PRINT_TO_PDF && (
+                    <div className="pdf-modal-row pdf-print-hint">{t('printToPdfHint')}</div>
+                  )}
                   <div className="pdf-modal-row pdf-print-field">
                     <label className="pdf-print-copies">
                       <span>{t('printCopies')}</span>
@@ -11361,7 +11383,9 @@ export default function App() {
                         min={1}
                         max={999}
                         value={printCopies}
-                        disabled={printDevice === PRINT_SYSTEM_DIALOG}
+                        disabled={
+                          printDevice === PRINT_SYSTEM_DIALOG || printDevice === PRINT_TO_PDF
+                        }
                         onChange={(e) =>
                           setPrintCopies(
                             Math.min(999, Math.max(1, Math.round(Number(e.target.value)) || 1)),
@@ -11373,7 +11397,11 @@ export default function App() {
                       <input
                         type="checkbox"
                         checked={printCollate}
-                        disabled={printDevice === PRINT_SYSTEM_DIALOG || printCopies < 2}
+                        disabled={
+                          printDevice === PRINT_SYSTEM_DIALOG ||
+                          printDevice === PRINT_TO_PDF ||
+                          printCopies < 2
+                        }
                         onChange={(e) => setPrintCollate(e.target.checked)}
                       />
                       {t('printCollate')}
@@ -11384,7 +11412,7 @@ export default function App() {
                     <select
                       className="pdf-modal-input"
                       value={printDuplex}
-                      disabled={printDevice === PRINT_SYSTEM_DIALOG}
+                      disabled={printDevice === PRINT_SYSTEM_DIALOG || printDevice === PRINT_TO_PDF}
                       onChange={(e) => setPrintDuplex(e.target.value as PrintDuplex)}
                     >
                       {PRINT_DUPLEX_MODES.map((m) => (

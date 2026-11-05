@@ -13,7 +13,7 @@ import { randomUUID } from 'node:crypto'
 import { open, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
 import { userInfo } from 'node:os'
-import { basename, dirname, join, resolve } from 'node:path'
+import { basename, dirname, extname, join, resolve } from 'node:path'
 import { BrowserWindow, WebContentsView, app, dialog, ipcMain, shell } from 'electron'
 import type { WebContents } from 'electron'
 import {
@@ -120,7 +120,7 @@ import type { ExternalSigner, SignPdfOptions } from './pdf-sign'
 import { readPdfSignatures } from './pdf-signatures'
 import { readPageLabelRanges } from './page-labels-io'
 import { signatureDisplayCopy } from './signature-display'
-import { buildPrintCopy } from './print-copy'
+import { buildPrintCopy, firstPageSizeIn } from './print-copy'
 import {
   addTrusted,
   loadTrusted,
@@ -1333,6 +1333,25 @@ function registerPdfIpc(): void {
         // the viewer lays its pages out a moment after the page has loaded
         await new Promise((resolve) => setTimeout(resolve, 2000))
         const contents = win.webContents
+        if (req.toPdf === true) {
+          // Chromium's own PDF writer: every page of the viewer becomes a page of a new file with its
+          // text kept as text, and no printer driver re-draws it (a driver turns each line into
+          // separately placed letters, which is what makes a driver's PDF read badly)
+          const size = await firstPageSizeIn(copy)
+          const data = await contents.printToPDF({
+            margins: { top: 0, bottom: 0, left: 0, right: 0 },
+            printBackground: true,
+            ...(size ? { pageSize: size } : {}),
+          })
+          const parent = BrowserWindow.fromWebContents(e.sender)
+          const defaultPath = join(dirname(path), `${basename(path, extname(path))} (printed).pdf`)
+          const picked = parent
+            ? await dialog.showSaveDialog(parent, { defaultPath })
+            : await dialog.showSaveDialog({ defaultPath })
+          if (picked.canceled || !picked.filePath) return { ok: false }
+          await writeFile(picked.filePath, data)
+          return { ok: true, savedPath: picked.filePath }
+        }
         return await new Promise<PrintVectorResult>((resolve) => {
           contents.print(
             {

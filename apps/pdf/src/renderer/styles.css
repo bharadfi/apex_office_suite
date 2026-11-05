@@ -5360,3 +5360,9 @@ button {
   background: var(--surface);
   padding-top: 8px;
 }
+
+.pdf-print-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
