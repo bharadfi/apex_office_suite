@@ -1,7 +1,7 @@
-# GenOffice on ChromeOS
+# Apex Office on ChromeOS
 
 ChromeOS runs Linux applications in an integrated Debian VM ("Crostini", the
-Terminal app's Linux development environment). GenOffice ships as a standard
+Terminal app's Linux development environment). Apex Office ships as a standard
 Linux desktop package, so it runs there like any other Linux app — no separate
 ChromeOS build exists or is needed. This page covers what works, how to set it
 up, and where the limits are.
@@ -47,11 +47,11 @@ only partially — keep important documents under `/mnt/chromeos/MyFiles/` so
 they live on the host filesystem.
 
 Display: the container's Sommelier bridges Linux windows to the ChromeOS
-desktop, over native Wayland or X11; GenOffice needs no display configuration.
+desktop, over native Wayland or X11; Apex Office needs no display configuration.
 
 ## What does not work / what does not exist
 
-- **Play Store / Android app**: GenOffice is not an Android application; ARC
+- **Play Store / Android app**: Apex Office is not an Android application; ARC
   (the Android runtime) is not a supported install path. The Electron desktop
   architecture does not translate to Android, and this is not planned.
 - **Google Drive sync**: no Drive integration is built in. Documents live in

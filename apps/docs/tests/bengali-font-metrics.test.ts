@@ -12,7 +12,7 @@ const FONTS = join(__dirname, '../src/renderer/fonts')
 const regular = readWoff2(join(FONTS, 'GenOfficeBengali-Regular.woff2'))
 const bold = readWoff2(join(FONTS, 'GenOfficeBengali-Bold.woff2'))
 
-describe('GenOffice Bengali (Nirmala UI-normalized)', () => {
+describe('Apex Office Bengali (Nirmala UI-normalized)', () => {
   it('space, danda and Bengali digits match Nirmala UI', () => {
     expect(advanceEm(regular, 0x20)).toBeCloseTo(0.274, 3)
     expect(advanceEm(regular, 0x0964)).toBeCloseTo(0.432, 3)

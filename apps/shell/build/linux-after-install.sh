@@ -38,9 +38,9 @@ if [ -d "$shell_new" ]; then
   mkdir -p "$templates_dir"
   for ext in docx xlsx pptx; do
     case "$ext" in
-      docx) name="GenOffice Document.docx" ;;
-      xlsx) name="GenOffice Spreadsheet.xlsx" ;;
-      pptx) name="GenOffice Presentation.pptx" ;;
+      docx) name="Apex Office Document.docx" ;;
+      xlsx) name="Apex Office Spreadsheet.xlsx" ;;
+      pptx) name="Apex Office Presentation.pptx" ;;
     esac
     # cp -f is the fallback for a busybox install(1) without -m. A template
     # that cannot be written must not fail the whole package install.
@@ -48,11 +48,11 @@ if [ -d "$shell_new" ]; then
       cp -f "$shell_new/blank.$ext" "$templates_dir/$name" || true
   done
 fi
-# Expose the genoffice command line shipped inside the app. Only an absent
+# Expose the apexoffice command line shipped inside the app. Only an absent
 # name, a dead link or a link into our own install dir is taken over; anything
-# else at /usr/bin/genoffice belongs to another program (genoffice#893).
+# else at /usr/bin/apexoffice belongs to another program (genoffice#893).
 launcher="$app/resources/cli/genoffice"
-link="/usr/bin/genoffice"
+link="/usr/bin/apexoffice"
 [ -x "$launcher" ] || exit 0
 if [ -L "$link" ]; then
   case "$(readlink "$link")" in

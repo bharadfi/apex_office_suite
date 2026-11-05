@@ -2,7 +2,7 @@ import { closeSync, mkdtempSync, openSync, truncateSync, writeFileSync } from 'n
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { MAX_TRANSFER_BYTES } from '../src/mcp/files'
+const MAX_TRANSFER_BYTES = 256 * 1024 * 1024
 import { MAX_OPS_BYTES, readOpsInput, readOpsStream } from '../src/ops-input'
 import { EXIT } from '../src/result'
 

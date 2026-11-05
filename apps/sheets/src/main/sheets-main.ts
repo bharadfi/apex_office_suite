@@ -230,7 +230,7 @@ const tMain = createI18n({
     filterXlsm: 'Excel 启用宏的工作簿',
     odsImportMsg: '转换 .{ext} 工作簿？',
     odsImportDetail:
-      'GenOffice 只编辑 .xlsx，不编辑 ODF。数值、公式和日期会被转换过来（公式改写为 Excel 语法，无法安全改写的只保留它的当前结果）；图片、合并单元格和列宽行高会一并带过来；边框等样式和图表不会保留。原文件不会被修改，转换出的副本首次保存时另存为 .xlsx。', // public-hygiene: allow
+      'Apex Office 只编辑 .xlsx，不编辑 ODF。数值、公式和日期会被转换过来（公式改写为 Excel 语法，无法安全改写的只保留它的当前结果）；图片、合并单元格和列宽行高会一并带过来；边框等样式和图表不会保留。原文件不会被修改，转换出的副本首次保存时另存为 .xlsx。', // public-hygiene: allow
     odsImportConvertBtn: '转换并打开',
     importSkipConfirm: '下次直接转换，不再提示',
     dlgAddAttachment: '添加附件',
@@ -294,7 +294,7 @@ const tMain = createI18n({
     filterXlsm: 'Excel Macro-Enabled Workbooks',
     odsImportMsg: 'Convert this .{ext} workbook?',
     odsImportDetail:
-      'GenOffice edits .xlsx, not ODF. Values, formulas and dates carry over (formulas are rewritten into Excel syntax, and any that cannot be rewritten safely keeps its current result). Pictures, merged cells, column widths and row heights come along too; other styling such as borders, and charts, are not carried over. The original file is never changed; the converted copy saves as .xlsx the first time you save.',
+      'Apex Office edits .xlsx, not ODF. Values, formulas and dates carry over (formulas are rewritten into Excel syntax, and any that cannot be rewritten safely keeps its current result). Pictures, merged cells, column widths and row heights come along too; other styling such as borders, and charts, are not carried over. The original file is never changed; the converted copy saves as .xlsx the first time you save.',
     odsImportConvertBtn: 'Convert and open',
     importSkipConfirm: 'Convert without asking next time',
     dlgAddAttachment: 'Add Attachments',
@@ -363,7 +363,7 @@ const tMain = createI18n({
     filterXlsm: 'Sổ làm việc Excel hỗ trợ Macro',
     odsImportMsg: 'Chuyển đổi sổ làm việc .{ext} này?',
     odsImportDetail:
-      'GenOffice chỉnh sửa .xlsx chứ không chỉnh sửa ODF. Giá trị, công thức và ngày tháng sẽ được chuyển đổi (công thức viết lại theo cú pháp Excel, công thức không viết lại an toàn được sẽ giữ kết quả hiện tại). Hình ảnh, ô đã gộp, độ rộng cột và chiều cao hàng cũng được chuyển sang; các định dạng khác như đường viền, và biểu đồ, thì không. Tệp gốc không bao giờ bị sửa; bản sau chuyển đổi sẽ lưu thành .xlsx khi lưu lần đầu.',
+      'Apex Office chỉnh sửa .xlsx chứ không chỉnh sửa ODF. Giá trị, công thức và ngày tháng sẽ được chuyển đổi (công thức viết lại theo cú pháp Excel, công thức không viết lại an toàn được sẽ giữ kết quả hiện tại). Hình ảnh, ô đã gộp, độ rộng cột và chiều cao hàng cũng được chuyển sang; các định dạng khác như đường viền, và biểu đồ, thì không. Tệp gốc không bao giờ bị sửa; bản sau chuyển đổi sẽ lưu thành .xlsx khi lưu lần đầu.',
     odsImportConvertBtn: 'Chuyển đổi và mở',
     importSkipConfirm: 'Lần sau chuyển đổi ngay, không hỏi lại',
     dlgAddAttachment: 'Thêm tệp đính kèm',
@@ -434,7 +434,7 @@ const tMain = createI18n({
     filterXlsm: 'Excel Makro İçerebilen Çalışma Kitapları',
     odsImportMsg: 'Bu .{ext} çalışma kitabı dönüştürülsün mü?',
     odsImportDetail:
-      'GenOffice ODF değil, .xlsx düzenler. Değerler, formüller ve tarihler aktarılır (formüller Excel söz dizimine yeniden yazılır; güvenle yeniden yazılamayanlar mevcut sonucunu korur). Resimler, birleştirilmiş hücreler, sütun genişlikleri ve satır yükseklikleri de aktarılır; kenarlıklar gibi diğer biçimlendirmeler ve grafikler aktarılmaz. Özgün dosya asla değiştirilmez; dönüştürülen kopya ilk kaydettiğinizde .xlsx olarak kaydedilir.',
+      'Apex Office ODF değil, .xlsx düzenler. Değerler, formüller ve tarihler aktarılır (formüller Excel söz dizimine yeniden yazılır; güvenle yeniden yazılamayanlar mevcut sonucunu korur). Resimler, birleştirilmiş hücreler, sütun genişlikleri ve satır yükseklikleri de aktarılır; kenarlıklar gibi diğer biçimlendirmeler ve grafikler aktarılmaz. Özgün dosya asla değiştirilmez; dönüştürülen kopya ilk kaydettiğinizde .xlsx olarak kaydedilir.',
     odsImportConvertBtn: 'Dönüştür ve aç',
     importSkipConfirm: 'Bir dahaki sefere sormadan dönüştür',
     dlgAddAttachment: 'Ek Ekle',
@@ -505,7 +505,7 @@ const tMain = createI18n({
     filterXlsm: 'Excel マクロ有効ブック',
     odsImportMsg: 'この .{ext} ワークブックを変換しますか？',
     odsImportDetail:
-      'GenOffice は ODF ではなく .xlsx を編集します。値・数式・日付は変換されます（数式は Excel の構文に書き換えられ、安全に書き換えられないものは現在の値だけが残ります）。画像、結合セル、列の幅と行の高さも引き継がれますが、罫線などその他の書式とグラフは引き継がれません。元のファイルは変更されず、変換後のコピーは最初に保存する際 .xlsx として保存されます。',
+      'Apex Office は ODF ではなく .xlsx を編集します。値・数式・日付は変換されます（数式は Excel の構文に書き換えられ、安全に書き換えられないものは現在の値だけが残ります）。画像、結合セル、列の幅と行の高さも引き継がれますが、罫線などその他の書式とグラフは引き継がれません。元のファイルは変更されず、変換後のコピーは最初に保存する際 .xlsx として保存されます。',
     odsImportConvertBtn: '変換して開く',
     importSkipConfirm: '次回から確認せずに変換する',
     dlgAddAttachment: '添付ファイルを追加',
@@ -577,7 +577,7 @@ const tMain = createI18n({
     filterXlsm: 'Excel 매크로 사용 통합 문서',
     odsImportMsg: '이 .{ext} 워크북을 변환할까요?',
     odsImportDetail:
-      'GenOffice은 ODF가 아니라 .xlsx를 편집합니다. 값, 수식, 날짜는 변환됩니다(수식은 Excel 구문으로 다시 쓰이며, 안전하게 다시 쓸 수 없는 수식은 현재 값만 남습니다). 그림, 병합된 셀, 열 너비와 행 높이도 함께 옮겨지지만 테두리 등 그 밖의 서식과 차트는 옮겨지지 않습니다. 원본 파일은 변경되지 않으며, 변환된 사본은 처음 저장할 때 .xlsx로 저장됩니다.',
+      'Apex Office은 ODF가 아니라 .xlsx를 편집합니다. 값, 수식, 날짜는 변환됩니다(수식은 Excel 구문으로 다시 쓰이며, 안전하게 다시 쓸 수 없는 수식은 현재 값만 남습니다). 그림, 병합된 셀, 열 너비와 행 높이도 함께 옮겨지지만 테두리 등 그 밖의 서식과 차트는 옮겨지지 않습니다. 원본 파일은 변경되지 않으며, 변환된 사본은 처음 저장할 때 .xlsx로 저장됩니다.',
     odsImportConvertBtn: '변환 후 열기',
     importSkipConfirm: '다음부터 묻지 않고 변환',
     dlgAddAttachment: '첨부 파일 추가',
@@ -649,7 +649,7 @@ const tMain = createI18n({
     filterXlsm: 'Classeurs Excel prenant en charge les macros',
     odsImportMsg: 'Convertir ce classeur .{ext} ?',
     odsImportDetail:
-      'GenOffice modifie des .xlsx, pas de l’ODF. Les valeurs, les formules et les dates sont converties (les formules sont réécrites en syntaxe Excel ; celles qui ne peuvent pas l’être en sécurité gardent leur résultat actuel). Les images, les cellules fusionnées, les largeurs de colonne et les hauteurs de ligne sont également reprises ; les autres mises en forme, comme les bordures, et les graphiques ne le sont pas. Le fichier d’origine n’est jamais modifié ; la copie convertie s’enregistre en .xlsx lors du premier enregistrement.',
+      'Apex Office modifie des .xlsx, pas de l’ODF. Les valeurs, les formules et les dates sont converties (les formules sont réécrites en syntaxe Excel ; celles qui ne peuvent pas l’être en sécurité gardent leur résultat actuel). Les images, les cellules fusionnées, les largeurs de colonne et les hauteurs de ligne sont également reprises ; les autres mises en forme, comme les bordures, et les graphiques ne le sont pas. Le fichier d’origine n’est jamais modifié ; la copie convertie s’enregistre en .xlsx lors du premier enregistrement.',
     odsImportConvertBtn: 'Convertir et ouvrir',
     importSkipConfirm: 'La prochaine fois, convertir sans demander',
     dlgAddAttachment: 'Ajouter des pièces jointes',
@@ -722,7 +722,7 @@ const tMain = createI18n({
     filterXlsm: 'Excel-Arbeitsmappen mit Makros',
     odsImportMsg: 'Diese .{ext}-Arbeitsmappe konvertieren?',
     odsImportDetail:
-      'GenOffice bearbeitet .xlsx, nicht ODF. Werte, Formeln und Datumsangaben werden konvertiert (Formeln werden in Excel-Syntax umgeschrieben; was sich nicht sicher umschreiben lässt, behält seinen aktuellen Wert). Bilder, verbundene Zellen, Spaltenbreiten und Zeilenhöhen werden ebenfalls übernommen; andere Formatierungen wie Rahmen sowie Diagramme entfallen. Die Originaldatei bleibt unverändert; die konvertierte Kopie wird beim ersten Speichern als .xlsx angelegt.',
+      'Apex Office bearbeitet .xlsx, nicht ODF. Werte, Formeln und Datumsangaben werden konvertiert (Formeln werden in Excel-Syntax umgeschrieben; was sich nicht sicher umschreiben lässt, behält seinen aktuellen Wert). Bilder, verbundene Zellen, Spaltenbreiten und Zeilenhöhen werden ebenfalls übernommen; andere Formatierungen wie Rahmen sowie Diagramme entfallen. Die Originaldatei bleibt unverändert; die konvertierte Kopie wird beim ersten Speichern als .xlsx angelegt.',
     odsImportConvertBtn: 'Konvertieren und öffnen',
     importSkipConfirm: 'Nächstes Mal ohne Nachfrage konvertieren',
     dlgAddAttachment: 'Anlagen hinzufügen',
@@ -794,7 +794,7 @@ const tMain = createI18n({
     filterXlsm: 'Libros de Excel habilitados para macros',
     odsImportMsg: '¿Convertir este libro .{ext}?',
     odsImportDetail:
-      'GenOffice edita .xlsx, no ODF. Los valores, las fórmulas y las fechas se convierten (las fórmulas se reescriben con sintaxis de Excel; las que no se pueden reescribir con seguridad conservan su resultado actual). Las imágenes, las celdas combinadas, el ancho de columna y el alto de fila también se conservan; otros formatos, como los bordes, y los gráficos no. El archivo original nunca se modifica; la copia convertida se guarda como .xlsx la primera vez que se guarda.',
+      'Apex Office edita .xlsx, no ODF. Los valores, las fórmulas y las fechas se convierten (las fórmulas se reescriben con sintaxis de Excel; las que no se pueden reescribir con seguridad conservan su resultado actual). Las imágenes, las celdas combinadas, el ancho de columna y el alto de fila también se conservan; otros formatos, como los bordes, y los gráficos no. El archivo original nunca se modifica; la copia convertida se guarda como .xlsx la primera vez que se guarda.',
     odsImportConvertBtn: 'Convertir y abrir',
     importSkipConfirm: 'La próxima vez, convertir sin preguntar',
     dlgAddAttachment: 'Agregar datos adjuntos',
@@ -866,7 +866,7 @@ const tMain = createI18n({
     filterXlsm: 'เวิร์กบุ๊ก Excel ที่เปิดใช้งานแมโคร',
     odsImportMsg: 'แปลงเวิร์กบุ๊ก .{ext} นี้ไหม?',
     odsImportDetail:
-      'GenOffice แก้ไข .xlsx ไม่ใช่ ODF ค่า สูตร และวันที่จะถูกแปลง (สูตรเขียนใหม่เป็นไวยากรณ์ Excel และสูตรที่เขียนใหม่อย่างปลอดภัยไม่ได้จะคงค่าปัจจุบันไว้) รูปภาพ เซลล์ที่ผสาน ความกว้างคอลัมน์ และความสูงแถวจะถูกโอนมาด้วย ส่วนการจัดรูปแบบอื่น เช่น เส้นขอบ และแผนภูมิจะไม่ถูกโอนมา ไฟล์ต้นทางจะไม่ถูกแก้ไข และสำเนาที่แปลงแล้วจะบันทึกเป็น .xlsx ในการบันทึกครั้งแรก',
+      'Apex Office แก้ไข .xlsx ไม่ใช่ ODF ค่า สูตร และวันที่จะถูกแปลง (สูตรเขียนใหม่เป็นไวยากรณ์ Excel และสูตรที่เขียนใหม่อย่างปลอดภัยไม่ได้จะคงค่าปัจจุบันไว้) รูปภาพ เซลล์ที่ผสาน ความกว้างคอลัมน์ และความสูงแถวจะถูกโอนมาด้วย ส่วนการจัดรูปแบบอื่น เช่น เส้นขอบ และแผนภูมิจะไม่ถูกโอนมา ไฟล์ต้นทางจะไม่ถูกแก้ไข และสำเนาที่แปลงแล้วจะบันทึกเป็น .xlsx ในการบันทึกครั้งแรก',
     odsImportConvertBtn: 'แปลงแล้วเปิด',
     importSkipConfirm: 'ครั้งถัดไปแปลงทันทีโดยไม่ต้องถาม',
     dlgAddAttachment: 'เพิ่มสิ่งที่แนบ',
@@ -937,7 +937,7 @@ const tMain = createI18n({
     filterXlsm: 'Buku kerja Excel dengan makro aktif',
     odsImportMsg: 'Konversi buku kerja .{ext} ini?',
     odsImportDetail:
-      'GenOffice mengedit .xlsx, bukan ODF. Nilai, rumus, dan tanggal ikut terkonversi (rumus ditulis ulang ke sintaks Excel; rumus yang tidak bisa ditulis ulang dengan aman mempertahankan hasilnya). Gambar, sel gabungan, lebar kolom, dan tinggi baris juga ikut dibawa; gaya lain seperti garis tepi, serta grafik, tidak. File asli tidak pernah diubah; hasil konversi disimpan sebagai .xlsx saat penyimpanan pertama.',
+      'Apex Office mengedit .xlsx, bukan ODF. Nilai, rumus, dan tanggal ikut terkonversi (rumus ditulis ulang ke sintaks Excel; rumus yang tidak bisa ditulis ulang dengan aman mempertahankan hasilnya). Gambar, sel gabungan, lebar kolom, dan tinggi baris juga ikut dibawa; gaya lain seperti garis tepi, serta grafik, tidak. File asli tidak pernah diubah; hasil konversi disimpan sebagai .xlsx saat penyimpanan pertama.',
     odsImportConvertBtn: 'Konversi dan buka',
     importSkipConfirm: 'Lain kali langsung konversi tanpa bertanya',
     dlgAddAttachment: 'Tambahkan lampiran',
@@ -1006,7 +1006,7 @@ const tMain = createI18n({
     filterXlsm: 'Книги Excel с поддержкой макросов',
     odsImportMsg: 'Преобразовать эту книгу .{ext}?',
     odsImportDetail:
-      'GenOffice редактирует .xlsx, а не ODF. Значения, формулы и даты переносятся (формулы переписываются в синтаксис Excel; те, что нельзя переписать безопасно, сохраняют текущий результат). Изображения, объединённые ячейки, ширина столбцов и высота строк тоже переносятся; прочее оформление, например границы, и диаграммы — нет. Исходный файл никогда не изменяется; преобразованная копия при первом сохранении записывается как .xlsx.',
+      'Apex Office редактирует .xlsx, а не ODF. Значения, формулы и даты переносятся (формулы переписываются в синтаксис Excel; те, что нельзя переписать безопасно, сохраняют текущий результат). Изображения, объединённые ячейки, ширина столбцов и высота строк тоже переносятся; прочее оформление, например границы, и диаграммы — нет. Исходный файл никогда не изменяется; преобразованная копия при первом сохранении записывается как .xlsx.',
     odsImportConvertBtn: 'Преобразовать и открыть',
     importSkipConfirm: 'В следующий раз конвертировать без запроса',
     dlgAddAttachment: 'Добавить вложения',
@@ -1077,7 +1077,7 @@ const tMain = createI18n({
     filterXlsm: 'مصنفات Excel ممكّنة بوحدات الماكرو',
     odsImportMsg: 'تحويل دفتر عمل .{ext} هذا؟',
     odsImportDetail:
-      'يحرّر GenOffice ملفات ‎.xlsx ولا يحرّر ODF. تُحوَّل القيم والصيغ والتواريخ (تُعاد كتابة الصيغ بصيغة Excel، والصيغ التي لا يمكن إعادة كتابتها بأمان تحتفظ بنتيجتها الحالية). تُنقل أيضًا الصور والخلايا المدمجة وعرض الأعمدة وارتفاع الصفوف؛ أما التنسيقات الأخرى مثل الحدود، والرسوم البيانية، فلا تُنقل. لا يتغيّر الملف الأصلي أبدًا؛ والنسخة المحوّلة تُحفظ بصيغة ‎.xlsx عند أول حفظ.',
+      'يحرّر Apex Office ملفات ‎.xlsx ولا يحرّر ODF. تُحوَّل القيم والصيغ والتواريخ (تُعاد كتابة الصيغ بصيغة Excel، والصيغ التي لا يمكن إعادة كتابتها بأمان تحتفظ بنتيجتها الحالية). تُنقل أيضًا الصور والخلايا المدمجة وعرض الأعمدة وارتفاع الصفوف؛ أما التنسيقات الأخرى مثل الحدود، والرسوم البيانية، فلا تُنقل. لا يتغيّر الملف الأصلي أبدًا؛ والنسخة المحوّلة تُحفظ بصيغة ‎.xlsx عند أول حفظ.',
     odsImportConvertBtn: 'تحويل وفتح',
     importSkipConfirm: 'في المرة القادمة، حوّل دون سؤال',
     dlgAddAttachment: 'إضافة مرفقات',
@@ -1145,7 +1145,7 @@ const tMain = createI18n({
     filterXlsm: 'Pastas de Trabalho Habilitadas para Macro do Excel',
     odsImportMsg: 'Converter este livro .{ext}?',
     odsImportDetail:
-      'O GenOffice edita .xlsx, não ODF. Valores, fórmulas e datas são convertidos (as fórmulas são reescritas na sintaxe do Excel; as que não podem ser reescritas com segurança mantêm o resultado atual). Imagens, células mescladas, largura de coluna e altura de linha também são mantidas; outras formatações, como bordas, e gráficos não são. O arquivo original nunca é alterado; a cópia convertida é salva como .xlsx no primeiro salvamento.',
+      'O Apex Office edita .xlsx, não ODF. Valores, fórmulas e datas são convertidos (as fórmulas são reescritas na sintaxe do Excel; as que não podem ser reescritas com segurança mantêm o resultado atual). Imagens, células mescladas, largura de coluna e altura de linha também são mantidas; outras formatações, como bordas, e gráficos não são. O arquivo original nunca é alterado; a cópia convertida é salva como .xlsx no primeiro salvamento.',
     odsImportConvertBtn: 'Converter e abrir',
     importSkipConfirm: 'Da próxima vez, converter sem perguntar',
     dlgAddAttachment: 'Adicionar Anexos',
@@ -1216,7 +1216,7 @@ const tMain = createI18n({
     filterXlsm: 'Cartelle di lavoro di Excel con attivazione macro',
     odsImportMsg: 'Convertire questa cartella di lavoro .{ext}?',
     odsImportDetail:
-      'GenOffice modifica .xlsx, non ODF. Valori, formule e date vengono convertiti (le formule sono riscritte nella sintassi di Excel; quelle che non possono essere riscritte in sicurezza mantengono il risultato attuale). Immagini, celle unite, larghezza colonne e altezza righe vengono riportate; altre formattazioni, come i bordi, e i grafici no. Il file originale non viene mai modificato; la copia convertita si salva come .xlsx al primo salvataggio.',
+      'Apex Office modifica .xlsx, non ODF. Valori, formule e date vengono convertiti (le formule sono riscritte nella sintassi di Excel; quelle che non possono essere riscritte in sicurezza mantengono il risultato attuale). Immagini, celle unite, larghezza colonne e altezza righe vengono riportate; altre formattazioni, come i bordi, e i grafici no. Il file originale non viene mai modificato; la copia convertita si salva come .xlsx al primo salvataggio.',
     odsImportConvertBtn: 'Converti e apri',
     importSkipConfirm: 'La prossima volta converti senza chiedere',
     dlgAddAttachment: 'Aggiungi allegati',
@@ -1288,7 +1288,7 @@ const tMain = createI18n({
     filterXlsm: 'Skoroszyty programu Excel z obsługą makr',
     odsImportMsg: 'Skonwertować ten skoroszyt .{ext}?',
     odsImportDetail:
-      'GenOffice edytuje .xlsx, a nie ODF. Wartości, formuły i daty są konwertowane (formuły są przepisywane na składnię Excela; te, których nie można przepisać bezpiecznie, zachowują bieżący wynik). Obrazy, scalone komórki, szerokości kolumn i wysokości wierszy również są przenoszone; inne formatowanie, np. obramowania, oraz wykresy nie. Plik oryginalny nigdy nie jest zmieniany; skonwertowana kopia zapisuje się jako .xlsx przy pierwszym zapisaniu.',
+      'Apex Office edytuje .xlsx, a nie ODF. Wartości, formuły i daty są konwertowane (formuły są przepisywane na składnię Excela; te, których nie można przepisać bezpiecznie, zachowują bieżący wynik). Obrazy, scalone komórki, szerokości kolumn i wysokości wierszy również są przenoszone; inne formatowanie, np. obramowania, oraz wykresy nie. Plik oryginalny nigdy nie jest zmieniany; skonwertowana kopia zapisuje się jako .xlsx przy pierwszym zapisaniu.',
     odsImportConvertBtn: 'Konwertuj i otwórz',
     importSkipConfirm: 'Następnym razem konwertuj bez pytania',
     dlgAddAttachment: 'Dodaj załączniki',
@@ -1359,7 +1359,7 @@ const tMain = createI18n({
     filterXlsm: 'Sešity Excelu s podporou maker',
     odsImportMsg: 'Převést tento sešit .{ext}?',
     odsImportDetail:
-      'GenOffice upravuje .xlsx, nikoli ODF. Hodnoty, vzorce a data se převedou (vzorce se přepíší do syntaxe Excelu; ty, které nelze přepsat bezpečně, ponechají si aktuální výsledek). Obrázky, sloučené buňky, šířky sloupců a výšky řádků se přenesou také; ostatní formátování, například ohraničení, a grafy se nepřenesou. Původní soubor se nikdy nemění; převedená kopie se při prvním uložení uloží jako .xlsx.',
+      'Apex Office upravuje .xlsx, nikoli ODF. Hodnoty, vzorce a data se převedou (vzorce se přepíší do syntaxe Excelu; ty, které nelze přepsat bezpečně, ponechají si aktuální výsledek). Obrázky, sloučené buňky, šířky sloupců a výšky řádků se přenesou také; ostatní formátování, například ohraničení, a grafy se nepřenesou. Původní soubor se nikdy nemění; převedená kopie se při prvním uložení uloží jako .xlsx.',
     odsImportConvertBtn: 'Převést a otevřít',
     importSkipConfirm: 'Příště převést bez ptaní',
     dlgAddAttachment: 'Přidat přílohy',
@@ -1430,7 +1430,7 @@ const tMain = createI18n({
     filterXlsm: "Excel-werkmappen met macro's",
     odsImportMsg: 'Deze .{ext}-werkmap converteren?',
     odsImportDetail:
-      'GenOffice bewerkt .xlsx, niet ODF. Waarden, formules en datums worden geconverteerd (formules worden herschreven in Excel-syntaxis; formules die niet veilig herschreven kunnen worden houden hun huidige resultaat). Afbeeldingen, samengevoegde cellen, kolombreedtes en rijhoogten worden ook overgenomen; andere opmaak zoals randen, en diagrammen, niet. Het oorspronkelijke bestand wordt nooit gewijzigd; de geconverteerde kop slaat bij het eerste opslaan op als .xlsx.',
+      'Apex Office bewerkt .xlsx, niet ODF. Waarden, formules en datums worden geconverteerd (formules worden herschreven in Excel-syntaxis; formules die niet veilig herschreven kunnen worden houden hun huidige resultaat). Afbeeldingen, samengevoegde cellen, kolombreedtes en rijhoogten worden ook overgenomen; andere opmaak zoals randen, en diagrammen, niet. Het oorspronkelijke bestand wordt nooit gewijzigd; de geconverteerde kop slaat bij het eerste opslaan op als .xlsx.',
     odsImportConvertBtn: 'Converteren en openen',
     importSkipConfirm: 'Volgende keer converteren zonder te vragen',
     dlgAddAttachment: 'Bijlagen toevoegen',
@@ -1502,7 +1502,7 @@ const tMain = createI18n({
     filterXlsm: 'Buku Kerja Excel Didayakan Makro',
     odsImportMsg: 'Tukar buku kerja .{ext} ini?',
     odsImportDetail:
-      'GenOffice menyunting .xlsx, bukan ODF. Nilai, formula dan tarikh ditukar (formula ditulis semula dalam sintaks Excel; yang tidak dapat ditulis semula dengan selamat mengekalkan hasil semasanya). Gambar, sel bercantum, lebar lajur dan tinggi baris turut dibawa; gaya lain seperti sempadan, serta carta, tidak. Fail asal tidak pernah diubah; salinan yang ditukar disimpan sebagai .xlsx pada simpanan pertama.',
+      'Apex Office menyunting .xlsx, bukan ODF. Nilai, formula dan tarikh ditukar (formula ditulis semula dalam sintaks Excel; yang tidak dapat ditulis semula dengan selamat mengekalkan hasil semasanya). Gambar, sel bercantum, lebar lajur dan tinggi baris turut dibawa; gaya lain seperti sempadan, serta carta, tidak. Fail asal tidak pernah diubah; salinan yang ditukar disimpan sebagai .xlsx pada simpanan pertama.',
     odsImportConvertBtn: 'Tukar dan buka',
     importSkipConfirm: 'Lain kali terus tukar tanpa bertanya',
     dlgAddAttachment: 'Tambah Lampiran',
@@ -1573,7 +1573,7 @@ const tMain = createI18n({
     filterXlsm: 'חוברות עבודה של Excel מותאמות מאקרו',
     odsImportMsg: 'להמיר חוברת עבודה .{ext} זו?',
     odsImportDetail:
-      'GenOffice עורך קבצי .xlsx ולא ODF. ערכים, נוסחאות ותאריכים מומרים (נוסחאות נכתבות מחדש בתחביר Excel; כאלה שאי אפשר לכתוב מחדש בבטחה שומרות על התוצאה הנוכחית). תמונות, תאים ממוזגים, רוחב עמודות וגובה שורות עוברים גם הם; עיצוב אחר כגון גבולות, ותרשימים, לא עוברים. קובץ המקור לעולם אינו משתנה; העותק שהומר נשמר כקובץ .xlsx בשמירה הראשונה.',
+      'Apex Office עורך קבצי .xlsx ולא ODF. ערכים, נוסחאות ותאריכים מומרים (נוסחאות נכתבות מחדש בתחביר Excel; כאלה שאי אפשר לכתוב מחדש בבטחה שומרות על התוצאה הנוכחית). תמונות, תאים ממוזגים, רוחב עמודות וגובה שורות עוברים גם הם; עיצוב אחר כגון גבולות, ותרשימים, לא עוברים. קובץ המקור לעולם אינו משתנה; העותק שהומר נשמר כקובץ .xlsx בשמירה הראשונה.',
     odsImportConvertBtn: 'המר ופתח',
     importSkipConfirm: 'בפעם הבאה להמיר בלי לשאול',
     dlgAddAttachment: 'הוספת קבצים מצורפים',
@@ -1639,7 +1639,7 @@ const tMain = createI18n({
     filterXlsm: 'Excel मैक्रो-सक्षम कार्यपुस्तिकाएँ',
     odsImportMsg: 'इस .{ext} वर्कबुक को बदलें?',
     odsImportDetail:
-      'GenOffice .xlsx संपादित करता है, ODF नहीं। मान, सूत्र और तारीखें बदल दी जाती हैं (सूत्र Excel सिंटैक्स में फिर से लिखे जाते हैं; जिन्हें सुरक्षित रूप से नहीं लिखा जा सका वे अपना वर्तमान मान रखते हैं)। चित्र, मर्ज की गई सेल, कॉलम चौड़ाई और पंक्ति ऊँचाई भी साथ आती हैं; बॉर्डर जैसी अन्य स्टाइलिंग और चार्ट नहीं आते। मूल फ़ाइल कभी नहीं बदलती; बदली हुई प्रति पहली बार सहेजते समय .xlsx के रूप में सहेजी जाती है।',
+      'Apex Office .xlsx संपादित करता है, ODF नहीं। मान, सूत्र और तारीखें बदल दी जाती हैं (सूत्र Excel सिंटैक्स में फिर से लिखे जाते हैं; जिन्हें सुरक्षित रूप से नहीं लिखा जा सका वे अपना वर्तमान मान रखते हैं)। चित्र, मर्ज की गई सेल, कॉलम चौड़ाई और पंक्ति ऊँचाई भी साथ आती हैं; बॉर्डर जैसी अन्य स्टाइलिंग और चार्ट नहीं आते। मूल फ़ाइल कभी नहीं बदलती; बदली हुई प्रति पहली बार सहेजते समय .xlsx के रूप में सहेजी जाती है।',
     odsImportConvertBtn: 'बदलकर खोलें',
     importSkipConfirm: 'अगली बार बिना पूछे बदलें',
     dlgAddAttachment: 'अनुलग्नक जोड़ें',
@@ -1710,7 +1710,7 @@ const tMain = createI18n({
     filterXlsm: 'Excel 啟用巨集的活頁簿',
     odsImportMsg: '轉換這個 .{ext} 工作簿？',
     odsImportDetail:
-      'GenOffice 只編輯 .xlsx，不編輯 ODF。數值、公式與日期會被轉換（公式改寫為 Excel 語法，無法安全改寫的僅保留其目前結果）；圖片、合併儲存格與欄寬列高會一併帶入；框線等其他樣式與圖表不會保留。原始檔案不會被修改，轉換後的複本第一次儲存時會另存為 .xlsx。', // public-hygiene: allow
+      'Apex Office 只編輯 .xlsx，不編輯 ODF。數值、公式與日期會被轉換（公式改寫為 Excel 語法，無法安全改寫的僅保留其目前結果）；圖片、合併儲存格與欄寬列高會一併帶入；框線等其他樣式與圖表不會保留。原始檔案不會被修改，轉換後的複本第一次儲存時會另存為 .xlsx。', // public-hygiene: allow
     odsImportConvertBtn: '轉換並開啟',
     importSkipConfirm: '下次直接轉換，不再提示',
     dlgAddAttachment: '新增附件',
@@ -1839,7 +1839,7 @@ interface SheetsRuntimeConfig {
   rendererFile: string
   /** absolute path to the Rust xlsx-sidecar binary */
   sidecarPath?: string | undefined
-  /** Shell router used to open exported/AI-generated files in a new GenOffice tab. */
+  /** Shell router used to open exported/AI-generated files in a new Apex Office tab. */
   openGeneratedPath?: (path: string) => boolean
   /** Host-owned cross-app document creator (the shell routes docx/pdf/md into Docs). */
   createDocument?: (request: SheetsAiHostDocumentRequest) => Promise<WorkbookCreateDocumentResult>
@@ -1899,7 +1899,7 @@ async function createStandaloneSheetsDocument(
   request: SheetsAiHostDocumentRequest,
 ): Promise<WorkbookCreateDocumentResult> {
   if (request.type === 'docx') {
-    return { ok: false, error: 'Creating DOCX files requires the GenOffice shell or Docs app.' }
+    return { ok: false, error: 'Creating DOCX files requires the Apex Office shell or Docs app.' }
   }
   const title = sanitizeGeneratedFileBase(request.title)
   try {
@@ -2544,7 +2544,7 @@ export async function createSheetsWindow(
     minWidth: 720,
     minHeight: 550,
     show: false,
-    title: 'GenOffice Sheets',
+    title: 'Apex Office Sheets',
     // Traffic lights sit inside the toolbar row.
     ...(process.platform === 'darwin' ? { titleBarStyle: 'hiddenInset' as const } : {}),
     webPreferences: {
@@ -4260,7 +4260,7 @@ export function registerSheetsAiIpc(): void {
 
   // Node fetch (undici) direct connections get reset under VPN/tun setups; retry over Chromium's stack
   setRescueFetch((url, init) => net.fetch(url, init))
-  setAiUserAgent(`GenOffice/${app.getVersion()}`)
+  setAiUserAgent(`Apex Office/${app.getVersion()}`)
 
   ipcMain.handle(IPC_CHANNELS.aiGetSettings, (event): AiSettings => {
     sessionFor(event)

@@ -17,7 +17,7 @@
  * the developer's key and greets them by name (verified: that is what a local
  * e2e run does today). HOME is the one lever that covers both it and the
  * `~/.genoffice/bin` shim. `GENOFFICE_AUTH_DIR` is not enough on its own: it
- * redirects GenOffice's own key and leaves the shared gsk CLI config in place.
+ * redirects Apex Office's own key and leaves the shared gsk CLI config in place.
  *
  * With no key, `gskLoginInfo()` returns null, the app reads as signed out, and
  * the greeting, the account row and the Genspark Projects entry all disappear —
@@ -60,7 +60,7 @@ function minimalPdf(): Buffer {
     null, // stream, filled below
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
   ]
-  const stream = `BT /F1 18 Tf 72 700 Td (GenOffice Manual Sample) Tj ET\nBT /F1 11 Tf 72 660 Td (This paragraph is here so you can try text selection.) Tj ET\nBT /F1 11 Tf 72 620 Td (SECRET ONE needs redaction.) Tj ET\nBT /F1 11 Tf 72 580 Td (More filler text on the sample page.) Tj ET`
+  const stream = `BT /F1 18 Tf 72 700 Td (Apex Office Manual Sample) Tj ET\nBT /F1 11 Tf 72 660 Td (This paragraph is here so you can try text selection.) Tj ET\nBT /F1 11 Tf 72 620 Td (SECRET ONE needs redaction.) Tj ET\nBT /F1 11 Tf 72 580 Td (More filler text on the sample page.) Tj ET`
   objects[3] = `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`
   let pdf = '%PDF-1.4\n'
   const offsets: number[] = []
@@ -95,7 +95,7 @@ async function makeScratch(): Promise<Scratch> {
   // /var/folders/<xx>/<per-user-hash>/T, so it differs per machine. This has to
   // be absolute and creatable, which is all resolveDefaultSaveDir asks of a
   // configured dir.
-  const saveDir = process.platform === 'win32' ? 'C:\\GenOffice' : '/tmp/GenOffice'
+  const saveDir = process.platform === 'win32' ? 'C:\\Apex Office' : '/tmp/GenOffice'
   for (const dir of [home, userData, samples, saveDir]) mkdirSync(dir, { recursive: true })
 
   // the file list the Home figure shows; types only — the figures are about

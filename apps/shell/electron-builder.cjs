@@ -72,7 +72,7 @@ const includeMacX64 = process.env.GENOFFICE_MAC_X64 === '1'
 const winArm64 = process.env.GENOFFICE_WIN_ARM64 === '1'
 // 7-Zip packs ARM64 executables with its ARM64 branch filter, which the NSIS
 // install-time extractor (Nsis7z) cannot decode: it silently skips
-// GenOffice.exe and every dll (electron-builder#9983). BCJ it can decode.
+// Apex Office.exe and every dll (electron-builder#9983). BCJ it can decode.
 if (winArm64 && !process.env.ELECTRON_BUILDER_7Z_FILTER) {
   process.env.ELECTRON_BUILDER_7Z_FILTER = 'BCJ'
 }
@@ -123,9 +123,6 @@ const LINUX_SIDECAR =
 
 function assertExtraResourceSources() {
   for (const rel of [
-    '../../node_modules/@genspark/cli',
-    '../../node_modules/@genspark/cli/node_modules/commander',
-    '../../node_modules/ws',
     '../../node_modules/electron/dist/LICENSES.chromium.html',
     '../../node_modules/@embedpdf/pdfium/dist/pdfium.wasm',
     '../pdf/node_modules/harfbuzzjs/hb-subset.wasm',
@@ -201,8 +198,23 @@ function compileVisionOcr({ universalOnly } = { universalOnly: false }) {
 }
 
 const WIN_OCR_HELPER = '../../packages/pdf2docx/ocr-helper/win-ocr.exe'
+const THUMBS_DLL = 'native/apex-thumbs/target/release/apex_thumbs.dll'
+
+/** the Explorer thumbnail library (Rust, one crate); built here when it is missing */
+function ensureThumbnailLibrary() {
+  if (process.platform !== 'win32' || existsSync(join(__dirname, THUMBS_DLL))) return
+  try {
+    execFileSync('cargo', ['build', '--release', '--locked'], {
+      cwd: join(__dirname, 'native/apex-thumbs'),
+      stdio: 'inherit',
+    })
+  } catch (err) {
+    throw new Error(`apex-thumbs build failed: ${err}`, { cause: err })
+  }
+}
 
 function ensurePlatformHelpers() {
+  ensureThumbnailLibrary()
   // the Tesseract engine ships on every platform (the system helpers below are its fallback)
   try {
     execFileSync(
@@ -295,7 +307,7 @@ function assertModuleTreesPresent() {
     '../pdf/out',
     '../markdown/out',
     '../html/out',
-    '../../packages/cli/dist/genoffice.cjs',
+    '../../packages/cli/dist/apexoffice.cjs',
     '../../packages/cli/dist/node_modules/jsdom',
   ]) {
     if (!existsSync(join(__dirname, rel))) {
@@ -306,7 +318,7 @@ function assertModuleTreesPresent() {
   }
 }
 
-const CLI_BUNDLE_REL = '../../packages/cli/dist/genoffice.cjs'
+const CLI_BUNDLE_REL = '../../packages/cli/dist/apexoffice.cjs'
 const CLI_BUILD_REL = '../../packages/cli/build.mjs'
 const CLI_VERSION_ENV = 'GENOFFICE_APP_VERSION'
 const CLI_VERSION_BANNER = /^const __cliAppVersion = ("(?:[^"\\]|\\.)*");$/m
@@ -332,7 +344,7 @@ function bundledCliVersion(bundlePath) {
 }
 
 /**
- * `genoffice --version` is baked into the CLI bundle, which is built before
+ * `apexoffice --version` is baked into the CLI bundle, which is built before
  * electron-builder runs and therefore before a release version is known. Rebuild
  * it here with the app version whenever the two disagree, so the packaged
  * command line can never answer with the workspace CLI version.
@@ -382,7 +394,7 @@ function ensureThirdPartyNotices() {
 // NSIS makes every declared ProgId the extension's default opener; for the
 // office types that is the point, for plain text/JSON and the legacy Word
 // 97-2003 .doc/.dot it would hijack the system editor, so Windows leaves those
-// out (mac/Linux still declare them for Open With). GenOffice opens .doc/.dot
+// out (mac/Linux still declare them for Open With). Apex Office opens .doc/.dot
 // through its own Open dialog on every platform.
 const WIN_OPEN_WITH_ONLY_EXTS = new Set(['txt', 'json', 'doc', 'dot'])
 const FILE_ASSOCIATIONS = [
@@ -395,7 +407,7 @@ const FILE_ASSOCIATIONS = [
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   },
   {
-    // import-only: opens as a converted .docx copy, GenOffice never writes .doc
+    // import-only: opens as a converted .docx copy, Apex Office never writes .doc
     ext: 'doc',
     name: 'Word 97-2003 Document',
     role: 'Editor',
@@ -456,7 +468,7 @@ const FILE_ASSOCIATIONS = [
     mimeType: 'text/tab-separated-values',
   },
   {
-    // import-only: opens as a converted .xlsx copy, GenOffice never writes ODF
+    // import-only: opens as a converted .xlsx copy, Apex Office never writes ODF
     ext: 'ods',
     name: 'OpenDocument Spreadsheet',
     role: 'Editor',
@@ -471,7 +483,7 @@ const FILE_ASSOCIATIONS = [
     mimeType: 'application/vnd.oasis.opendocument.spreadsheet-template',
   },
   {
-    // import-only: opens as a converted .docx copy, GenOffice never writes ODF
+    // import-only: opens as a converted .docx copy, Apex Office never writes ODF
     ext: 'odt',
     name: 'OpenDocument Text',
     role: 'Editor',
@@ -486,7 +498,7 @@ const FILE_ASSOCIATIONS = [
     mimeType: 'application/vnd.oasis.opendocument.text-template',
   },
   {
-    // import-only: opens as a converted .docx copy, GenOffice never writes HWPX
+    // import-only: opens as a converted .docx copy, Apex Office never writes HWPX
     ext: 'hwpx',
     name: 'Hancom HWPX Document',
     role: 'Editor',
@@ -502,7 +514,7 @@ const FILE_ASSOCIATIONS = [
     mimeType: 'application/x-hwp',
   },
   {
-    // import-only: opens as a converted .pptx copy, GenOffice never writes ODF
+    // import-only: opens as a converted .pptx copy, Apex Office never writes ODF
     ext: 'odp',
     name: 'OpenDocument Presentation',
     role: 'Editor',
@@ -570,8 +582,8 @@ const FILE_ASSOCIATIONS = [
 ]
 
 const config = {
-  appId: 'com.genoffice.app',
-  productName: 'GenOffice',
+  appId: 'com.apexoffice.app',
+  productName: 'Apex Office',
   // Resolved from the installed electron package so dependency bumps can
   // never leave a stale hard-coded pin behind (packaging would silently ship
   // the old runtime).
@@ -643,53 +655,32 @@ const config = {
       from: '../../packages/pdf2docx/ocr-helper/tesseract',
       to: 'ocr/tesseract',
     },
-    {
-      from: '../../node_modules/@genspark/cli',
-      to: 'gsk/node_modules/@genspark/cli',
-    },
-    // genoffice command line: runs on the app binary with ELECTRON_RUN_AS_NODE (as
+    // apexoffice command line: runs on the app binary with ELECTRON_RUN_AS_NODE (as
     // the gsk CLI above already does), so the RunAsNode fuse must stay enabled.
     // Layout (Resources/cli next to wasm/, native/, ocr/) is what
     // packages/cli/src/resources.ts expects.
     {
-      from: '../../packages/cli/dist/genoffice.cjs',
-      to: 'cli/genoffice.cjs',
+      from: '../../packages/cli/dist/apexoffice.cjs',
+      to: 'cli/apexoffice.cjs',
     },
     {
-      from: '../../packages/cli/bin/genoffice',
+      from: '../../packages/cli/bin/apexoffice',
       to: 'cli/genoffice',
     },
     {
-      from: '../../packages/cli/bin/genoffice.cmd',
-      to: 'cli/genoffice.cmd',
+      from: '../../packages/cli/bin/apexoffice.cmd',
+      to: 'cli/apexoffice.cmd',
     },
-    // the CLI's version (Settings → Integrations shows it) and the agent skill
-    // the same pane installs into Claude Code / Codex / …; bytes identical to the repo file
+    // the CLI's version, read by the command line itself
     {
       from: '../../packages/cli/package.json',
       to: 'cli/package.json',
     },
-    {
-      from: '../../skills/genoffice/SKILL.md',
-      to: 'cli/skills/genoffice/SKILL.md',
-    },
-    {
-      from: '../../skills/recommended',
-      to: 'cli/skills/recommended',
-    },
-    // runtime deps the genoffice bundle leaves external (jsdom for the Word/Markdown
+    // runtime deps the apexoffice bundle leaves external (jsdom for the Word/Markdown
     // paths); collected by packages/cli/collect-deps.mjs during its build
     {
       from: '../../packages/cli/dist/node_modules',
       to: 'cli/node_modules',
-    },
-    {
-      from: '../../node_modules/@genspark/cli/node_modules/commander',
-      to: 'gsk/node_modules/commander',
-    },
-    {
-      from: '../../node_modules/ws',
-      to: 'gsk/node_modules/ws',
     },
   ],
   // `mimeType` is read only by the Linux target, where it becomes the
@@ -700,42 +691,11 @@ const config = {
   // build/ as <icon>.icns for the mac CFBundleDocumentTypes entry and
   // <icon>.ico for the NSIS DefaultIcon registry value. Without it both
   // platforms fall back to the app icon, so every associated file shows the
-  // bare GenOffice logo instead of a per-type document icon. The icns/ico
+  // bare Apex Office logo instead of a per-type document icon. The icns/ico
   // pairs are generated from the shell renderer's file-type tiles by
   // tools/gen-file-association-icons.mjs.
   fileAssociations: FILE_ASSOCIATIONS,
   npmRebuild: false,
-  mac: {
-    // Two separate arch packages (NOT universal): arm64 keeps the exact
-    // artifact names and update-feed entries it always had, x64 (opt-in via
-    // GENOFFICE_MAC_X64=1, see includeMacX64 above) adds Intel support with
-    // electron-builder's default arch-less names (GenOffice-<v>.dmg /
-    // GenOffice-<v>-mac.zip). Both zips land in one latest-mac.yml and
-    // electron-updater picks by process.arch. Dual-arch packs ship the same
-    // lipo fat xlsx-sidecar (see assertUniversalSidecar above).
-    target: [
-      { target: 'dmg', arch: includeMacX64 ? ['arm64', 'x64'] : ['arm64'] },
-      { target: 'zip', arch: includeMacX64 ? ['arm64', 'x64'] : ['arm64'] },
-    ],
-    category: 'public.app-category.productivity',
-    hardenedRuntime: true,
-    gatekeeperAssess: false,
-    entitlements: 'build/entitlements.mac.plist',
-    entitlementsInherit: 'build/entitlements.mac.plist',
-    // Slides' Slide Show > Record: the hardened runtime refuses the microphone without the
-    // audio-input entitlement, and macOS asks for it with this text
-    extendInfo: {
-      NSMicrophoneUsageDescription:
-        'GenOffice records your narration when you record a slide show.',
-    },
-    notarize: true,
-    extraResources: [
-      {
-        from: '../sheets/native/xlsx-engine/target/release/xlsx-sidecar',
-        to: 'native/xlsx-sidecar',
-      },
-    ],
-  },
   win: {
     target: [
       {
@@ -744,6 +704,9 @@ const config = {
       },
     ],
     fileAssociations: FILE_ASSOCIATIONS.filter((a) => !WIN_OPEN_WITH_ONLY_EXTS.has(a.ext)),
+    // the Explorer thumbnail handler (a COM library) is registered by the installer and finds the
+    // program beside itself
+    extraFiles: [{ from: THUMBS_DLL, to: 'apex_thumbs.dll' }],
     extraResources: [
       {
         from: WIN_SIDECAR,
@@ -765,63 +728,6 @@ const config = {
   // arm64 host or an explicit cross build (see linuxSidecarCandidates and the
   // ELF check). That flag is config support only: no second Linux pass runs
   // anywhere yet, so the arm64 artifacts are not produced by this repo.
-  linux: {
-    // AppImage (self-contained, any distro) + deb (apt install, pulls in the
-    // GTK/NSS runtime deps) + rpm (dnf/zypper install on Fedora / RHEL /
-    // openSUSE). Default artifact names are kept on purpose —
-    // GenOffice-<v>.AppImage / genoffice_<v>_amd64.deb — because the public
-    // README download links and the already-published linux-v0.5.149 release
-    // use them. The arm64 targets reuse the ${arch}-templated deb/rpm names
-    // (genoffice_<v>_arm64.deb).
-    target: [
-      { target: 'AppImage', arch: [linuxArm64 ? 'arm64' : 'x64'] },
-      { target: 'deb', arch: [linuxArm64 ? 'arm64' : 'x64'] },
-      { target: 'rpm', arch: [linuxArm64 ? 'arm64' : 'x64'] },
-    ],
-    // deb control metadata; values match the manually published 0.5.149 deb
-    // so apt sees the new packages as the same lineage. Homepage comes from
-    // package.json "homepage"; the Package field is pinned in the deb block
-    // below (packageName is a per-target option, rejected here by the schema).
-    maintainer: 'Mainfunc, Inc. <team@genspark.ai>',
-    vendor: 'Mainfunc, Inc. <team@genspark.ai>',
-    category: 'Office',
-    // Icon SET directory, not the single 1024px png: electron-builder does
-    // not resize a lone png, so deb/rpm would install only
-    // hicolor/1024x1024/apps/genoffice.png — a size absent from the hicolor
-    // theme index, leaving GNOME/KDE launchers on the generic fallback icon
-    // (genspark-ai/genoffice#90). The set ships every standard raster size.
-    icon: 'build/icons',
-    // mac and win name the binary from productName; linux instead derives it
-    // from package.json "name", and "@genoffice/shell" sanitizes to the
-    // invalid "@genofficeshell". Setting it explicitly also makes the
-    // generated genoffice.desktop match the WM_CLASS Electron reports (it
-    // takes that from the executable basename), so the running window links
-    // back to its launcher entry.
-    executableName: 'genoffice',
-    // Electron takes its X11 app_id from package.json "desktopName"
-    // (genoffice.desktop); syncDesktopName makes electron-builder name the
-    // .desktop file and its StartupWMClass from the same value. Without it
-    // StartupWMClass falls back to productName ("GenOffice"), which does not
-    // match the "genoffice" WM_CLASS the window actually reports — and X11
-    // compares case-sensitively, so the taskbar shows an unlinked window.
-    syncDesktopName: true,
-    extraResources: [
-      {
-        from: LINUX_SIDECAR,
-        to: 'native/xlsx-sidecar',
-      },
-      // Same blank templates the Windows installer registers for Explorer's
-      // "New" menu. The deb/rpm post-install step copies them into
-      // /usr/share/templates, which KDE Plasma's Dolphin "Create New" menu
-      // scans (genoffice#2384). AppImage gets the payload too but runs no
-      // install script, so it adds no templates.
-      {
-        from: 'build/shell-new',
-        to: 'shell-new',
-        filter: ['*.docx', '*.xlsx', '*.pptx'],
-      },
-    ],
-  },
   // Same "@genoffice/shell" problem as executableName above: the default deb
   // artifact name derives from package.json "name", and the scope's "/" makes
   // fpm treat "@genoffice" as a directory. Spell the published name out
@@ -829,11 +735,11 @@ const config = {
   // packageName pins the control Package field to the same value the 0.5.149
   // deb shipped with — apt treats a different Package name as an unrelated
   // install, breaking upgrades. Without it, fpm receives productName
-  // "GenOffice" and only happens to downcase it to the right value.
+  // "Apex Office" and only happens to downcase it to the right value.
   deb: {
     artifactName: 'genoffice_${version}_${arch}.deb',
     packageName: 'genoffice',
-    // expose the genoffice command line shipped inside the app
+    // expose the apexoffice command line shipped inside the app
     afterInstall: 'build/linux-after-install.sh',
     afterRemove: 'build/linux-after-remove.sh',
   },
@@ -865,6 +771,10 @@ const config = {
   nsis: {
     oneClick: false,
     allowToChangeInstallationDirectory: true,
+    shortcutName: 'Apex Office',
+    uninstallDisplayName: 'Apex Office ${version}',
+    artifactName: 'ApexOffice-Setup-${version}.${ext}',
+    include: 'build/installer.nsh',
   },
   beforePack: async (context) => {
     ensurePlatformHelpers()
@@ -899,10 +809,6 @@ const config = {
       assertLinuxSidecarArch(sidecar, linuxArm64)
     }
   },
-  dmg: {
-    sign: true,
-  },
-  afterAllArtifactBuild: 'build/notarize-dmg.js',
 }
 
 // Windows in-package code signing. Security features that judge every PE
@@ -912,7 +818,7 @@ const config = {
 // signed. When CI exports GENOFFICE_WIN_SIGN_MODE ("test" = alpha
 // self-signed PFX, "production" = DigiCert KeyLocker — the two modes of
 // scripts/win-sign.cjs, whose env-var contract applies here too), every
-// binary electron-builder signs for win (GenOffice.exe, the NSIS
+// binary electron-builder signs for win (Apex Office.exe, the NSIS
 // uninstaller, and the installer) goes through that script. The static
 // extraResources binaries (xlsx-sidecar.exe, win-ocr.exe) are signed by the
 // workflow before packaging since electron-builder does not sign

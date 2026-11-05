@@ -20,7 +20,7 @@ import { getUiLang } from '@genoffice/i18n'
 import type { FoundSkill, RecommendedSkill } from '../shared/found-skill'
 
 /**
- * The skills a user installed into GenOffice.
+ * The skills a user installed into Apex Office.
  *
  * Only `<userData>/skills/<name>/SKILL.md` counts. Nothing is scanned from a
  * coding agent's directories: a developer's `.claude` holds git, test and

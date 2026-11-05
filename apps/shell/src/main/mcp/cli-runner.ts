@@ -61,7 +61,7 @@ export interface CliRunner {
 export interface CliRunnerPaths {
   /** node/electron executable that runs the CLI entry */
   executable: string
-  /** absolute path to the bundled CLI entry (dist/genoffice.cjs) */
+  /** absolute path to the bundled CLI entry (dist/apexoffice.cjs) */
   entry: string
   /** extra environment (the runner adds ELECTRON_RUN_AS_NODE when needed) */
   env?: NodeJS.ProcessEnv
@@ -151,5 +151,5 @@ export function createCliRunner(paths: CliRunnerPaths): CliRunner {
 export function cliErrorMessage(outcome: CliRunOutcome): string {
   if (outcome.json && outcome.json.status === 'error') return outcome.json.message
   const detail = outcome.stderr.trim() || outcome.stdout.trim()
-  return detail ? `genoffice failed: ${detail}` : `genoffice exited with code ${outcome.code}`
+  return detail ? `apexoffice failed: ${detail}` : `apexoffice exited with code ${outcome.code}`
 }

@@ -11,7 +11,7 @@
 import { LANGS } from '@genoffice/i18n'
 import { topicTitle } from './help-titles'
 
-export type HelpGroupId = 'start' | 'apps' | 'ai' | 'manage'
+export type HelpGroupId = 'start' | 'apps' | 'manage'
 
 export interface HelpGroup {
   id: HelpGroupId
@@ -20,7 +20,6 @@ export interface HelpGroup {
 export const HELP_GROUPS: HelpGroup[] = [
   { id: 'start' },
   { id: 'apps' },
-  { id: 'ai' },
   { id: 'manage' },
 ]
 
@@ -197,43 +196,9 @@ export const HELP_TOPICS: HelpTopicMeta[] = [
     keywords: ['网页', 'html', '预览', 'preview', '检查器', 'inspector'],
   },
   {
-    id: 'ai-panel',
-    group: 'ai',
-    order: 1,
-    keywords: [
-      'ai',
-      '助手',
-      'assistant',
-      '面板',
-      'panel',
-      '生成',
-      'generate',
-      '回滚',
-      'rollback',
-      '撤销',
-    ],
-  },
-  {
-    id: 'ai-models',
-    group: 'ai',
-    order: 2,
-    keywords: [
-      '模型',
-      'model',
-      'provider',
-      'key',
-      'byok',
-      '端点',
-      'endpoint',
-      'genspark',
-      '登录',
-      'login',
-    ],
-  },
-  {
     id: 'fonts',
-    group: 'ai',
-    order: 3,
+    group: 'manage',
+    order: 5,
     keywords: [
       '字体',
       'font',
@@ -266,46 +231,10 @@ export const HELP_TOPICS: HelpTopicMeta[] = [
     ],
   },
   {
-    id: 'settings-integrations',
-    group: 'manage',
-    order: 2,
-    keywords: [
-      '重排',
-      'rerank',
-      'liquid',
-      '设置',
-      'settings',
-      '语言',
-      'language',
-      '主题',
-      'theme',
-      '深色',
-      'dark',
-      'mcp',
-      '默认应用',
-      'default app',
-    ],
-  },
-  {
     id: 'cli',
     group: 'manage',
     order: 3,
-    keywords: ['命令行', 'cli', 'genoffice', 'convert', 'render', '命令行工具', '终端'],
-  },
-  {
-    id: 'mcp',
-    group: 'manage',
-    order: 4,
-    keywords: [
-      'mcp',
-      'model context protocol',
-      '编程助手',
-      'coding agent',
-      'claude',
-      'codex',
-      'cursor',
-      '智能体',
-    ],
+    keywords: ['命令行', 'cli', 'apexoffice', 'convert', 'render', '命令行工具', '终端'],
   },
 ]
 

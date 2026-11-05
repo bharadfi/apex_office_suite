@@ -82,7 +82,7 @@ describe('createDocumentSkill', () => {
     ]) {
       expect(skill.verifyResponse!(fact, [])).toBeNull()
     }
-    expect(skill.verifyResponse!('I saved it to the GenOffice folder.', [])).toContain(
+    expect(skill.verifyResponse!('I saved it to the Apex Office folder.', [])).toContain(
       'create_document',
     )
     expect(skill.verifyResponse!('Saved as q3-summary.docx in your folder.', [])).toContain(

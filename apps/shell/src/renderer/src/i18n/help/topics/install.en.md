@@ -1,4 +1,4 @@
-# Installing GenOffice
+# Installing Apex Office
 
 Every build is published on the [Releases page](https://github.com/genspark-ai/genoffice/releases/latest). All of them come from `main`; the macOS and Windows installers are signed.
 
@@ -18,11 +18,11 @@ Older versions stay on the Releases page.
 
 ## On macOS
 
-Open the `.dmg` and drag **GenOffice** into Applications. On an Intel build the first launch asks you to confirm opening it: right-click the app in Applications ▸ Open. That is Gatekeeper meeting an unsigned-seeming disk image, not a damaged download.
+Open the `.dmg` and drag **Apex Office** into Applications. On an Intel build the first launch asks you to confirm opening it: right-click the app in Applications ▸ Open. That is Gatekeeper meeting an unsigned-seeming disk image, not a damaged download.
 
 ## On Windows
 
-Run the `.exe` installer. It puts GenOffice in the Start menu and registers `.docx`, `.xlsx`, `.pptx`, `.pdf` and friends so double-clicking a file opens it.
+Run the `.exe` installer. It puts Apex Office in the Start menu and registers `.docx`, `.xlsx`, `.pptx`, `.pdf` and friends so double-clicking a file opens it.
 
 ## On Linux
 
@@ -64,4 +64,4 @@ All three wrap the published artifacts rather than rebuilding the app, so they t
 
 ## The command line comes with it
 
-Every install ships a `genoffice` command that talks to the same engines the window does, so the two never disagree about a file. On macOS and Windows it is inside the app bundle; `genoffice install-cli` puts it on your `PATH`. See **Command line and agents** for what it can do.
+Every install ships a `genoffice` command that talks to the same engines the window does, so the two never disagree about a file. On macOS and Windows it is inside the app bundle; `apexoffice install-cli` puts it on your `PATH`. See **Command line and agents** for what it can do.

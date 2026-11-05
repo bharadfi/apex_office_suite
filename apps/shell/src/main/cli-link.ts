@@ -14,7 +14,7 @@ interface CliLinkRecord {
 }
 
 /**
- * Every launch: record where the genoffice launcher lives so agents can find it
+ * Every launch: record where the apexoffice launcher lives so agents can find it
  * without a PATH (the `genoffice` skill reads `~/.genoffice/launcher`), then
  * try to expose it on the PATH. The dmg has no installer step to do that, so
  * macOS retries on each start until a writable directory turns up. Windows
@@ -60,7 +60,7 @@ export function launcherFilePath(env: NodeJS.ProcessEnv): string {
   return join(env.GENOFFICE_AUTH_DIR || join(homedir(), '.genoffice'), 'launcher')
 }
 
-/** One line, the directory holding genoffice / genoffice.cmd; rewritten only when it changed. */
+/** One line, the directory holding genoffice / apexoffice.cmd; rewritten only when it changed. */
 export function writeLauncherFile(file: string, launcherDir: string): boolean {
   const content = `${launcherDir}\n`
   try {

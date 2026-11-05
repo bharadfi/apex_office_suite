@@ -197,7 +197,7 @@ describe('native admission for Genspark provider requests', () => {
     const headers = new Headers(business.init.headers)
     expect(headers.get('x-genspark-token-pass')).toBe(token)
     expect(headers.get('authorization')).toBe('Bearer gsk-live')
-    expect(headers.get('user-agent')).toBe('GenOffice')
+    expect(headers.get('user-agent')).toBe('Apex Office')
     expect(business.init.body).toBe('{"a":1}')
     expect(business.init.redirect).toBe('error')
   })

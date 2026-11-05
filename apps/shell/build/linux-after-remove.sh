@@ -1,5 +1,5 @@
 #!/bin/sh
-# deb/rpm post-remove: drop the genoffice symlink only on a real uninstall.
+# deb/rpm post-remove: drop the apexoffice symlink only on a real uninstall.
 # rpm runs the old package's %postun after the new %post during an upgrade
 # (with $1 = 1); deb passes "upgrade" there. Removing then would kill the
 # link the new version just created.
@@ -17,7 +17,7 @@ if [ -f "$profile" ]; then
   fi
   rm -f "$profile"
 fi
-link="/usr/bin/genoffice"
+link="/usr/bin/apexoffice"
 # same ownership rule as the post-install: only a link into our install dir is ours
 if [ -L "$link" ]; then
   case "$(readlink "$link")" in
@@ -27,7 +27,7 @@ fi
 # Drop the KDE "Create New" templates the post-install step installed. Only
 # our exact file names are removed, so the directory and every other app's
 # templates stay (genoffice#2384).
-for name in "GenOffice Document.docx" "GenOffice Spreadsheet.xlsx" "GenOffice Presentation.pptx"; do
+for name in "Apex Office Document.docx" "Apex Office Spreadsheet.xlsx" "Apex Office Presentation.pptx"; do
   rm -f "/usr/share/templates/$name"
 done
 exit 0

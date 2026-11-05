@@ -6,7 +6,7 @@
  * SERPER_API_KEY, the Serply key reuses SERPLY_API_KEY, the SearchApi key reuses
  * SEARCHAPI_API_KEY, the Tavily key reuses TAVILY_API_KEY, Parallel uses PARALLEL_API_KEY, Exa
  * uses EXA_API_KEY, Firecrawl uses FIRECRAWL_API_KEY and Keenable uses KEENABLE_API_KEY.
- * For Genspark auth see ./gsk.ts (GenOffice sign-in or explicit GSK_API_KEY).
+ * For Genspark auth see ./gsk.ts (Apex Office sign-in or explicit GSK_API_KEY).
  */
 
 import {
@@ -298,7 +298,7 @@ async function parallelWebSearch(
     const raw: unknown[] = Array.isArray(data.results) ? data.results : []
     const results: WebSearchResult[] = []
     for (const item of raw) {
-      // v1 search has no result-count parameter, so GenOffice's limit is applied
+      // v1 search has no result-count parameter, so Apex Office's limit is applied
       // here. Cut the loop off once the list is full instead of slicing the source
       // first: the URL check below drops entries, and slicing first would both
       // concatenate excerpts for results that are then thrown away and under-fill
@@ -419,7 +419,7 @@ async function firecrawlWebSearch(
 }
 
 /** The keyless endpoint identifies the calling app by this header instead of a key. */
-const KEENABLE_TITLE = 'GenOffice'
+const KEENABLE_TITLE = 'Apex Office'
 const KEENABLE_SNIPPET_CHARS = 500
 
 /**

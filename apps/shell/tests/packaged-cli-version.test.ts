@@ -9,7 +9,7 @@ const shellRoot = resolve(import.meta.dirname, '..')
 const shellPackage = JSON.parse(readFileSync(resolve(shellRoot, 'package.json'), 'utf-8')) as {
   version: string
 }
-const CLI_BUNDLE_REL = '../../packages/cli/dist/genoffice.cjs'
+const CLI_BUNDLE_REL = '../../packages/cli/dist/apexoffice.cjs'
 
 // ELF e_machine values the linux packaging guard reads out of the sidecar.
 const ELF_X86_64 = 0x3e
@@ -79,7 +79,7 @@ function loadConfig(opts: {
           existsSync: (path: string) =>
             String(path).endsWith('xlsx-sidecar') ? opts.sidecarExists !== false : true,
           readFileSync: (path: string, encoding: string) => {
-            if (String(path).endsWith('genoffice.cjs')) {
+            if (String(path).endsWith('apexoffice.cjs')) {
               return `const __cliAppVersion = ${JSON.stringify(baked)};\n`
             }
             // Packaging also gates on a generated third-party notice. Serve a

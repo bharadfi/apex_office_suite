@@ -1,5 +1,5 @@
-; Keeps the genoffice command line (resources\cli, holding genoffice.cmd and the
-; extension-less genoffice for Git Bash) on the installing user's PATH for the
+; Keeps the apexoffice command line (resources\cli, holding apexoffice.cmd and the
+; extension-less apexoffice for Git Bash) on the installing user's PATH for the
 ; lifetime of the install. The value is read and written unexpanded
 ; (REG_EXPAND_SZ) so entries such as %USERPROFILE%\bin survive, and Explorer
 ; is told about the change so terminals opened afterwards see it.

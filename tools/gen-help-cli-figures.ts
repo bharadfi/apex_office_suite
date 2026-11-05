@@ -167,7 +167,7 @@ function figureHtml(title: string, blocks: { command: string; output: string }[]
 </style></head>
 <body>
   <div class="card">
-    <div class="head"><span class="app">GenOffice</span><span class="sep">—</span><span>${escapeHtml(title)}</span></div>
+    <div class="head"><span class="app">Apex Office</span><span class="sep">—</span><span>${escapeHtml(title)}</span></div>
     <div class="term">
 ${body}
     </div>

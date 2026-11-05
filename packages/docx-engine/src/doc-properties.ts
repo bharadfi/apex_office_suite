@@ -259,9 +259,9 @@ function blankAppPropertiesXml(): string {
   )
 }
 
-/** Application a new GenOffice document records in docProps/app.xml */
-export const NEW_DOCUMENT_APPLICATION = 'GenOffice'
-/** Template a new GenOffice document records (Word's own default) */
+/** Application a new Apex Office document records in docProps/app.xml */
+export const NEW_DOCUMENT_APPLICATION = 'Apex Office'
+/** Template a new Apex Office document records (Word's own default) */
 export const NEW_DOCUMENT_TEMPLATE = 'Normal.dotm'
 /**
  * AppVersion of a new document. The docx-engine package version at release

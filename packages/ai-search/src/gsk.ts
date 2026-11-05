@@ -87,9 +87,9 @@ function electronCompatArgs(): string[] {
 
 /**
  * API key for Genspark LLM proxy / tool_cli auth; '' when not logged in.
- * Priority: explicit GSK_API_KEY env → GenOffice's own login.
+ * Priority: explicit GSK_API_KEY env → Apex Office's own login.
  * Never borrow the shared CLI login: it can belong to another app or account,
- * and must not silently undo GenOffice sign-out.
+ * and must not silently undo Apex Office sign-out.
  */
 export function gskApiKey(): string {
   const env = process.env.GSK_API_KEY
@@ -101,9 +101,9 @@ export function gskApiKey(): string {
 // ── Rejected keys (401) ─────────────────────────────────────────────
 
 /**
- * Keys the server answered 401 for (expired / revoked). GenOffice's own key
+ * Keys the server answered 401 for (expired / revoked). Apex Office's own key
  * is also deleted from disk; env keys are only skipped for the rest of this
- * process because GenOffice does not own their source.
+ * process because Apex Office does not own their source.
  */
 const rejectedKeys = new Set<string>()
 
@@ -378,7 +378,7 @@ function runGskOnce(
   signal?: AbortSignal,
 ): Promise<unknown> {
   // With no injected key the CLI would independently load its shared login.
-  if (!key) return Promise.reject(new GskAuthError('Sign in to GenOffice to use Genspark'))
+  if (!key) return Promise.reject(new GskAuthError('Sign in to Apex Office to use Genspark'))
   // inject the resolved key so the CLI bills the same identity as our direct HTTP calls
   return new Promise((resolve, reject) => {
     execFile(

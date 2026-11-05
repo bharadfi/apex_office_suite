@@ -1,7 +1,8 @@
 import { readFileSync, readSync, statSync } from 'node:fs'
 import { flagString, type ParsedArgs } from './args'
 import { resolveInput, type PathContext } from './fs'
-import { MAX_TRANSFER_BYTES } from './mcp/files'
+/** largest file the command line reads or writes in one go */
+const MAX_TRANSFER_BYTES = 256 * 1024 * 1024
 import { CliError, EXIT } from './result'
 
 /** Same ceiling as MCP file transfers: decks inline pictures as base64 in addPicture.bytes. */

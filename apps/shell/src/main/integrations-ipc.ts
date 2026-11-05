@@ -46,7 +46,7 @@ export interface IntegrationsDeps {
   settingsPath: () => string
   /** the shell window dialogs attach to */
   window: () => BrowserWindow | null
-  /** directory holding genoffice / genoffice.cmd and, packaged, skills/genoffice/SKILL.md */
+  /** directory holding genoffice / apexoffice.cmd and, packaged, skills/genoffice/SKILL.md */
   cliDir: string
   /** skills/genoffice/SKILL.md (repo file in dev, Resources/cli/skills/... packaged) */
   skillPath: string
@@ -73,7 +73,7 @@ export function registerIntegrationsIpc(deps: IntegrationsDeps): void {
   ipcMain.handle(INTEGRATIONS_CHANNELS.status, (): IntegrationsStatus => {
     const skill = bundled()
     const l = ledger()
-    const launcher = join(deps.cliDir, process.platform === 'win32' ? 'genoffice.cmd' : 'genoffice')
+    const launcher = join(deps.cliDir, process.platform === 'win32' ? 'apexoffice.cmd' : 'genoffice')
     return {
       cli: {
         ...inspectCliLink({ launcher }),

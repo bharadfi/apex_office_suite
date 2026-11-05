@@ -26,7 +26,7 @@ function publish(dir: string, name: string, body: unknown): void {
 describe('userData directory list', () => {
   it('scans the dev profile under both spellings it has had', () => {
     const { env, home } = fakeHome()
-    const packaged = join(appData(home), 'GenOffice')
+    const packaged = join(appData(home), 'Apex Office')
     // The shell writes "-Dev" since genoffice#1879; " Dev" is what it wrote
     // before, and a profile nobody migrated is still there.
     expect(genofficeUserDataDirs(env)).toEqual([packaged, `${packaged}-Dev`, `${packaged} Dev`])
@@ -61,7 +61,7 @@ describe('a dev shell is reachable', () => {
 
   it('still finds a profile left under the old " Dev" spelling', () => {
     const { env, home } = fakeHome()
-    const old = join(appData(home), 'GenOffice Dev')
+    const old = join(appData(home), 'Apex Office Dev')
     publish(old, 'control.json', {
       pid: process.pid,
       endpoint: 'http://127.0.0.1:1/old',
@@ -81,7 +81,7 @@ describe('a dev shell is reachable', () => {
 
   it('covers both instances at once, which is what the write guard needs', () => {
     const { env, home } = fakeHome()
-    const packaged = join(appData(home), 'GenOffice')
+    const packaged = join(appData(home), 'Apex Office')
     const dev = join(appData(home), 'GenOffice-Dev')
     publish(packaged, 'open-documents.json', { pid: process.pid, paths: ['/a.docx'] })
     publish(dev, 'open-documents.json', { pid: process.pid, paths: ['/b.docx'] })

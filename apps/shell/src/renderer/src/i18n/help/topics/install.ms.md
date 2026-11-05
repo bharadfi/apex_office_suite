@@ -1,4 +1,4 @@
-# Pemasangan GenOffice
+# Pemasangan Apex Office
 
 Setiap keluaran diterbitkan pada [halaman Keluaran](https://github.com/genspark-ai/genoffice/releases/latest). Semuanya datang daripada `main`; pemasang untuk macOS dan Windows adalah bertanda tangan.
 
@@ -18,11 +18,11 @@ Versi lama kekal pada halaman Keluaran.
 
 ## Pada macOS
 
-Buka `.dmg` itu dan seret **GenOffice** ke dalam Applications. Pada keluaran Intel, pelancaran pertama akan meminta anda mengesahkan membukanya: klik kanan aplikasi itu dalam Applications ▸ Open. Itu Gatekeeper bertemu imej cakera yang kelihatan tidak bertanda tangan, bukan muat turun yang rosak.
+Buka `.dmg` itu dan seret **Apex Office** ke dalam Applications. Pada keluaran Intel, pelancaran pertama akan meminta anda mengesahkan membukanya: klik kanan aplikasi itu dalam Applications ▸ Open. Itu Gatekeeper bertemu imej cakera yang kelihatan tidak bertanda tangan, bukan muat turun yang rosak.
 
 ## Pada Windows
 
-Jalankan pemasang `.exe`. Ia meletakkan GenOffice dalam menu Start dan mendaftarkan `.docx`, `.xlsx`, `.pptx`, `.pdf` dan yang lain supaya mengklik dua kali pada fail membukanya.
+Jalankan pemasang `.exe`. Ia meletakkan Apex Office dalam menu Start dan mendaftarkan `.docx`, `.xlsx`, `.pptx`, `.pdf` dan yang lain supaya mengklik dua kali pada fail membukanya.
 
 ## Pada Linux
 
@@ -64,4 +64,4 @@ Ketiganya membalut artifak yang diterbitkan, bukan membina semula aplikasi, jadi
 
 ## Baris arahan yang disertakan
 
-Setiap pemasangan meliputi satu perintah `genoffice` yang bercakap dengan enjin yang sama seperti yang digunakan oleh tetingkap itu, jadi kedua-duanya tidak pernah berselisih tentang sesuatu fail. Pada macOS dan Windows ia berada dalam bungkus aplikasi; `genoffice install-cli` meletakkannya pada `PATH` anda. Lihat **Baris arahan dan ejen** untuk apa yang boleh ia lakukan.
+Setiap pemasangan meliputi satu perintah `genoffice` yang bercakap dengan enjin yang sama seperti yang digunakan oleh tetingkap itu, jadi kedua-duanya tidak pernah berselisih tentang sesuatu fail. Pada macOS dan Windows ia berada dalam bungkus aplikasi; `apexoffice install-cli` meletakkannya pada `PATH` anda. Lihat **Baris arahan dan ejen** untuk apa yang boleh ia lakukan.

@@ -2,12 +2,12 @@
   <a href="https://genoffice.ai/">
     <picture>
       <source srcset="../assets/readme/hero-dark.webp" media="(prefers-color-scheme: dark)">
-      <img src="../assets/readme/hero.webp" alt="GenOffice — חבילת האופיס מבוססת ה-AI בקוד פתוח: Docs,‏ Sheets,‏ Slides,‏ PDF,‏ Markdown ו-HTML עם פאנל AI מובנה" width="100%">
+      <img src="../assets/readme/hero.webp" alt="Apex Office — חבילת האופיס מבוססת ה-AI בקוד פתוח: Docs,‏ Sheets,‏ Slides,‏ PDF,‏ Markdown ו-HTML עם פאנל AI מובנה" width="100%">
     </picture>
   </a>
 </p>
 
-<h1 align="center" dir="rtl">GenOffice</h1>
+<h1 align="center" dir="rtl">Apex Office</h1>
 
 <p align="center" dir="rtl"><b>הסוויטה המשרדית הראשונה בעולם מבוססת AI, בקוד פתוח ומלאת יכולות.</b><br>
 קבצי Word, Excel, PowerPoint ו-PDF, נערכים על ידיכם ועל ידי ה-AI שלכם, ונשמרים בחזרה בפורמטים המקוריים.</p>
@@ -31,7 +31,7 @@
   <a href="../../PRIVACY.md"><b>פרטיות</b></a>
 </p>
 
-GenOffice היא חלופה חינמית ובקוד פתוח ל-Microsoft Office עבור macOS,‏
+Apex Office היא חלופה חינמית ובקוד פתוח ל-Microsoft Office עבור macOS,‏
 Windows ו-Linux. היא פותחת ושומרת קבצי `.docx`,‏ `.xlsx` ו-`.pptx` מקוריים,
 מאפשרת לערוך PDF,‏ Markdown ו-HTML, ומציבה סוכן AI לצד כל מסמך — לא תיבת
 צ'אט שהודבקה בצד, אלא עורך שקורא את הקובץ, מבצע את השינוי, ומראה לכם בדיוק
@@ -76,8 +76,8 @@ Windows ו-Linux. היא פותחת ושומרת קבצי `.docx`,‏ `.xlsx` ו
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/docs-report.webp" alt="GenOffice Docs מציג עמוד דו-טורי מדוח שנתי עם תמונת שער ברוחב מלא, טבלת KPI מוצללת, כותרת עליונה ותחתונה, בתקריב של 80% עם פאנל ה-AI מכווץ"></td>
-<td width="50%"><img src="../assets/readme/docs-ai.webp" alt="GenOffice Docs: סקירת חברה עם תמונת באנר; ה-AI חידד את קטע ה-Overview והוסיף קטע חדש עם תבליטים, והפאנל מציע שחזור בלחיצה אחת"></td>
+<td width="50%"><img src="../assets/readme/docs-report.webp" alt="Apex Office Docs מציג עמוד דו-טורי מדוח שנתי עם תמונת שער ברוחב מלא, טבלת KPI מוצללת, כותרת עליונה ותחתונה, בתקריב של 80% עם פאנל ה-AI מכווץ"></td>
+<td width="50%"><img src="../assets/readme/docs-ai.webp" alt="Apex Office Docs: סקירת חברה עם תמונת באנר; ה-AI חידד את קטע ה-Overview והוסיף קטע חדש עם תבליטים, והפאנל מציע שחזור בלחיצה אחת"></td>
 </tr>
 <tr>
 <td dir="rtl"><b>פותח את הקובץ בדיוק כפי ש-Word מעצב אותו</b> — קטעים דו-טוריים, תמונות עד לשולי העמוד, טבלאות מוצללות, כותרות עליונות ותחתונות, ומיספור עמודים המבוסס על מדדי השורות של Word. סטיילים, הערות, מעקב שינויים, נוסחאות, רישום בכתב יד ופקדי תוכן (content controls) עוברים הלוך ושוב ללא כל שינוי. לשונית <b>Mailings</b> הופכת את המסמך לתבנית מיזוג דואר: בחרו רשימת נמענים ב-<code>.xlsx</code> או ב-<code>.csv</code>, הוסיפו <code>MERGEFIELD</code> אמיתיים, הציגו תצוגה מקדימה רשומה אחר רשומה, ומזגו למסמך אחד או לקובץ <code>.docx</code> אחד לכל רשומה.</td>
@@ -89,8 +89,8 @@ Windows ו-Linux. היא פותחת ושומרת קבצי `.docx`,‏ `.xlsx` ו
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/sheets-ai.webp" alt="GenOffice Sheets: ה-AI הוסיף גיליון Summary עם הכנסות לפי אזור וקטגוריה באמצעות נוסחאות SUMIF, בתוספת תרשים עמודות, ומדווח על 43 שינויים שהוחלו עם כפתור ביטול"></td>
-<td width="50%"><img src="../assets/readme/sheets-qa.webp" alt="GenOffice Sheets: בתשובה לשאלה איזה אזור הוביל בהכנסות ברבעון השני, ה-AI עונה אירופה עם פירוט לפי קטגוריה, ומצטט כקישורים את התאים שבהם השתמש, לצד גיליון Orders"></td>
+<td width="50%"><img src="../assets/readme/sheets-ai.webp" alt="Apex Office Sheets: ה-AI הוסיף גיליון Summary עם הכנסות לפי אזור וקטגוריה באמצעות נוסחאות SUMIF, בתוספת תרשים עמודות, ומדווח על 43 שינויים שהוחלו עם כפתור ביטול"></td>
+<td width="50%"><img src="../assets/readme/sheets-qa.webp" alt="Apex Office Sheets: בתשובה לשאלה איזה אזור הוביל בהכנסות ברבעון השני, ה-AI עונה אירופה עם פירוט לפי קטגוריה, ומצטט כקישורים את התאים שבהם השתמש, לצד גיליון Orders"></td>
 </tr>
 <tr>
 <td dir="rtl"><b>בנו אותו</b> — ממשפט אחד הסוכן מוסיף גיליון Summary עם נוסחאות <code>SUMIF</code> אמיתיות לפי אזור וקטגוריה, מוסיף תרשים עמודות, ומחיל את 43 השינויים כאצווה אחת שאפשר לבטל.</td>
@@ -100,15 +100,15 @@ Windows ו-Linux. היא פותחת ושומרת קבצי `.docx`,‏ `.xlsx` ו
 
 ### 3 · Slides — מפרומפט למצגת `.pptx`
 
-<img src="../assets/readme/slides-generate.webp" alt="טיים-לאפס של GenOffice Slides יוצר את מצגת המשקיעים Aurora Home: ה-AI מתכנן את קו העלילה בפאנל, השקופיות מופיעות על הקנבס אחת אחרי השנייה, והמצגת המוגמרת מסתיימת בבקשת הסגירה (closing ask)" width="100%">
+<img src="../assets/readme/slides-generate.webp" alt="טיים-לאפס של Apex Office Slides יוצר את מצגת המשקיעים Aurora Home: ה-AI מתכנן את קו העלילה בפאנל, השקופיות מופיעות על הקנבס אחת אחרי השנייה, והמצגת המוגמרת מסתיימת בבקשת הסגירה (closing ask)" width="100%">
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/slides-cover.webp" alt="GenOffice Slides: שקופית השער של מצגת משקיעים בשם Aurora Home שנוצרה על ידי AI, על הקנבס, עם הפרומפט המקורי בשורה אחת וסיכום ה-AI של מה שנבנה בפאנל"></td>
-<td width="50%"><img src="../assets/readme/slides-ai.webp" alt="GenOffice Slides: שקופית הסיום המעוצבת של אותה מצגת בת 11 שקופיות, עם רצועת התמונות הממוזערות בצד שמאל ופאנל ה-AI מסכם את קו העלילה"></td>
+<td width="50%"><img src="../assets/readme/slides-cover.webp" alt="Apex Office Slides: שקופית השער של מצגת משקיעים בשם Aurora Home שנוצרה על ידי AI, על הקנבס, עם הפרומפט המקורי בשורה אחת וסיכום ה-AI של מה שנבנה בפאנל"></td>
+<td width="50%"><img src="../assets/readme/slides-ai.webp" alt="Apex Office Slides: שקופית הסיום המעוצבת של אותה מצגת בת 11 שקופיות, עם רצועת התמונות הממוזערות בצד שמאל ופאנל ה-AI מסכם את קו העלילה"></td>
 </tr>
 <tr>
-<td dir="rtl"><b>שורה אחת בכניסה</b> — ״צרו מצגת משקיעים בת 10 שקופיות בשביל Aurora Home…״. GenOffice מתכננת את קו העלילה, חוקרת את המספרים, ומכינה כל שקופית ישירות על הקנבס כקובץ <code>.pptx</code> אמיתי.</td>
+<td dir="rtl"><b>שורה אחת בכניסה</b> — ״צרו מצגת משקיעים בת 10 שקופיות בשביל Aurora Home…״. Apex Office מתכננת את קו העלילה, חוקרת את המספרים, ומכינה כל שקופית ישירות על הקנבס כקובץ <code>.pptx</code> אמיתי.</td>
 <td dir="rtl"><b>מצגת מוגמרת בפלט</b> — אחת עשרה שקופיות מעוצבות עם טיפוגרפיה ותמונות עקביות וקריאה לפעולה בסיום; המשיכו לערוך עם מאסטרים (masters), פריסות, קווי הנחיה חכמים וחיתוך תמונות שאינו הרסני, או בקשו מהפאנל לעצב מחדש, לכתוב מחדש ולסדר מחדש. הוסיפו קובץ <code>.glb</code> ותקבלו מודל תלת-ממדי אמיתי: סובבו אותו בגרירה בתוך העורך, הוא נשמר באותו אופן שבו PowerPoint מאחסן תלת-ממד, והוא נשאר תלת-ממדי גם ב-PowerPoint.</td>
 </tr>
 </table>
@@ -121,8 +121,8 @@ Windows ו-Linux. היא פותחת ושומרת קבצי `.docx`,‏ `.xlsx` ו
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/pdf-edit.webp" alt="GenOffice PDF: מצב 'ערוך טקסט' מתאר בקו כל בלוק טקסט בעמוד לעריכה במקום, בזמן שפאנל ה-AI עונה על שאלה בנוגע לדוח עם ציטוטים למספרי עמוד"></td>
-<td width="50%"><img src="../assets/readme/pdf-convert.webp" alt="GenOffice Docs מציג מסמך Word שהומר באופן מקומי מקובץ ה-PDF של סיכום הרבעון של Helios, ונפתח בכרטיסייה שנייה לצד קובץ ה-PDF המקורי"></td>
+<td width="50%"><img src="../assets/readme/pdf-edit.webp" alt="Apex Office PDF: מצב 'ערוך טקסט' מתאר בקו כל בלוק טקסט בעמוד לעריכה במקום, בזמן שפאנל ה-AI עונה על שאלה בנוגע לדוח עם ציטוטים למספרי עמוד"></td>
+<td width="50%"><img src="../assets/readme/pdf-convert.webp" alt="Apex Office Docs מציג מסמך Word שהומר באופן מקומי מקובץ ה-PDF של סיכום הרבעון של Helios, ונפתח בכרטיסייה שנייה לצד קובץ ה-PDF המקורי"></td>
 </tr>
 <tr>
 <td dir="rtl"><b>ערכו בתוך העמוד</b> — מצב 'ערוך טקסט' מתאר בקו כל בלוק טקסט להקלדה חוזרת במקום; זרם התוכן נכתב מחדש באמצעות PDFium עם הגופנים המקוריים, ולא באמצעות הערת כיסוי. שאלו את ה-AI על דוח ארוך וקבלו תשובות עם ציטוטים למספרי עמוד.</td>
@@ -136,11 +136,11 @@ Windows ו-Linux. היא פותחת ושומרת קבצי `.docx`,‏ `.xlsx` ו
 brief) — משפט פתיחה, פלטת צבעים, טיפוגרפיה וכיווני סטייל — ולאחר מכן בונה
 קובץ `.html` אחד ועצמאי בהתאם לפרמטרים האלה.
 
-<img src="../assets/readme/html-restyle-motion.webp" alt="טיים-לאפס של GenOffice HTML משנה את העיצוב של דף הנחיתה של Lumen: בקשת Restyle אחת בפאנל הופכת את הדף הכהה של Midnight Studio לגרסת Solar Daybreak החמימה, בעוד כל קטע וכל התוכן נשארים במקומם" width="100%">
+<img src="../assets/readme/html-restyle-motion.webp" alt="טיים-לאפס של Apex Office HTML משנה את העיצוב של דף הנחיתה של Lumen: בקשת Restyle אחת בפאנל הופכת את הדף הכהה של Midnight Studio לגרסת Solar Daybreak החמימה, בעוד כל קטע וכל התוכן נשארים במקומם" width="100%">
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/html-ai.webp" alt="GenOffice HTML: עמוד נחיתה שנוצר עבור מנורת שולחן סולארית בכיוון העיצובי הכהה Midnight Studio, מוצג בתצוגה המקדימה החיה עם פאנל ה-AI מסכם את העמוד שבנה"></td>
+<td width="50%"><img src="../assets/readme/html-ai.webp" alt="Apex Office HTML: עמוד נחיתה שנוצר עבור מנורת שולחן סולארית בכיוון העיצובי הכהה Midnight Studio, מוצג בתצוגה המקדימה החיה עם פאנל ה-AI מסכם את העמוד שבנה"></td>
 <td width="50%"><img src="../assets/readme/html-restyle.webp" alt="אותו עמוד נחיתה של Lumen, שעוצב מחדש על ידי ה-AI לכיוון החם Solar Daybreak: רקע בצבע נייר, כותרות בגופן serif ומבטא כתום, בשמירה על כל הקטעים וכל התוכן הכתוב"></td>
 </tr>
 <tr>
@@ -150,8 +150,8 @@ brief) — משפט פתיחה, פלטת צבעים, טיפוגרפיה וכיו
 </table>
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/html-dashboard.webp" alt="GenOffice HTML: ממשק דשבורד אישי שנוצר לעצמאי/ת בתחום העיצוב, בסטייל 'לינן' חם, עם עמודת ניווט בצד שמאל, ברכה בגופן serif וארבעה כרטיסי מדדים"></td>
-<td width="50%"><img src="../assets/readme/html-report.webp" alt="GenOffice HTML: דוח נתונים על שוק הרכב החשמלי (EV) שנוצר בסטייל 'עיתון רחב' (broadsheet), עם כותרת ראשית בגופן serif, נתון כותרת של 17.3 מיליון ושורת סטטיסטיקות"></td>
+<td width="50%"><img src="../assets/readme/html-dashboard.webp" alt="Apex Office HTML: ממשק דשבורד אישי שנוצר לעצמאי/ת בתחום העיצוב, בסטייל 'לינן' חם, עם עמודת ניווט בצד שמאל, ברכה בגופן serif וארבעה כרטיסי מדדים"></td>
+<td width="50%"><img src="../assets/readme/html-report.webp" alt="Apex Office HTML: דוח נתונים על שוק הרכב החשמלי (EV) שנוצר בסטייל 'עיתון רחב' (broadsheet), עם כותרת ראשית בגופן serif, נתון כותרת של 17.3 מיליון ושורת סטטיסטיקות"></td>
 </tr>
 <tr>
 <td dir="rtl"><b>מוקאפים לממשק</b> — נקודת ההתחלה "דשבורד אישי" הופכת פרסונה לפריסה עובדת: עמודת ניווט, ברכה, sparkline של שעות לחיוב, כרטיסי חשבוניות וניצולת — הכול HTML אמיתי שאפשר להעביר למפתח.</td>
@@ -163,8 +163,8 @@ brief) — משפט פתיחה, פלטת צבעים, טיפוגרפיה וכיו
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/markdown-ai.webp" alt="GenOffice Markdown: פסקה מסומנת מציגה חלונית קופצת Ask AI עם הנחיה מוקלדת וצ'יפים של הצעות כמו Polish,‏ Make more concise,‏ Expand ו-Fix grammar, וגם כפתורי Send now ו-Add to queue"></td>
-<td width="50%"><img src="../assets/readme/markdown-render.webp" alt="GenOffice Markdown מציג מסמך הערות השקה עם טבלה, תרשים זרימה של Mermaid ורשימת משימות, עם פרומפטי הפתיחה של פאנל ה-AI בצד שמאל"></td>
+<td width="50%"><img src="../assets/readme/markdown-ai.webp" alt="Apex Office Markdown: פסקה מסומנת מציגה חלונית קופצת Ask AI עם הנחיה מוקלדת וצ'יפים של הצעות כמו Polish,‏ Make more concise,‏ Expand ו-Fix grammar, וגם כפתורי Send now ו-Add to queue"></td>
+<td width="50%"><img src="../assets/readme/markdown-render.webp" alt="Apex Office Markdown מציג מסמך הערות השקה עם טבלה, תרשים זרימה של Mermaid ורשימת משימות, עם פרומפטי הפתיחה של פאנל ה-AI בצד שמאל"></td>
 </tr>
 <tr>
 <td dir="rtl"><b>שאלו את ה-AI על קטע מסומן</b> — סמנו כל קטע וצ'יפ <b>Ask AI</b> יופיע: הקלידו הנחיה או בחרו הצעה, שלחו אותה עכשיו, או העמידו בתור כמה שינויים מעוגנים והריצו אותם במעבר אחד. אותה נקודת כניסה קיימת בכל אחת מהאפליקציות.</td>
@@ -177,23 +177,23 @@ brief) — משפט פתיחה, פלטת צבעים, טיפוגרפיה וכיו
 תמונה בתוך הטקסט. פאנל **Backlinks** מפרט את כל ההערות המצביעות על ההערה
 הפתוחה, ותצוגת **Graph** ממפה את הקישורים של ה-vault כולו.
 
-### 7 · CLI — סוכן הקוד שלכם מפעיל את GenOffice, על המחשב שלכם
+### 7 · CLI — סוכן הקוד שלכם מפעיל את Apex Office, על המחשב שלכם
 
-GenOffice מגיעה עם שורת פקודה `genoffice` ועם skill לסוכנים. התקינו את
+Apex Office מגיעה עם שורת פקודה `genoffice` ועם skill לסוכנים. התקינו את
 ה-skill, ו-Claude Code,‏ Codex,‏ Cursor,‏ Gemini CLI,‏ GitHub Copilot,‏ OpenCode
 או Windsurf יוכלו ליצור, להמיר, לקרוא ולערוך קבצי Office אמיתיים דרך אותם
 מנועים שמפעילים את האפליקציות, בלי לפתוח חלון.
 
-<img src="../assets/readme/cli-deck-in-app.webp" alt="GenOffice Slides מציג מצגת בת שמונה שקופיות על מערכת השמש שסוכן קוד בנה דרך שורת הפקודה genoffice: שקופית השער על הקנבס, שמונה תמונות ממוזערות בצד שמאל ופאנל ה-AI פתוח" width="100%">
+<img src="../assets/readme/cli-deck-in-app.webp" alt="Apex Office Slides מציג מצגת בת שמונה שקופיות על מערכת השמש שסוכן קוד בנה דרך שורת הפקודה genoffice: שקופית השער על הקנבס, שמונה תמונות ממוזערות בצד שמאל ופאנל ה-AI פתוח" width="100%">
 
 <table>
 <tr>
 <td width="50%"><img src="../assets/readme/cli-slides-grid.webp" alt="שמונה השקופיות המרונדרות של מצגת מערכת השמש זו לצד זו: שער, ציר זמן של החקר, ארבעה מספרים מרכזיים, תרשים עמודות של קוטרי כוכבי הלכת, עולמות סלעיים מול ענקים, המספר הבולט 99.8% של השמש, רשת ארבעת הענקים ומסקנות"></td>
-<td width="50%"><img src="../assets/readme/cli-integrations.webp" alt="הגדרות GenOffice, עמוד Integrations: ה-skill של genoffice מותקן ב-Claude Code, עם כפתורי Install ליד Codex ו-Cursor"></td>
+<td width="50%"><img src="../assets/readme/cli-integrations.webp" alt="הגדרות Apex Office, עמוד Integrations: ה-skill של genoffice מותקן ב-Claude Code, עם כפתורי Install ליד Codex ו-Cursor"></td>
 </tr>
 <tr>
 <td dir="rtl"><b>פרומפט אחד לסוכן שלכם</b> — ״בנו מצגת בת שמונה שקופיות על מערכת השמש.״ הסוכן קורא את ה-skill, כותב גיליון סטייל, מתווה ומפרט עמוד אחד לכל שקופית, מייצר את שתי התמונות עם <code>genoffice image</code>, ונותן ל-<code>genoffice slides check</code> לדחות כל דבר שגולש או חופף לפני ש-<code>genoffice create</code> מרכיב את ה-<code>.pptx</code> ו-<code>slides render</code> מחזיר PNG לכל שקופית להתרשמות.</td>
-<td dir="rtl"><b>התקינו פעם אחת, מתוך הגדרות → שילובים</b> — GenOffice מציגה את סוכני הקוד שהיא מוצאת על המחשב הזה וכותבת את ה-skill לכל אחד שתבחרו. או הורידו את ה-skill כ-zip, או הריצו <code>npx skills add genspark-ai/genoffice</code>. הפקודות ותהליך העבודה המלא נמצאים ב<a href="#command-line-and-agent-skill">שורת הפקודה וה-skill לסוכנים</a>.</td>
+<td dir="rtl"><b>התקינו פעם אחת, מתוך הגדרות → שילובים</b> — Apex Office מציגה את סוכני הקוד שהיא מוצאת על המחשב הזה וכותבת את ה-skill לכל אחד שתבחרו. או הורידו את ה-skill כ-zip, או הריצו <code>npx skills add genspark-ai/genoffice</code>. הפקודות ותהליך העבודה המלא נמצאים ב<a href="#command-line-and-agent-skill">שורת הפקודה וה-skill לסוכנים</a>.</td>
 </tr>
 </table>
 
@@ -209,8 +209,8 @@ skill ובלי לפתוח חלון, ולקבל 29 כלים בתוספת מדרי
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/mcp-deck-in-app.webp" alt="GenOffice Slides מציג את מצגת Renewable Energy 2026 בת שמונה השקופיות ש-Claude Code בנה דרך שרת ה-MCP של genoffice: שקופית השער עם תצלום של חוות רוח על הקנבס ושמונה תמונות ממוזערות בצד שמאל"></td>
-<td width="50%"><img src="../assets/readme/mcp-integrations.webp" alt="הגדרות GenOffice, עמוד Integrations, חלק ה-MCP: פקודת claude mcp add בשורה אחת עבור Claude Code, בלוק ה-JSON עבור Cursor,‏ Claude Desktop ולקוחות MCP אחרים, ואפשרות שרת ה-HTTP המקומי מתחת"></td>
+<td width="50%"><img src="../assets/readme/mcp-deck-in-app.webp" alt="Apex Office Slides מציג את מצגת Renewable Energy 2026 בת שמונה השקופיות ש-Claude Code בנה דרך שרת ה-MCP של genoffice: שקופית השער עם תצלום של חוות רוח על הקנבס ושמונה תמונות ממוזערות בצד שמאל"></td>
+<td width="50%"><img src="../assets/readme/mcp-integrations.webp" alt="הגדרות Apex Office, עמוד Integrations, חלק ה-MCP: פקודת claude mcp add בשורה אחת עבור Claude Code, בלוק ה-JSON עבור Cursor,‏ Claude Desktop ולקוחות MCP אחרים, ואפשרות שרת ה-HTTP המקומי מתחת"></td>
 </tr>
 <tr>
 <td dir="rtl"><b>פרומפט אחד, 38 קריאות לכלים, בלי shell</b> — ״בנו תדריך משקיעים בן שמונה שקופיות על אנרגיה מתחדשת ב-2026, עם תמונה אמיתית על השער ובכל מקום שתמונה עוזרת.״ הסוכן מושך את האיורים והתמונות עם <code>search</code>, שואל את <code>media</code> אם כל תמונה מועמדת היא תצלום אמיתי, קורא ל-<code>deck_start</code> עם גיליון סטייל ותווה, ואז <code>deck_page</code> פעם אחת לכל שקופית; כל עמוד נבדק מול התווה והפלטה לפני שהוא נשמר, <code>deck_build</code> מרכיב את ה-<code>.pptx</code>, <code>slides_audit</code> מחפש גלישות, <code>slides_render</code> מחזיר PNG לכל שקופית כתוכן תמונה שהמודל יכול להסתכל עליו, ו-<code>deck_replace</code> מתקן את שלושת העמודים שלא מצאו חן בעיניו.</td>
@@ -218,7 +218,7 @@ skill ובלי לפתוח חלון, ולקבל 29 כלים בתוספת מדרי
 </tr>
 </table>
 
-## למה GenOffice
+## למה Apex Office
 
 - **קוד פתוח**, ברישיון Apache-2.0, מפותח בפומבי ב-GitHub.
 - **שלך להרצה.** אפליקציות מקוריות ל-macOS, Windows ו-Linux; הקבצים נשארים
@@ -270,7 +270,7 @@ Parallel,‏ Keenable,‏ Exa או Firecrawl לחיפוש
 ## Skills
 
 Skill הוא קובץ `SKILL.md` שמסביר ל-AI איך לבצע היטב משימה אחת: דוח שבועי, NDA, מערך שיעור.
-GenOffice מגיע עם אוסף כזה ומקבל גם skills משלך, באותו פורמט שבו משתמשים סוכני הקוד.
+Apex Office מגיע עם אוסף כזה ומקבל גם skills משלך, באותו פורמט שבו משתמשים סוכני הקוד.
 
 - **הגדרות ← Skills.** **התקן** skill מומלץ, או **ייבא** תיקייה, zip או `SKILL.md` יחיד. בייבוא לא מורץ דבר. לשונית **הכול** מציגה את כל הקטלוג המומלץ במקום אחד, עם תיאורים בשפת האפליקציה.
 - **בשיחה.** פתח את תפריט **+** ליד תיבת ההקלדה בכל חלונית AI, בחר **Skills**, סמן אחד ושלח. ה-skill מצורף להודעה הזו בלבד.
@@ -283,7 +283,7 @@ GenOffice מגיע עם אוסף כזה ומקבל גם skills משלך, באו�
 
 כל מה שהאפליקציות יכולות לעשות לקובץ, שורת הפקודה `genoffice` יכולה לעשות
 מהטרמינל: לבדוק, להמיר, ליצור, לקרוא ולערוך Word,‏ Excel,‏ PowerPoint,‏ PDF,‏
-Markdown ו-HTML על אותם מנועים, ללא ממשק גרפי. היא מותקנת יחד עם GenOffice,
+Markdown ו-HTML על אותם מנועים, ללא ממשק גרפי. היא מותקנת יחד עם Apex Office,
 לא דורשת סביבת הרצה משלה, ולעולם לא שולחת מסמך לשום מקום. יחד עם **ה-skill
 לסוכנים** המצורף, היא הופכת סוכן קוד לעובד מסמכים שמייצר קבצי Office אמיתיים
 במקום קירובים ב-Markdown.
@@ -296,7 +296,7 @@ OpenCode ו-Windsurf ישר מהקופסה, עם כל סוכן אחר שקורא
 
 | איך                                    | מה קורה                                                                                                                                             |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **הגדרות → שילובים** באפליקציה         | מציג את הסוכנים שנמצאו על המחשב הזה; לחיצה אחת כותבת את ה-skill לכל אחד שתבחרו. כפתור **Update** מופיע כשגרסת GenOffice חדשה מגיעה עם skill מעודכן. |
+| **הגדרות → שילובים** באפליקציה         | מציג את הסוכנים שנמצאו על המחשב הזה; לחיצה אחת כותבת את ה-skill לכל אחד שתבחרו. כפתור **Update** מופיע כשגרסת Apex Office חדשה מגיעה עם skill מעודכן. |
 | **הורדה כ-zip** באותו העמוד            | המבנה ש-claude.ai, אפליקציות Claude לדסקטופ ועוזרים אחרים מקבלים כ-skill שהועלה.                                                                    |
 | `npx skills add genspark-ai/genoffice` | מתקין מהמאגר הזה לכל סוכן שתומך ב-skills.                                                                                                           |
 
@@ -330,7 +330,7 @@ genoffice open sales.xlsx                          # hand the result to the edit
 לפני שהשלב הבא התחיל:
 
 ```bash
-genoffice capabilities --json                        # which cloud tools GenOffice has configured
+genoffice capabilities --json                        # which cloud tools Apex Office has configured
 genoffice guide slides design                        # the deck workflow and layout library
 genoffice image "the eight planets in a row …" --aspect 16:9 --out deck/assets/cover.jpg
 genoffice slides check deck/outline.json --json      # 8 pages, no findings
@@ -358,7 +358,7 @@ genoffice open deck/solar-system.pptx
 | דרך                              | מה זה                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **A ·‏ `genoffice mcp`** (מומלץ) | שרת stdio שהעוזר מפעיל בעצמו; אין צורך ש-GenOffice יהיה פתוח. כלי אחד לכל פקודה (`info`,‏ `convert`,‏ `create_docx`,‏ `create_xlsx`,‏ `create_pptx`,‏ `create_pdf`,‏ `docs_read` / `docs_apply` / `docs_check`,‏ `sheet_*`,‏ `slides_*`,‏ `render`,‏ `guide`,‏ `search`,‏ `image`,‏ `media`,‏ `open`) ובנוסף תהליך המצגת המדורג `deck_start` → `deck_page` → `deck_build` → `deck_replace`. פעולות, מפרטים ו-Markdown מועברים ישירות בקריאה, כך שגם לקוח בלי מערכת קבצים עובד. |
-| **B · שרת HTTP מקומי**           | רץ בתוך אפליקציית GenOffice בכתובת `http://127.0.0.1:3093/mcp` (Streamable HTTP, עם SSE ישן לתאימות). הכלים שלו מפעילים לשונית עורך Word גלויה: `create_session`,‏ `insert_content`,‏ `replace_blocks`,‏ `apply_ops`,‏ `read_document`,‏ `save_session`, ואתם צופים במסמך מקבל צורה. כבוי כברירת מחדל; הפעילו אותו באותה חלונית הגדרות.                                                                                                                                        |
+| **B · שרת HTTP מקומי**           | רץ בתוך אפליקציית Apex Office בכתובת `http://127.0.0.1:3093/mcp` (Streamable HTTP, עם SSE ישן לתאימות). הכלים שלו מפעילים לשונית עורך Word גלויה: `create_session`,‏ `insert_content`,‏ `replace_blocks`,‏ `apply_ops`,‏ `read_document`,‏ `save_session`, ואתם צופים במסמך מקבל צורה. כבוי כברירת מחדל; הפעילו אותו באותה חלונית הגדרות.                                                                                                                                        |
 
 ```bash
 # Claude Code
@@ -422,7 +422,7 @@ deck_replace(dir, n, page) ×3 · slides_render(file, out)
 <details>
 <summary><b>התקנה ב-Linux</b></summary>
 
-קובץ ה-deb מותקן באמצעות apt — הוא מוריד את יחסי התלות ומוסיף את GenOffice
+קובץ ה-deb מותקן באמצעות apt — הוא מוריד את יחסי התלות ומוסיף את Apex Office
 לתפריט האפליקציות:
 
 ```bash
@@ -490,36 +490,36 @@ npm run dist:linux   # אריזת AppImage + deb + rpm עבור Linux
 
 ## קהילה
 
-GenOffice נמצאת בפיתוח פעיל, והמשוב שלכם מעצב אותה.
+Apex Office נמצאת בפיתוח פעיל, והמשוב שלכם מעצב אותה.
 
 - **דווחו על באג או בקשו פיצ'ר** ב-
   [GitHub Issues](https://github.com/genspark-ai/genoffice/issues).
-- **הצטרפו לצ'אט הקבוצתי של GenOffice** ב-
+- **הצטרפו לצ'אט הקבוצתי של Apex Office** ב-
   [GenTeam](https://genoffice.ai/join) כדי לדבר עם הצוות ועם משתמשים אחרים.
-- **תנו כוכב (star) למאגר** אם GenOffice שימושית לכם — זו הדרך הטובה ביותר
+- **תנו כוכב (star) למאגר** אם Apex Office שימושית לכם — זו הדרך הטובה ביותר
   לתמוך בפרויקט.
 
 ## שאלות נפוצות
 
 <details>
-<summary><b>האם GenOffice חינמית?</b></summary>
+<summary><b>האם Apex Office חינמית?</b></summary>
 
-כן. GenOffice חינמית ובקוד פתוח, בהתאם לרישיון Apache-2.0 — אין תקופת
+כן. Apex Office חינמית ובקוד פתוח, בהתאם לרישיון Apache-2.0 — אין תקופת
 ניסיון ואין מסלול בתשלום לאפליקציות עצמן.
 
 </details>
 
 <details>
-<summary><b>האם GenOffice יכולה לפתוח קבצי Microsoft Word,‏ Excel ו-PowerPoint?</b></summary>
+<summary><b>האם Apex Office יכולה לפתוח קבצי Microsoft Word,‏ Excel ו-PowerPoint?</b></summary>
 
-כן. GenOffice פותחת ושומרת קבצי `.docx`,‏ `.xlsx` ו-`.pptx` מקוריים.
+כן. Apex Office פותחת ושומרת קבצי `.docx`,‏ `.xlsx` ו-`.pptx` מקוריים.
 השמירה נעשית בשמירה על הבייטים: חלקים בקובץ שלא נגעתם בהם נכתבים בחזרה בית
 לבית, כך שהמסמכים ממשיכים לעבוד ב-Microsoft Office.
 
 </details>
 
 <details>
-<summary><b>האם GenOffice עובדת באופן לא מקוון?</b></summary>
+<summary><b>האם Apex Office עובדת באופן לא מקוון?</b></summary>
 
 עריכת מסמכים מתבצעת באופן מקומי מלא — קבצים לעולם לא עוזבים את המכשיר שלכם
 כדי להיפתח, להיערך, להישמר או להיות מומרים. תכונות ה-AI (סוכנים, חיפוש,
@@ -529,7 +529,7 @@ GenOffice נמצאת בפיתוח פעיל, והמשוב שלכם מעצב או�
 </details>
 
 <details>
-<summary><b>האם GenOffice יכולה לערוך קבצי PDF?</b></summary>
+<summary><b>האם Apex Office יכולה לערוך קבצי PDF?</b></summary>
 
 כן — עריכה אמיתית של טקסט ותמונות ב-PDF, שכותבת מחדש את זרם התוכן של העמוד
 עם שימור הגופנים המקוריים, ולא באמצעות הערות כיסוי.
@@ -537,7 +537,7 @@ GenOffice נמצאת בפיתוח פעיל, והמשוב שלכם מעצב או�
 </details>
 
 <details>
-<summary><b>האם GenOffice יכולה להמיר PDF ל-Word,‏ Excel או PowerPoint?</b></summary>
+<summary><b>האם Apex Office יכולה להמיר PDF ל-Word,‏ Excel או PowerPoint?</b></summary>
 
 כן — הכול באופן מקומי במכשיר: חילוץ תווים באמצעות PDFium, בשילוב ניתוח
 פריסה מבוסס גאומטריה, בלי שירות cloud ובלי העלאה. גם עמודים סרוקים מכוסים:
@@ -549,7 +549,7 @@ GenOffice נמצאת בפיתוח פעיל, והמשוב שלכם מעצב או�
 <details>
 <summary><b>האם אפשר להשתמש במודל AI או במפתח API משלי?</b></summary>
 
-כן. מעבר להתחברות ל-Genspark שאינה דורשת מפתח, GenOffice מאפשרת להביא מפתח
+כן. מעבר להתחברות ל-Genspark שאינה דורשת מפתח, Apex Office מאפשרת להביא מפתח
 משלכם עבור Claude,‏ OpenAI,‏ Gemini,‏ DeepSeek,‏ Kimi,‏ GLM,‏ Qwen,‏ Doubao,‏
 MiniMax,‏ Grok,‏ Mistral,‏ OpenRouter,‏ Requesty ו-OpenCode Zen/Go, וכן כל endpoint
 תואם-OpenAI — כולל שרתי מודלים מקומיים. חיפוש, יצירת תמונות וניתוח
@@ -568,7 +568,7 @@ AI מפורשת — כפתור ברצועה (ribbon) או פריט בתפריט 
 </details>
 
 <details>
-<summary><b>האם GenOffice יכולה להמיר HTML ל-Word?</b></summary>
+<summary><b>האם Apex Office יכולה להמיר HTML ל-Word?</b></summary>
 
 כן — פעולת Export as Word באפליקציית ה-HTML מייצרת קובץ `.docx` מקורי
 הניתן לעריכה, הכול באופן מקומי במכשיר. העמוד מוצג באמצעות Chromium המובנה
@@ -579,9 +579,9 @@ KPI, שדות טופס ורקעי עמוד; רק אלמנטים ויזואליי
 </details>
 
 <details>
-<summary><b>האם אפשר להפעיל את GenOffice מתוך Claude Code,‏ Codex,‏ Cursor או מסקריפט?</b></summary>
+<summary><b>האם אפשר להפעיל את Apex Office מתוך Claude Code,‏ Codex,‏ Cursor או מסקריפט?</b></summary>
 
-כן. GenOffice מתקינה שורת פקודה `genoffice` שמריצה את אותם מנועים ללא ממשק
+כן. Apex Office מתקינה שורת פקודה `genoffice` שמריצה את אותם מנועים ללא ממשק
 גרפי: בדיקה, המרה, יצירה, קריאה ועריכה של מסמכים מהטרמינל או מסקריפט, עם
 פלט `--json` לתוכנות. ה-skill המצורף לסוכנים מלמד את Claude Code,‏ Codex,‏
 Cursor,‏ Gemini CLI,‏ GitHub Copilot,‏ OpenCode ו-Windsurf להשתמש בה; התקינו
@@ -591,13 +591,13 @@ Cursor,‏ Gemini CLI,‏ GitHub Copilot,‏ OpenCode ו-Windsurf להשתמש �
 </details>
 
 <details>
-<summary><b>האם GenOffice אוספת מידע?</b></summary>
+<summary><b>האם Apex Office אוספת מידע?</b></summary>
 
 בגרסאות הרשמיות הארוזות נשלח כברירת מחדל מידע אנליטי מוגבל על השימוש,
 ואפשר לבטל את הדיווח בכל עת תחת Settings → General. הנתונים האנליטיים
 לעולם לא כוללים תוכן מסמכים, שמות קבצים, נתיבי קבצים, זהות חשבון או כתובות
 אימייל. לפירוט המלא של האירועים והנתונים המדווחים ראו
-[GenOffice Privacy](../../PRIVACY.md).
+[Apex Office Privacy](../../PRIVACY.md).
 
 </details>
 
@@ -609,7 +609,7 @@ Cursor,‏ Gemini CLI,‏ GitHub Copilot,‏ OpenCode ו-Windsurf להשתמש �
 
 ## תודות
 
-GenOffice לא הייתה יכולה להתקיים בלי הפרויקטים הבאים בקוד פתוח:
+Apex Office לא הייתה יכולה להתקיים בלי הפרויקטים הבאים בקוד פתוח:
 
 - [Electron](https://www.electronjs.org/) — סביבת ההרצה לדסקטופ של כל
   האפליקציות.
@@ -655,10 +655,10 @@ MIT/Apache-2.0/BSD-3-Clause/OFL.
 
 ## רישיון
 
-GenOffice מופצת ברישיון [Apache License 2.0](../../LICENSE), עם חריג אחד:
+Apex Office מופצת ברישיון [Apache License 2.0](../../LICENSE), עם חריג אחד:
 התיקייה `ee/` שמורה למודולים עסקיים (enterprise) עתידיים, והיא כפופה
-ל-[GenOffice Enterprise License](../../ee/LICENSE).
+ל-[Apex Office Enterprise License](../../ee/LICENSE).
 
-השמות והלוגואים GenOffice ו-Genspark הם סימנים מסחריים של Mainfunc, Inc.
+השמות והלוגואים Apex Office ו-Genspark הם סימנים מסחריים של Mainfunc, Inc.
 רישיון Apache-2.0 אינו מעניק הרשאה לשימוש בהם (ראו סעיף 6); על forks
 להשתמש במיתוג משלהם.

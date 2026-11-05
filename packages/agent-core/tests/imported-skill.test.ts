@@ -3,7 +3,7 @@ import { classifySkill, parseSkillFrontmatter, SKILL_FORMAT_TOKENS } from '../sr
 
 const SKILL = `---
 name: genoffice
-description: Create, convert, read and edit Office documents locally with GenOffice's command line.
+description: Create, convert, read and edit Office documents locally with Apex Office's command line.
 metadata:
   version: 2.67.1
   cli: '>=0.9.0'
@@ -71,7 +71,7 @@ describe('parseSkillFrontmatter', () => {
 })
 
 describe('classifySkill', () => {
-  it('keeps a skill that names a format GenOffice opens', () => {
+  it('keeps a skill that names a format Apex Office opens', () => {
     const out = classifySkill('genoffice', 'Create and convert docx, xlsx, pptx and pdf files')
     expect(out.relevant).toBe(true)
     expect(out.matched).toEqual(['docx', 'pdf', 'pptx', 'xlsx'])
@@ -96,7 +96,7 @@ describe('classifySkill', () => {
     expect(classifySkill('s', 'Edit a \ubb38\uc11c').relevant).toBe(true)
   })
 
-  it('drops a skill about work GenOffice does not do', () => {
+  it('drops a skill about work Apex Office does not do', () => {
     const out = classifySkill('k8s-deploy', 'Deploy to Kubernetes, roll back releases, read logs')
     expect(out.relevant).toBe(false)
     expect(out.matched).toEqual([])

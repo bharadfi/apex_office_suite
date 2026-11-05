@@ -19,7 +19,7 @@ function macStatusJson(
     me: ME,
     types: OFFICE_TYPES.map((t) => {
       const id = owner(t.uti)
-      return { uti: t.uti, id, name: id === ME ? 'GenOffice' : id ? name : null }
+      return { uti: t.uti, id, name: id === ME ? 'Apex Office' : id ? name : null }
     }),
   })
 }

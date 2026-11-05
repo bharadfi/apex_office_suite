@@ -5,7 +5,7 @@ import { defaultRegistry, runCli } from '../src/cli'
 import { commandHelp } from '../src/registry'
 
 // Help/registry/README/skill sync: every command and option in the registry must
-// surface in `genoffice help`, in the CLI README examples and in the genoffice
+// surface in `apexoffice help`, in the CLI README examples and in the genoffice
 // agent skill, so adding a flag without documenting it fails loudly instead of
 // drifting. Fast and deterministic: in-process runCli plus file reads only.
 
@@ -57,7 +57,7 @@ async function helpFor(argv: string[]): Promise<string> {
 /**
  * Host-only commands the agent skill legitimately omits: `install-cli` puts the
  * launcher on the PATH, not a document workflow an agent reads the skill for.
- * It must stay in `genoffice help` and the CLI README. Enforced in both
+ * It must stay in `apexoffice help` and the CLI README. Enforced in both
  * directions below, so extending the skill (or dropping a command) fails loudly
  * instead of silently changing coverage.
  */
@@ -65,7 +65,7 @@ const SKILL_COMMAND_OMISSIONS = new Map([['install-cli', 'host setup, not a docu
 
 /**
  * Flags the README example fences legitimately omit: the fences show one common
- * invocation per command while `genoffice help <command>` is the complete
+ * invocation per command while `apexoffice help <command>` is the complete
  * reference. Enforced exactly like the skill omissions: a new flag must gain a
  * fence example or be added here deliberately, and removing a flag without
  * updating this set fails.
@@ -118,15 +118,15 @@ describe('cli help/registry/readme/skill sync', () => {
     }
   })
 
-  it('lists every registry command and global flag in genoffice help', async () => {
+  it('lists every registry command and global flag in apexoffice help', async () => {
     const global = norm(await helpFor(['help']))
     const names = defaultRegistry()
       .list()
       .map((d) => d.name)
     const missing = names.filter((n) => !global.includes(n))
-    expect(missing, `genoffice help is missing commands: ${missing.join(', ')}`).toEqual([])
+    expect(missing, `apexoffice help is missing commands: ${missing.join(', ')}`).toEqual([])
     for (const flag of ['--json', '--help', '--version']) {
-      expect(global.includes(flag), `genoffice help is missing global flag ${flag}`).toBe(true)
+      expect(global.includes(flag), `apexoffice help is missing global flag ${flag}`).toBe(true)
     }
   })
 
@@ -164,7 +164,7 @@ describe('cli help/registry/readme/skill sync', () => {
     ).toEqual([])
   })
 
-  it('covers every command in the genoffice skill except documented host-only ones', () => {
+  it('covers every command in the apexoffice skill except documented host-only ones', () => {
     const body = norm(skillFile.text)
     const names = defaultRegistry()
       .list()

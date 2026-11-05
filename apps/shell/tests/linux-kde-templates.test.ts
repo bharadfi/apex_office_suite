@@ -26,9 +26,9 @@ const TEMPLATE_DIR = join(BUILD_DIR, 'shell-new')
 // post-install script installs one blank document per format there
 // (genoffice#2384); the menu label is the installed file name.
 const TEMPLATES = {
-  docx: 'GenOffice Document.docx',
-  xlsx: 'GenOffice Spreadsheet.xlsx',
-  pptx: 'GenOffice Presentation.pptx',
+  docx: 'Apex Office Document.docx',
+  xlsx: 'Apex Office Spreadsheet.xlsx',
+  pptx: 'Apex Office Presentation.pptx',
 } as const
 
 const INSTALL_SCRIPT = join(BUILD_DIR, 'linux-after-install.sh')
@@ -106,7 +106,7 @@ describe.skipIf(process.platform === 'win32')('Linux post-install scripts in a s
   // test needs no root and touches no real system directory.
   function makeRoot(withPayload: boolean) {
     const root = mkdtempSync(join(tmpdir(), 'genoffice-kde-templates-'))
-    const app = join(root, 'opt', 'GenOffice')
+    const app = join(root, 'opt', 'Apex Office')
     const bin = join(root, 'usr', 'bin')
     const templates = join(root, 'usr', 'share', 'templates')
     const launcher = join(app, 'resources', 'cli', 'genoffice')

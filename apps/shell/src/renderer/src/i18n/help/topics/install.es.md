@@ -1,4 +1,4 @@
-# Instalar GenOffice
+# Instalar Apex Office
 
 Cada versión publicada está en la [página de versiones](https://github.com/genspark-ai/genoffice/releases/latest). Todas salen de `main`; los instaladores de macOS y Windows están firmados.
 
@@ -18,11 +18,11 @@ Las versiones anteriores siguen en la página de versiones.
 
 ## En macOS
 
-Abra el `.dmg` y arrastre **GenOffice** a Aplicaciones. En una compilación para Intel, el primer arranque le pide confirmar la apertura: haga clic derecho en la aplicación dentro de Aplicaciones ▸ Abrir. Es Gatekeeper:topándose con una imagen de disco que parece no estar firmada, no una descarga dañada.
+Abra el `.dmg` y arrastre **Apex Office** a Aplicaciones. En una compilación para Intel, el primer arranque le pide confirmar la apertura: haga clic derecho en la aplicación dentro de Aplicaciones ▸ Abrir. Es Gatekeeper:topándose con una imagen de disco que parece no estar firmada, no una descarga dañada.
 
 ## En Windows
 
-Ejecute el instalador `.exe`. Coloca GenOffice en el menú Inicio y registra `.docx`, `.xlsx`, `.pptx`, `.pdf` y formatos similares como aplicaciones predeterminadas, de modo que al hacer doble clic en un archivo este se abra en GenOffice.
+Ejecute el instalador `.exe`. Coloca Apex Office en el menú Inicio y registra `.docx`, `.xlsx`, `.pptx`, `.pdf` y formatos similares como aplicaciones predeterminadas, de modo que al hacer doble clic en un archivo este se abra en Apex Office.
 
 ## En Linux
 
@@ -64,4 +64,4 @@ Las tres envuelven los artefactos publicados en lugar de recompilar la aplicaci�
 
 ## La línea de comandos viene incluida
 
-Cada instalación trae un comando `genoffice` que habla con los mismos motores que la ventana, de modo que ambos nunca discrepan sobre un archivo. En macOS y Windows está dentro del paquete de la aplicación; `genoffice install-cli` lo pone en su `PATH`. Vea **Línea de comandos y agentes** para saber qué puede hacer.
+Cada instalación trae un comando `genoffice` que habla con los mismos motores que la ventana, de modo que ambos nunca discrepan sobre un archivo. En macOS y Windows está dentro del paquete de la aplicación; `apexoffice install-cli` lo pone en su `PATH`. Vea **Línea de comandos y agentes** para saber qué puede hacer.

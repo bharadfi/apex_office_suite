@@ -75,8 +75,8 @@ export function opSuggestion(f: OpFailure, domain: 'slides' | 'docs' | 'sheets')
   switch (f.reason) {
     case 'unknown_op':
       return f.did_you_mean
-        ? `did you mean "${f.did_you_mean}"? (\`genoffice guide ${domain}\` lists every op), then resend the whole batch`
-        : `run \`genoffice guide ${domain}\` for the op list, then resend the whole batch`
+        ? `did you mean "${f.did_you_mean}"? (\`apexoffice guide ${domain}\` lists every op), then resend the whole batch`
+        : `run \`apexoffice guide ${domain}\` for the op list, then resend the whole batch`
     case 'out_of_range':
       return `use an index between ${f.valid_range![0]} and ${f.valid_range![1]} (\`genoffice ${domain} read <file> --json\` lists the current ones), then resend the whole batch`
     case 'target_not_found':

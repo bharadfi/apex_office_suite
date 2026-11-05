@@ -1,4 +1,4 @@
-# Instalace GenOffice
+# Instalace Apex Office
 
 Každá sestavení je zveřejněno na [stránce Releases](https://github.com/genspark-ai/genoffice/releases/latest). Všechna pocházejí z `main`; instalátory pro macOS a Windows jsou podepsané.
 
@@ -18,11 +18,11 @@ Starší verze zůstávají na stránce Releases.
 
 ## V systému macOS
 
-Otevřete soubor `.dmg` a přetáhněte **GenOffice** do složky Aplikace. U sestavení Intel vás při prvním spuštění požádá o potvrzení otevření: klikněte na aplikaci v Aplikacích pravým tlačítkem ▸ Otevřít. To je Gatekeeper, který narazí na obraz disku, který vypadá jako nepodepsaný, a ne poškozené stažení.
+Otevřete soubor `.dmg` a přetáhněte **Apex Office** do složky Aplikace. U sestavení Intel vás při prvním spuštění požádá o potvrzení otevření: klikněte na aplikaci v Aplikacích pravým tlačítkem ▸ Otevřít. To je Gatekeeper, který narazí na obraz disku, který vypadá jako nepodepsaný, a ne poškozené stažení.
 
 ## V systému Windows
 
-Spusťte instalátor `.exe`. Umístí GenOffice do nabídky Start a zaregistruje `.docx`, `.xlsx`, `.pptx`, `.pdf` a podobné, takže dvojklik na soubor jej otevře.
+Spusťte instalátor `.exe`. Umístí Apex Office do nabídky Start a zaregistruje `.docx`, `.xlsx`, `.pptx`, `.pdf` a podobné, takže dvojklik na soubor jej otevře.
 
 ## V systému Linux
 
@@ -64,4 +64,4 @@ Všechny tři obalí zveřejněné artefakty místo toho, aby aplikaci znovu ses
 
 ## Příkazová řádka je součástí
 
-Každá instalace obsahuje příkaz `genoffice`, který mluví se stejnými enginy jako okno, takže se nikdy neshodnou v tom, jaký soubor je. V systémech macOS a Windows je uvnitř balíčku aplikace; `genoffice install-cli` jej umístí do vaší `PATH`. Co umí, se dozvíte v kapitole **Příkazová řádka a agenti**.
+Každá instalace obsahuje příkaz `genoffice`, který mluví se stejnými enginy jako okno, takže se nikdy neshodnou v tom, jaký soubor je. V systémech macOS a Windows je uvnitř balíčku aplikace; `apexoffice install-cli` jej umístí do vaší `PATH`. Co umí, se dozvíte v kapitole **Příkazová řádka a agenti**.

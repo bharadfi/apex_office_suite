@@ -8,8 +8,8 @@ vi.mock('electron', () => ({ app: { isPackaged: false, getVersion: () => '0.0.0'
 
 import { isEphemeralInstall, launcherFilePath, writeLauncherFile } from '../src/main/cli-link'
 
-describe('genoffice launcher file', () => {
-  it('lives in the genoffice auth directory, overridable like auth.json', () => {
+describe('apexoffice launcher file', () => {
+  it('lives in the apexoffice auth directory, overridable like auth.json', () => {
     expect(launcherFilePath({})).toBe(join(process.env.HOME ?? '', '.genoffice', 'launcher'))
     expect(launcherFilePath({ GENOFFICE_AUTH_DIR: '/tmp/x' })).toBe(join('/tmp/x', 'launcher'))
   })
@@ -24,8 +24,8 @@ describe('genoffice launcher file', () => {
       false,
     )
     expect(statSync(file).mtimeMs).toBe(before)
-    expect(writeLauncherFile(file, 'C:\\Programs\\GenOffice\\resources\\genoffice')).toBe(true)
-    expect(readFileSync(file, 'utf-8')).toBe('C:\\Programs\\GenOffice\\resources\\genoffice\n')
+    expect(writeLauncherFile(file, 'C:\\Programs\\Apex Office\\resources\\genoffice')).toBe(true)
+    expect(readFileSync(file, 'utf-8')).toBe('C:\\Programs\\Apex Office\\resources\\genoffice\n')
   })
 
   it('treats dmg and AppImage mounts as temporary', () => {

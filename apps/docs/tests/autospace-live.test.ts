@@ -290,8 +290,8 @@ describe('balanced-space advance', () => {
 
   it('draws the wrapped space from the fixed half-width (0.5em) space face', () => {
     const rule = /\.doc-balanced-space\s*\{([^}]*)\}/.exec(read('../src/renderer/styles.css'))
-    expect(rule?.[1]).toContain("font-family: 'GenOffice Balanced Space'")
-    const face = /font-family: 'GenOffice Balanced Space';([^}]*)\}/.exec(
+    expect(rule?.[1]).toContain("font-family: 'Apex Office Balanced Space'")
+    const face = /font-family: 'Apex Office Balanced Space';([^}]*)\}/.exec(
       read('../src/renderer/fonts/fonts.css'),
     )
     expect(face?.[1]).toContain('GenOfficeBalancedSpace.woff2')

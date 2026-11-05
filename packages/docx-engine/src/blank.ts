@@ -543,7 +543,7 @@ export interface BlankDocxOptions {
   paperSize?: BlankPaperSize
   /** Creation stamp of docProps/core.xml; defaults to now (tests pin a fixed date). */
   createdAt?: Date
-  /** docProps/app.xml Application; defaults to "GenOffice". */
+  /** docProps/app.xml Application; defaults to "Apex Office". */
   application?: string
   /** docProps/app.xml AppVersion; defaults to the docx-engine package version. */
   appVersion?: string

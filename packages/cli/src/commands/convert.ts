@@ -40,7 +40,7 @@ const NODE_ROUTES: Record<string, readonly string[]> = {
 }
 
 /**
- * Conversions the GenOffice binary runs for us in its hidden headless-export
+ * Conversions the Apex Office binary runs for us in its hidden headless-export
  * mode: anything that needs an app renderer (page layout for pdf, the Word
  * editor's HTML export, html2docx). Mirrors HEADLESS_TARGETS in the shell.
  */
@@ -72,7 +72,7 @@ function appTarget(from: string, to: string): AppExportTarget | null {
 
 export const convertCommand: CommandDef = {
   name: 'convert',
-  summary: 'Convert a document to another format using the GenOffice engines.',
+  summary: 'Convert a document to another format using the Apex Office engines.',
   usage: 'convert <file> --to <format> [--out <path>] [--force] [--password <pw>] [--sheet <name>]',
   options: [
     { name: 'to', value: 'format', description: 'target format: ' + describeRoutes() },
@@ -160,7 +160,7 @@ async function run(
   const viaApp = appTarget(from, to)
   if (viaApp) {
     const r = await exportViaApp(input, viaApp, output, { env: ctx.env, log: ctx.log })
-    return { detail: { via: 'genoffice --headless-export', summary: r.summary } }
+    return { detail: { via: 'apexoffice --headless-export', summary: r.summary } }
   }
   if (from === 'pdf') {
     const r = await convertPdfOrThrow(input, to as PdfTarget, password, ctx)
@@ -219,7 +219,7 @@ async function docxToMarkdown(docx: Uint8Array, ctx: CommandContext): Promise<Pr
       ctx.warn({
         code: 'images_dropped',
         message: `${exported.skipped.images} image(s) have no Markdown form and were dropped`,
-        suggestion: 'use `genoffice docs read --html` when the images matter',
+        suggestion: 'use `apexoffice docs read --html` when the images matter',
       })
     }
     return {
@@ -259,7 +259,7 @@ async function convertPdfViaDocx(
   try {
     writeFileSync(docxPath, pdf.bytes)
     const r = await exportViaApp(docxPath, 'html', output, { env: ctx.env, log: ctx.log })
-    return { detail: { ...via, via: 'genoffice --headless-export', summary: r.summary } }
+    return { detail: { ...via, via: 'apexoffice --headless-export', summary: r.summary } }
   } finally {
     try {
       rmSync(dir, { recursive: true, force: true })

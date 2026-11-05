@@ -502,7 +502,7 @@ describe('webSearch (Keenable)', () => {
     expect(urls).toEqual(['https://api.keenable.ai/v1/search/public'])
     expect(init?.headers).toEqual({
       'Content-Type': 'application/json',
-      'X-Keenable-Title': 'GenOffice',
+      'X-Keenable-Title': 'Apex Office',
     })
     expect(JSON.parse(String(init?.body))).toEqual({ query: 'q', max_results: 5 })
     expect(r.method).toBe('keenable')

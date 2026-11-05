@@ -3,17 +3,17 @@
 Elke installatie bevat een `genoffice`-commando dat dezelfde engines aanstuurt als het venster — dezelfde parsers, dezelfde writer, dezelfde renderer. Een bestand dat de app opslaat en een bestand dat de opdracht schrijft zijn hetzelfde bestand, en een controle die het AI-paneel van de app doorstaat, doorstaat de opdracht ook.
 
 ```sh
-genoffice --help          # every command
-genoffice guide slides    # the op reference, for writing your own
+apexoffice --help          # every command
+apexoffice guide slides    # the op reference, for writing your own
 ```
 
 Dat is het hele oppervlak op één scherm — elke opdracht met een regel die zegt wat hij doet, en daarna de globale opties en de exitcodes:
 
-![De echte uitvoer van genoffice --help: de versiebanner, elke opdracht met een beschrijving op één regel, en de globale opties en de exitcodes](img/cli.png)
+![De echte uitvoer van apexoffice --help: de versiebanner, elke opdracht met een beschrijving op één regel, en de globale opties en de exitcodes](img/cli.png)
 
 ## De opdracht bemachtigen
 
-macOS en Windows leveren het mee in de app-bundel. Om het bij naam aan te roepen, voer eenmaal `genoffice install-cli` uit: het koppelt de gebundelde binary in een map op uw PATH — op macOS `/usr/local/bin` zolang dat geen Homebrew-prefix is (Homebrews eigen mappen worden nooit aangeraakt), anders uw gebruikers-bin — of in uw gebruikers-`PATH` op Windows.
+macOS en Windows leveren het mee in de app-bundel. Om het bij naam aan te roepen, voer eenmaal `apexoffice install-cli` uit: het koppelt de gebundelde binary in een map op uw PATH — op macOS `/usr/local/bin` zolang dat geen Homebrew-prefix is (Homebrews eigen mappen worden nooit aangeraakt), anders uw gebruikers-bin — of in uw gebruikers-`PATH` op Windows.
 
 ## De opdrachten die je moet kennen
 
@@ -37,20 +37,20 @@ macOS en Windows leveren het mee in de app-bundel. Om het bij naam aan te roepen
 
 ## Bewerken: docs, sheets, slides
 
-`genoffice docs`, `genoffice sheet` en `genoffice slides` lezen en bewerken via hetzelfde schrijfpad als de app, en ze delen één woordenlijst: een **op** is één bewerking, en een **spec** is een lijst van ops die in volgorde worden toegepast.
+`apexoffice docs`, `apexoffice sheet` en `apexoffice slides` lezen en bewerken via hetzelfde schrijfpad als de app, en ze delen één woordenlijst: een **op** is één bewerking, en een **spec** is een lijst van ops die in volgorde worden toegepast.
 
 ```sh
-genoffice sheet read report.xlsx
-genoffice slides apply deck.pptx --ops ops.json --dry-run
-genoffice docs apply brief.docx --ops ops.json
+apexoffice sheet read report.xlsx
+apexoffice slides apply deck.pptx --ops ops.json --dry-run
+apexoffice docs apply brief.docx --ops ops.json
 ```
 
 `--dry-run` meldt wat een batch zou doen en schrijft niets, wat de goedkoopste manier is om een spec te controleren voordat die landt. Het AI-paneel in de app draait op precies deze ops, dus alles wat je het kunt vragen kun je ook scripten.
 
 ## Model Context Protocol
 
-`genoffice mcp` biedt elke opdracht aan als MCP-tool, en `genoffice mcp install <agent|all>` registreert die in de eigen configuratie van een coding agent. Die kant staat in **Verbinden met een coding agent**.
+`apexoffice mcp` biedt elke opdracht aan als MCP-tool, en `apexoffice mcp install <agent|all>` registreert die in de eigen configuratie van een coding agent. Die kant staat in **Verbinden met een coding agent**.
 
 ## Wat de opdracht niet doet
 
-Het leest en schrijft het bestand. Het is niet de app: er is geen venster, en het updatevenster in de app geldt hier niet. Alles wat het venster nodig heeft — het AI-paneel, de kwaliteitscontrole over een gerenderde slide — moet wachten tot je het bestand opent. `genoffice render` levert je de pixels zonder venster, en `genoffice slides` controleert de opmaak van een deck zelf.
+Het leest en schrijft het bestand. Het is niet de app: er is geen venster, en het updatevenster in de app geldt hier niet. Alles wat het venster nodig heeft — het AI-paneel, de kwaliteitscontrole over een gerenderde slide — moet wachten tot je het bestand opent. `apexoffice render` levert je de pixels zonder venster, en `apexoffice slides` controleert de opmaak van een deck zelf.

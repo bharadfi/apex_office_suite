@@ -2,12 +2,12 @@
   <a href="https://genoffice.ai/">
     <picture>
       <source srcset="../assets/readme/hero-dark.webp" media="(prefers-color-scheme: dark)">
-      <img src="../assets/readme/hero.webp" alt="GenOffice — het open-source AI-kantoorpakket: Docs, Sheets, Slides, PDF, Markdown en HTML met een ingebouwd AI-paneel" width="100%">
+      <img src="../assets/readme/hero.webp" alt="Apex Office — het open-source AI-kantoorpakket: Docs, Sheets, Slides, PDF, Markdown en HTML met een ingebouwd AI-paneel" width="100%">
     </picture>
   </a>
 </p>
 
-<h1 align="center">GenOffice</h1>
+<h1 align="center">Apex Office</h1>
 
 <p align="center"><b>De eerste volwaardige open-source AI-officesuite ter wereld.</b><br>
 Word-, Excel-, PowerPoint- en PDF-bestanden, bewerkt door jou en je AI, opgeslagen in de echte formaten.</p>
@@ -31,7 +31,7 @@ Word-, Excel-, PowerPoint- en PDF-bestanden, bewerkt door jou en je AI, opgeslag
   <a href="../../PRIVACY.md"><b>Privacy</b></a>
 </p>
 
-GenOffice is een gratis, open-source alternatief voor Microsoft Office voor
+Apex Office is een gratis, open-source alternatief voor Microsoft Office voor
 macOS, Windows en Linux. Het opent en bewaart native `.docx`-, `.xlsx`- en
 `.pptx`-bestanden, bewerkt PDF, Markdown en HTML, en zet bij elk document een
 AI-agent — geen los chatvenstertje erbij geplakt, maar een editor die het
@@ -81,8 +81,8 @@ prompt die je in het paneel kunt lezen.
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/docs-report.webp" alt="GenOffice Docs toont een pagina van een jaarverslag in twee kolommen met een cover-afbeelding over de volledige breedte, een KPI-tabel met arcering, koptekst en voettekst, op 80% zoom met het AI-paneel ingeklapt"></td>
-<td width="50%"><img src="../assets/readme/docs-ai.webp" alt="GenOffice Docs: een bedrijfsoverzicht met een bannerafbeelding; de AI heeft de Overview compacter gemaakt en een nieuwe sectie met opsommingstekens toegevoegd, en het paneel biedt een terugdraaifunctie met één klik"></td>
+<td width="50%"><img src="../assets/readme/docs-report.webp" alt="Apex Office Docs toont een pagina van een jaarverslag in twee kolommen met een cover-afbeelding over de volledige breedte, een KPI-tabel met arcering, koptekst en voettekst, op 80% zoom met het AI-paneel ingeklapt"></td>
+<td width="50%"><img src="../assets/readme/docs-ai.webp" alt="Apex Office Docs: een bedrijfsoverzicht met een bannerafbeelding; de AI heeft de Overview compacter gemaakt en een nieuwe sectie met opsommingstekens toegevoegd, en het paneel biedt een terugdraaifunctie met één klik"></td>
 </tr>
 <tr>
 <td><b>Opent het bestand precies zoals Word het opmaakt</b> — secties in twee kolommen, beeldvullende afbeeldingen, tabellen met arcering, koppen en voetteksten, paginering op basis van Words regelmetriek. Stijlen, opmerkingen, tracked changes, vergelijkingen, inkt en content controls komen ongewijzigd terug. Het tabblad <b>Mailings</b> maakt van het document een samenvoegsjabloon: kies een ontvangerslijst als <code>.xlsx</code> of <code>.csv</code>, voeg echte <code>MERGEFIELD</code>s in, bekijk per record een voorbeeld en voeg samen tot één document of één <code>.docx</code> per record.</td>
@@ -94,8 +94,8 @@ prompt die je in het paneel kunt lezen.
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/sheets-ai.webp" alt="GenOffice Sheets: de AI heeft een Summary-blad toegevoegd met omzet per regio en categorie via SUMIF-formules, plus een kolomdiagram, en meldt 43 toegepaste wijzigingen met een knop om ongedaan te maken"></td>
-<td width="50%"><img src="../assets/readme/sheets-qa.webp" alt="GenOffice Sheets: gevraagd welke regio de omzet in Q2 aanvoerde, antwoordt de AI Europa met de uitsplitsing per categorie en verwijst als links naar de cellen die het heeft gebruikt, naast het Orders-blad"></td>
+<td width="50%"><img src="../assets/readme/sheets-ai.webp" alt="Apex Office Sheets: de AI heeft een Summary-blad toegevoegd met omzet per regio en categorie via SUMIF-formules, plus een kolomdiagram, en meldt 43 toegepaste wijzigingen met een knop om ongedaan te maken"></td>
+<td width="50%"><img src="../assets/readme/sheets-qa.webp" alt="Apex Office Sheets: gevraagd welke regio de omzet in Q2 aanvoerde, antwoordt de AI Europa met de uitsplitsing per categorie en verwijst als links naar de cellen die het heeft gebruikt, naast het Orders-blad"></td>
 </tr>
 <tr>
 <td><b>Bouw het</b> — met één zin voegt de agent een Summary-blad toe met echte <code>SUMIF</code>-formules per regio en categorie, voegt een kolomdiagram in, en past de 43 wijzigingen toe als één batch die je in één keer ongedaan kunt maken.</td>
@@ -105,15 +105,15 @@ prompt die je in het paneel kunt lezen.
 
 ### 3 · Slides — van een prompt naar een `.pptx`-deck
 
-<img src="../assets/readme/slides-generate.webp" alt="Timelapse van GenOffice Slides dat de Aurora Home investeerdersdeck genereert: de AI plant het verhaal in het paneel, dia's verschijnen één voor één op het canvas, en de voltooide deck eindigt met de afsluitende vraag" width="100%">
+<img src="../assets/readme/slides-generate.webp" alt="Timelapse van Apex Office Slides dat de Aurora Home investeerdersdeck genereert: de AI plant het verhaal in het paneel, dia's verschijnen één voor één op het canvas, en de voltooide deck eindigt met de afsluitende vraag" width="100%">
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/slides-cover.webp" alt="GenOffice Slides: de openingsslide van een door AI gegenereerd investeerdersdeck voor Aurora Home op het canvas, met de oorspronkelijke prompt van één regel en de samenvatting van de AI over wat het heeft gebouwd, in het paneel"></td>
-<td width="50%"><img src="../assets/readme/slides-ai.webp" alt="GenOffice Slides: de vormgegeven slotslide van hetzelfde deck van 11 slides, met de miniaturenstrook links en het AI-paneel dat de verhaallijn samenvat"></td>
+<td width="50%"><img src="../assets/readme/slides-cover.webp" alt="Apex Office Slides: de openingsslide van een door AI gegenereerd investeerdersdeck voor Aurora Home op het canvas, met de oorspronkelijke prompt van één regel en de samenvatting van de AI over wat het heeft gebouwd, in het paneel"></td>
+<td width="50%"><img src="../assets/readme/slides-ai.webp" alt="Apex Office Slides: de vormgegeven slotslide van hetzelfde deck van 11 slides, met de miniaturenstrook links en het AI-paneel dat de verhaallijn samenvat"></td>
 </tr>
 <tr>
-<td><b>Eén regel als input</b> — "Create a 10-slide investor pitch deck for Aurora Home…". GenOffice bepaalt de verhaallijn, zoekt de cijfers uit en zet elke slide als een echte <code>.pptx</code> op het canvas.</td>
+<td><b>Eén regel als input</b> — "Create a 10-slide investor pitch deck for Aurora Home…". Apex Office bepaalt de verhaallijn, zoekt de cijfers uit en zet elke slide als een echte <code>.pptx</code> op het canvas.</td>
 <td><b>Een afgewerkt deck als resultaat</b> — elf vormgegeven slides met consistente typografie, beeldmateriaal en een afsluitende call-to-action; blijf bewerken met masters, layouts, slimme hulplijnen en niet-destructief bijsnijden, of laat het paneel de stijl, tekst en volgorde aanpassen. Voeg een <code>.glb</code> in en het is een echt 3D-model: draai het rond door te slepen in de editor, opgeslagen zoals PowerPoint 3D opslaat, nog steeds 3D in PowerPoint.</td>
 </tr>
 </table>
@@ -127,8 +127,8 @@ manier af.
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/pdf-edit.webp" alt="GenOffice PDF: Edit text mode omkadert elk tekstblok op de pagina voor bewerking op de plek zelf, terwijl het AI-paneel een vraag over het rapport beantwoordt met paginaverwijzingen"></td>
-<td width="50%"><img src="../assets/readme/pdf-convert.webp" alt="GenOffice Docs toont een Word-document dat lokaal is geconverteerd vanuit de kwartaalrapportage-PDF van Helios, geopend in een tweede tab naast de originele PDF"></td>
+<td width="50%"><img src="../assets/readme/pdf-edit.webp" alt="Apex Office PDF: Edit text mode omkadert elk tekstblok op de pagina voor bewerking op de plek zelf, terwijl het AI-paneel een vraag over het rapport beantwoordt met paginaverwijzingen"></td>
+<td width="50%"><img src="../assets/readme/pdf-convert.webp" alt="Apex Office Docs toont een Word-document dat lokaal is geconverteerd vanuit de kwartaalrapportage-PDF van Helios, geopend in een tweede tab naast de originele PDF"></td>
 </tr>
 <tr>
 <td><b>Bewerk binnen de pagina</b> — Edit text mode omkadert elk tekstblok voor herschrijven op de plek zelf; de content stream wordt via PDFium herschreven met de originele fonts, geen overplaknotitie. Stel de AI een vraag over een lang rapport en krijg antwoorden met paginaverwijzingen.</td>
@@ -142,11 +142,11 @@ Vertel waarvoor de pagina dient en voor wie hij bedoeld is. De AI stelt eerst
 een **design brief** voor — hook, kleurenpalet, typografie en stijlrichtingen
 — en bouwt daarna op basis van die tokens één zelfstandig `.html`-bestand.
 
-<img src="../assets/readme/html-restyle-motion.webp" alt="Timelapse van GenOffice HTML dat de Lumen landingspagina van stijl verandert: één Restyle-verzoek in het paneel verandert de donkere Midnight Studio-pagina in de warme Solar Daybreak-versie, terwijl elke sectie en alle inhoud op hun plek blijven" width="100%">
+<img src="../assets/readme/html-restyle-motion.webp" alt="Timelapse van Apex Office HTML dat de Lumen landingspagina van stijl verandert: één Restyle-verzoek in het paneel verandert de donkere Midnight Studio-pagina in de warme Solar Daybreak-versie, terwijl elke sectie en alle inhoud op hun plek blijven" width="100%">
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/html-ai.webp" alt="GenOffice HTML: een gegenereerde landingspagina voor een zonne-energie bureaulamp in de donkere stijlrichting Midnight Studio, getoond in de live preview met het AI-paneel dat de net gebouwde pagina samenvat"></td>
+<td width="50%"><img src="../assets/readme/html-ai.webp" alt="Apex Office HTML: een gegenereerde landingspagina voor een zonne-energie bureaulamp in de donkere stijlrichting Midnight Studio, getoond in de live preview met het AI-paneel dat de net gebouwde pagina samenvat"></td>
 <td width="50%"><img src="../assets/readme/html-restyle.webp" alt="Dezelfde Lumen-landingspagina, door de AI omgezet naar de warme stijlrichting Solar Daybreak: papieren achtergrond, serif-koppen en een oranje accent, met behoud van elke sectie en alle tekst"></td>
 </tr>
 <tr>
@@ -156,8 +156,8 @@ een **design brief** voor — hook, kleurenpalet, typografie en stijlrichtingen
 </table>
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/html-dashboard.webp" alt="GenOffice HTML: een gegenereerde persoonlijke dashboard-UI voor een freelance designer in een warme linnen stijl, met een navigatiebalk links, een begroeting in serif en vier metriekkaarten"></td>
-<td width="50%"><img src="../assets/readme/html-report.webp" alt="GenOffice HTML: een gegenereerd datarapport over de EV-markt in broadsheet-stijl, met een kopregel in serif, een hoofdcijfer van 17,3 miljoen en een rij met kerncijfers"></td>
+<td width="50%"><img src="../assets/readme/html-dashboard.webp" alt="Apex Office HTML: een gegenereerde persoonlijke dashboard-UI voor een freelance designer in een warme linnen stijl, met een navigatiebalk links, een begroeting in serif en vier metriekkaarten"></td>
+<td width="50%"><img src="../assets/readme/html-report.webp" alt="Apex Office HTML: een gegenereerd datarapport over de EV-markt in broadsheet-stijl, met een kopregel in serif, een hoofdcijfer van 17,3 miljoen en een rij met kerncijfers"></td>
 </tr>
 <tr>
 <td><b>UI-mockups</b> — de starter "personal dashboard" zet een persona om in een werkende layout: navigatiebalk links, begroeting, sparkline voor factureerbare uren, facturen- en bezettingskaarten, allemaal echte HTML die je zo aan een developer kunt overdragen.</td>
@@ -169,8 +169,8 @@ een **design brief** voor — hook, kleurenpalet, typografie en stijlrichtingen
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/markdown-ai.webp" alt="GenOffice Markdown: bij een geselecteerde alinea verschijnt een Ask AI-popover met een getypte instructie en suggestiechips zoals Polish, Make more concise, Expand en Fix grammar, plus de knoppen Send now en Add to queue"></td>
-<td width="50%"><img src="../assets/readme/markdown-render.webp" alt="GenOffice Markdown toont een document met lanceringsnotities met een tabel, een Mermaid-stroomdiagram en een taaklijst, met de startprompts van het AI-paneel aan de linkerkant"></td>
+<td width="50%"><img src="../assets/readme/markdown-ai.webp" alt="Apex Office Markdown: bij een geselecteerde alinea verschijnt een Ask AI-popover met een getypte instructie en suggestiechips zoals Polish, Make more concise, Expand en Fix grammar, plus de knoppen Send now en Add to queue"></td>
+<td width="50%"><img src="../assets/readme/markdown-render.webp" alt="Apex Office Markdown toont een document met lanceringsnotities met een tabel, een Mermaid-stroomdiagram en een taaklijst, met de startprompts van het AI-paneel aan de linkerkant"></td>
 </tr>
 <tr>
 <td><b>Ask AI over een selectie</b> — selecteer een willekeurige passage en er verschijnt een <b>Ask AI</b>-chip: typ een instructie of kies een suggestie, verstuur die direct, of verzamel meerdere aan tekst verankerde wijzigingen en voer ze in één keer uit. Dezelfde toegang bestaat in elke app.</td>
@@ -185,15 +185,15 @@ inline in. Een **Backlinks**-paneel zet elke notitie op een rij die naar de
 geopende verwijst, en de **Graph**-weergave brengt de koppelingen van de hele
 vault in kaart.
 
-### 7 · CLI — je coding agent stuurt GenOffice aan, op je eigen machine
+### 7 · CLI — je coding agent stuurt Apex Office aan, op je eigen machine
 
-GenOffice levert een `genoffice`-opdrachtregel en een agent-skill mee.
+Apex Office levert een `genoffice`-opdrachtregel en een agent-skill mee.
 Installeer de skill en Claude Code, Codex, Cursor, Gemini CLI, GitHub
 Copilot, OpenCode of Windsurf kunnen echte Office-bestanden maken,
 converteren, lezen en bewerken via dezelfde engines als de apps, zonder een
 venster te openen.
 
-<img src="../assets/readme/cli-deck-in-app.webp" alt="GenOffice Slides toont een deck van acht slides over het zonnestelsel dat een coding agent via de genoffice-opdrachtregel heeft gebouwd: de openingsslide op het canvas, acht miniaturen links en het AI-paneel geopend" width="100%">
+<img src="../assets/readme/cli-deck-in-app.webp" alt="Apex Office Slides toont een deck van acht slides over het zonnestelsel dat een coding agent via de genoffice-opdrachtregel heeft gebouwd: de openingsslide op het canvas, acht miniaturen links en het AI-paneel geopend" width="100%">
 
 <table>
 <tr>
@@ -202,7 +202,7 @@ venster te openen.
 </tr>
 <tr>
 <td><b>Eén prompt aan je agent</b> — "Bouw een deck van acht slides over het zonnestelsel." De agent leest de skill, schrijft een stylesheet, een outline en één paginaspecificatie per slide, genereert de twee foto's met <code>genoffice image</code> en laat <code>genoffice slides check</code> alles afwijzen wat overloopt of overlapt, voordat <code>genoffice create</code> de <code>.pptx</code> samenstelt en <code>slides render</code> per slide een PNG teruggeeft om te bekijken.</td>
-<td><b>Eén keer installeren, via Instellingen → Integraties</b> — GenOffice toont de coding agents die het op deze computer vindt en schrijft de skill naar elke agent die je kiest. Of download de skill als zip, of voer <code>npx skills add genspark-ai/genoffice</code> uit. Commando's en de volledige workflow staan in <a href="#command-line-and-agent-skill">Opdrachtregel en agent-skill</a>.</td>
+<td><b>Eén keer installeren, via Instellingen → Integraties</b> — Apex Office toont de coding agents die het op deze computer vindt en schrijft de skill naar elke agent die je kiest. Of download de skill als zip, of voer <code>npx skills add genspark-ai/genoffice</code> uit. Commando's en de volledige workflow staan in <a href="#command-line-and-agent-skill">Opdrachtregel en agent-skill</a>.</td>
 </tr>
 </table>
 
@@ -215,11 +215,11 @@ tools plus de op-referenties als resources. Een tweede, HTTP-server in de
 app laat een agent een Word-document opbouwen in een zichtbaar
 editortabblad terwijl je toekijkt.
 
-<img src="../assets/readme/mcp-deck-motion.webp" alt="Time-lapse van Claude Code dat via de genoffice MCP-server een investeerderspresentatie van acht slides over hernieuwbare energie bouwt: zoekt naar figuren en foto's, controleert elke kandidaat-afbeelding met media, deck_start schrijft de stylesheet en de outline, deck_page voegt telkens één gecontroleerde pagina toe, deck_build stelt de .pptx samen en slides_render geeft een afbeelding van elke slide terug; het afgeronde deck opent daarna in GenOffice Slides" width="100%">
+<img src="../assets/readme/mcp-deck-motion.webp" alt="Time-lapse van Claude Code dat via de genoffice MCP-server een investeerderspresentatie van acht slides over hernieuwbare energie bouwt: zoekt naar figuren en foto's, controleert elke kandidaat-afbeelding met media, deck_start schrijft de stylesheet en de outline, deck_page voegt telkens één gecontroleerde pagina toe, deck_build stelt de .pptx samen en slides_render geeft een afbeelding van elke slide terug; het afgeronde deck opent daarna in Apex Office Slides" width="100%">
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/mcp-deck-in-app.webp" alt="GenOffice Slides toont het deck Renewable Energy 2026 van acht slides dat Claude Code via de genoffice MCP-server heeft gebouwd: de openingsslide met een foto van een windmolenpark op het canvas en acht miniaturen links"></td>
+<td width="50%"><img src="../assets/readme/mcp-deck-in-app.webp" alt="Apex Office Slides toont het deck Renewable Energy 2026 van acht slides dat Claude Code via de genoffice MCP-server heeft gebouwd: de openingsslide met een foto van een windmolenpark op het canvas en acht miniaturen links"></td>
 <td width="50%"><img src="../assets/readme/mcp-integrations.webp" alt="GenOffice-instellingen, pagina Integraties, MCP-onderdeel: het eenregelige commando claude mcp add voor Claude Code, het JSON-blok voor Cursor, Claude Desktop en andere MCP-clients, en de optie voor de lokale HTTP-server daaronder"></td>
 </tr>
 <tr>
@@ -228,7 +228,7 @@ editortabblad terwijl je toekijkt.
 </tr>
 </table>
 
-## Waarom GenOffice
+## Waarom Apex Office
 
 - **Open source**, Apache-2.0, in het openbaar ontwikkeld op GitHub.
 - **Van jou om te draaien.** Native apps voor macOS, Windows en Linux;
@@ -280,7 +280,7 @@ opgeslagen bestanden behouden altijd de eigen kleuren van het document.
 ## Skills
 
 Een skill is een `SKILL.md` die de AI vertelt hoe één taak goed te doen: een weekrapport, een NDA, een lesplan.
-GenOffice levert een set mee en accepteert je eigen skills, in hetzelfde formaat dat coding-agents gebruiken.
+Apex Office levert een set mee en accepteert je eigen skills, in hetzelfde formaat dat coding-agents gebruiken.
 
 - **Instellingen → Skills.** **Installeer** een aanbevolen skill, of **Importeer** een map, een zip of één `SKILL.md`. Bij importeren wordt niets uitgevoerd. Het tabblad **Alles** toont de hele aanbevolen catalogus op één plek, met beschrijvingen in de taal van de app.
 - **In een chat.** Open het **+**-menu naast het invoerveld van een AI-paneel, kies **Skills**, vink er een aan en verstuur. De skill gaat alleen met dat bericht mee.
@@ -294,7 +294,7 @@ GenOffice levert een set mee en accepteert je eigen skills, in hetzelfde formaat
 Alles wat de apps met een bestand kunnen, kan de `genoffice`-opdrachtregel
 vanuit een terminal: Word, Excel, PowerPoint, PDF, Markdown en HTML
 inspecteren, converteren, maken, lezen en bewerken op dezelfde engines,
-headless. Hij wordt samen met GenOffice geïnstalleerd, heeft geen eigen
+headless. Hij wordt samen met Apex Office geïnstalleerd, heeft geen eigen
 runtime nodig en stuurt nooit een document ergens naartoe. In combinatie met
 de meegeleverde **agent-skill** maakt hij van een coding agent een
 documentenwerker die echte Office-bestanden oplevert in plaats van
@@ -344,7 +344,7 @@ Daarachter volgde de agent de gefaseerde workflow van de skill en
 controleerde de CLI elke fase voordat de volgende begon:
 
 ```bash
-genoffice capabilities --json                        # which cloud tools GenOffice has configured
+genoffice capabilities --json                        # which cloud tools Apex Office has configured
 genoffice guide slides design                        # the deck workflow and layout library
 genoffice image "the eight planets in a row …" --aspect 16:9 --out deck/assets/cover.jpg
 genoffice slides check deck/outline.json --json      # 8 pages, no findings
@@ -359,7 +359,7 @@ genoffice open deck/solar-system.pptx
 
 Binnen `genoffice` vindt geen enkele modelaanroep plaats: de agent doet het
 denkwerk, de CLI het bouwen en controleren, en het resultaat opent in
-GenOffice of PowerPoint als een gewone `.pptx`.
+Apex Office of PowerPoint als een gewone `.pptx`.
 
 <a id="mcp-server"></a>
 
@@ -373,7 +373,7 @@ kant-en-klare snippets in **Instellingen → Integraties → MCP**:
 
 | Manier                               | Wat het is                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A · `genoffice mcp`** (aanbevolen) | Een stdio-server die de assistent zelf start; GenOffice hoeft niet open te staan. Eén tool per commando (`info`, `convert`, `create_docx`, `create_xlsx`, `create_pptx`, `create_pdf`, `docs_read` / `docs_apply` / `docs_check`, `sheet_*`, `slides_*`, `render`, `guide`, `search`, `image`, `media`, `open`) plus de gefaseerde deck-flow `deck_start` → `deck_page` → `deck_build` → `deck_replace`. Ops, specs en Markdown worden inline doorgegeven, dus werkt ook een client zonder bestandssysteem. |
+| **A · `genoffice mcp`** (aanbevolen) | Een stdio-server die de assistent zelf start; Apex Office hoeft niet open te staan. Eén tool per commando (`info`, `convert`, `create_docx`, `create_xlsx`, `create_pptx`, `create_pdf`, `docs_read` / `docs_apply` / `docs_check`, `sheet_*`, `slides_*`, `render`, `guide`, `search`, `image`, `media`, `open`) plus de gefaseerde deck-flow `deck_start` → `deck_page` → `deck_build` → `deck_replace`. Ops, specs en Markdown worden inline doorgegeven, dus werkt ook een client zonder bestandssysteem. |
 | **B · Lokale HTTP-server**           | Draait binnen de GenOffice-app op `http://127.0.0.1:3093/mcp` (Streamable HTTP, met legacy SSE). De tools ervan sturen een zichtbaar Word-editortabblad aan: `create_session`, `insert_content`, `replace_blocks`, `apply_ops`, `read_document`, `save_session`, en je ziet het document vorm aannemen. Standaard uit; zet hem aan in hetzelfde instellingenscherm.                                                                                                                                         |
 
 ```bash
@@ -393,7 +393,7 @@ draagt zijn eigen workflow-instructies mee en stelt de op-referenties
 beschikbaar als `genoffice://guide/*`-resources, dus is er geen skill
 nodig; de skill en de MCP-server kunnen naast elkaar bestaan en de
 assistent kiest er één. Cloudfuncties (`search`, `image`, `media`) lopen
-nog steeds via de provider die in GenOffice is ingesteld; al het andere
+nog steeds via de provider die in Apex Office is ingesteld; al het andere
 draait lokaal, en `GENOFFICE_ALLOWED_ROOTS` beperkt elke tool tot de
 mappen die je opgeeft.
 
@@ -420,7 +420,7 @@ Achtendertig aanroepen, ongeveer dertien minuten, en de assistent heeft
 nooit een terminal aangeraakt: de figuren, de foto's, de gidsen, de
 controles en de renders reisden allemaal als MCP-tool-resultaten. Alleen
 `search` en `media` verlieten de machine, naar de provider die in
-GenOffice is geconfigureerd.
+Apex Office is geconfigureerd.
 
 <a id="download"></a>
 
@@ -443,7 +443,7 @@ Oudere versies staan op de pagina [Releases](https://github.com/genspark-ai/geno
 <summary><b>Installeren op Linux</b></summary>
 
 De deb installeer je met apt — dat haalt de afhankelijkheden op en voegt
-GenOffice toe aan het toepassingenmenu:
+Apex Office toe aan het toepassingenmenu:
 
 ```bash
 sudo apt install ./genoffice_<version>_amd64.deb
@@ -511,7 +511,7 @@ elke wijziging moet doorstaan en hoe pull requests worden gemerged.
 
 ## Community
 
-GenOffice wordt actief doorontwikkeld en jouw feedback bepaalt mee de
+Apex Office wordt actief doorontwikkeld en jouw feedback bepaalt mee de
 richting.
 
 - **Meld een bug of vraag een functie aan** via
@@ -519,23 +519,23 @@ richting.
 - **Doe mee aan de GenOffice-groepschat** op
   [GenTeam](https://genoffice.ai/join) om met het team en andere gebruikers te
   praten.
-- **Geef de repo een ster** als je iets aan GenOffice hebt — dat is de beste
+- **Geef de repo een ster** als je iets aan Apex Office hebt — dat is de beste
   manier om het project te steunen.
 
 ## Veelgestelde vragen
 
 <details>
-<summary><b>Is GenOffice gratis?</b></summary>
+<summary><b>Is Apex Office gratis?</b></summary>
 
-Ja. GenOffice is gratis en open source onder de Apache-2.0-licentie — geen
+Ja. Apex Office is gratis en open source onder de Apache-2.0-licentie — geen
 proefperiode, geen betaalde laag voor de apps zelf.
 
 </details>
 
 <details>
-<summary><b>Kan GenOffice bestanden van Microsoft Word, Excel en PowerPoint openen?</b></summary>
+<summary><b>Kan Apex Office bestanden van Microsoft Word, Excel en PowerPoint openen?</b></summary>
 
-Ja. GenOffice opent en bewaart native `.docx`-, `.xlsx`- en `.pptx`-bestanden.
+Ja. Apex Office opent en bewaart native `.docx`-, `.xlsx`- en `.pptx`-bestanden.
 Opslaan is byte-behoudend: delen van het bestand die je niet hebt aangeraakt,
 worden byte-voor-byte terugweggeschreven, zodat documenten gewoon blijven
 werken in Microsoft Office.
@@ -543,7 +543,7 @@ werken in Microsoft Office.
 </details>
 
 <details>
-<summary><b>Werkt GenOffice offline?</b></summary>
+<summary><b>Werkt Apex Office offline?</b></summary>
 
 Documenten bewerken is volledig lokaal — bestanden verlaten je machine nooit
 om te worden geopend, bewerkt, opgeslagen of geconverteerd. De AI-functies
@@ -553,7 +553,7 @@ een Genspark-login of je eigen model-API-key.
 </details>
 
 <details>
-<summary><b>Kan GenOffice PDF-bestanden bewerken?</b></summary>
+<summary><b>Kan Apex Office PDF-bestanden bewerken?</b></summary>
 
 Ja — echte bewerking van PDF-tekst en -afbeeldingen, waarbij de content
 stream van de pagina wordt herschreven met behoud van de originele fonts,
@@ -562,7 +562,7 @@ niet met overplaknotities.
 </details>
 
 <details>
-<summary><b>Kan GenOffice PDF converteren naar Word, Excel of PowerPoint?</b></summary>
+<summary><b>Kan Apex Office PDF converteren naar Word, Excel of PowerPoint?</b></summary>
 
 Ja — volledig on-device: tekenniveau-extractie met PDFium plus
 geometrie-gebaseerde layout-analyse, geen cloudservice, geen upload. Gescande
@@ -575,7 +575,7 @@ pagina-afbeelding.
 <details>
 <summary><b>Kan ik mijn eigen AI-model of API-key gebruiken?</b></summary>
 
-Ja. Naast de keyless Genspark-login ondersteunt GenOffice je eigen key voor
+Ja. Naast de keyless Genspark-login ondersteunt Apex Office je eigen key voor
 Claude, OpenAI, Gemini, DeepSeek, Kimi, GLM, Qwen, Doubao, MiniMax, Grok,
 Mistral, OpenRouter, Requesty en OpenCode Zen/Go, plus elk OpenAI-compatibel endpoint —
 inclusief lokale modelservers. Search, beeldgeneratie en analyse van beeld en
@@ -595,7 +595,7 @@ is hij weer verborgen.
 </details>
 
 <details>
-<summary><b>Kan GenOffice HTML converteren naar Word?</b></summary>
+<summary><b>Kan Apex Office HTML converteren naar Word?</b></summary>
 
 Ja — Export as Word in de HTML-app levert volledig on-device een native,
 bewerkbare `.docx` op. De pagina wordt gerenderd in de ingebouwde Chromium en
@@ -607,9 +607,9 @@ afbeelding ingevoegd.
 </details>
 
 <details>
-<summary><b>Kan ik GenOffice aansturen vanuit Claude Code, Codex, Cursor of een script?</b></summary>
+<summary><b>Kan ik Apex Office aansturen vanuit Claude Code, Codex, Cursor of een script?</b></summary>
 
-Ja. GenOffice installeert een `genoffice`-opdrachtregel die dezelfde engines
+Ja. Apex Office installeert een `genoffice`-opdrachtregel die dezelfde engines
 headless draait: documenten inspecteren, converteren, maken, lezen en
 bewerken vanuit een terminal of een script, met `--json`-uitvoer voor
 programma's. De meegeleverde agent-skill leert Claude Code, Codex, Cursor,
@@ -620,13 +620,13 @@ via **Instellingen → Integraties**. Zie
 </details>
 
 <details>
-<summary><b>Verzamelt GenOffice gegevens?</b></summary>
+<summary><b>Verzamelt Apex Office gegevens?</b></summary>
 
 De officiële, kant-en-klare builds versturen standaard beperkte
 gebruiksanalyse, en je kunt rapportage op elk moment uitschakelen onder
 Settings → General. Analytics verstuurt nooit documentinhoud, bestandsnamen,
 bestandspaden, accountidentiteit of e-mailadressen. Zie
-[GenOffice Privacy](../../PRIVACY.md) voor de volledige lijst van events en
+[Apex Office Privacy](../../PRIVACY.md) voor de volledige lijst van events en
 gegevens die worden gedeeld.
 
 </details>
@@ -639,7 +639,7 @@ dreigingsmodellen voor door AI gegenereerde content.
 
 ## Met dank aan
 
-GenOffice zou niet mogelijk zijn zonder deze open-source projecten:
+Apex Office zou niet mogelijk zijn zonder deze open-source projecten:
 
 - [Electron](https://www.electronjs.org/) — de desktop-runtime voor elke app.
 - [Univer](https://github.com/dream-num/univer) (Apache-2.0) — de
@@ -685,11 +685,11 @@ MIT/Apache-2.0/BSD-3-Clause/OFL.
 
 ## Licentie
 
-GenOffice wordt uitgebracht onder de [Apache License 2.0](../../LICENSE), met
+Apex Office wordt uitgebracht onder de [Apache License 2.0](../../LICENSE), met
 één uitzondering: de map `ee/` is gereserveerd voor toekomstige
 enterprise-modules en valt onder de
-[GenOffice Enterprise License](../../ee/LICENSE).
+[Apex Office Enterprise License](../../ee/LICENSE).
 
-De namen en logo's van GenOffice en Genspark zijn handelsmerken van Mainfunc,
+De namen en logo's van Apex Office en Genspark zijn handelsmerken van Mainfunc,
 Inc. De Apache-2.0-licentie geeft geen toestemming om deze te gebruiken (zie
 sectie 6); forks moeten hun eigen branding gebruiken.

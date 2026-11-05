@@ -1,4 +1,4 @@
-# Instalar o GenOffice
+# Instalar o Apex Office
 
 Todas as versões são publicadas na [página de lançamentos](https://github.com/genspark-ai/genoffice/releases/latest). Todas vêm de `main`; e os instaladores para macOS e Windows estão assinados.
 
@@ -18,11 +18,11 @@ As versões mais antigas permanecem na página de lançamentos.
 
 ## No macOS
 
-Abra o `.dmg` e arraste o **GenOffice** para Aplicações. Numa compilação Intel, o primeiro arranque pede-lhe que confirme a abertura: clique com o botão direito na aplicação em Aplicações ▸ Abrir. Isso é o Gatekeeper a encontrar uma imagem de disco sem assinatura aparente, não uma transferência danificada.
+Abra o `.dmg` e arraste o **Apex Office** para Aplicações. Numa compilação Intel, o primeiro arranque pede-lhe que confirme a abertura: clique com o botão direito na aplicação em Aplicações ▸ Abrir. Isso é o Gatekeeper a encontrar uma imagem de disco sem assinatura aparente, não uma transferência danificada.
 
 ## No Windows
 
-Execute o instalador `.exe`. Ele coloca o GenOffice no menu Iniciar e regista `.docx`, `.xlsx`, `.pptx`, `.pdf` e afins, para que um clique duplo num ficheiro o abra.
+Execute o instalador `.exe`. Ele coloca o Apex Office no menu Iniciar e regista `.docx`, `.xlsx`, `.pptx`, `.pdf` e afins, para que um clique duplo num ficheiro o abra.
 
 ## No Linux
 
@@ -64,4 +64,4 @@ As três embrulham os artefactos publicados em vez de recompilar a aplicação, 
 
 ## A linha de comandos vem de brinde
 
-Todas as instalações incluem um comando `genoffice` que fala com os mesmos motores que a janela usa, por isso os dois nunca discordam sobre um ficheiro. Em macOS e Windows está dentro do pacote da aplicação; e `genoffice install-cli` coloca-o no seu `PATH`. Consulte **Linha de comandos e agentes** para saber o que ele sabe fazer.
+Todas as instalações incluem um comando `genoffice` que fala com os mesmos motores que a janela usa, por isso os dois nunca discordam sobre um ficheiro. Em macOS e Windows está dentro do pacote da aplicação; e `apexoffice install-cli` coloca-o no seu `PATH`. Consulte **Linha de comandos e agentes** para saber o que ele sabe fazer.

@@ -147,7 +147,7 @@ describe('gsk CLI 401 recovery', () => {
     expect(readFileSync(config, 'utf-8')).toBe(before)
   })
 
-  it('does not resume billing through the shared login after GenOffice sign-out', async () => {
+  it('does not resume billing through the shared login after Apex Office sign-out', async () => {
     const config = sharedLogin()
     const before = readFileSync(config, 'utf-8')
     const log = fakeCli()
@@ -219,7 +219,7 @@ describe('noteGskCallFailure (LLM proxy chat/stream)', () => {
       stubServer(() => response({ detail: FRESH_AUTH_REQUIRED }, 403))
       expect(gskApiKey()).toBe('gsk-env')
       noteGskCallFailure('gsk-env', 'HTTP 401: Unauthorized')
-      // falls through to GenOffice's own (still valid) key
+      // falls through to Apex Office's own (still valid) key
       expect(gskApiKey()).toBe('gsk-expired')
     } finally {
       delete process.env.GSK_API_KEY

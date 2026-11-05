@@ -7,20 +7,13 @@ import { capabilitiesCommand } from './commands/capabilities'
 import { convertCommand } from './commands/convert'
 import { docsCommand } from './commands/docs'
 import { createCommand } from './commands/create'
-import { guideCommand } from './commands/guide'
-import { imageCommand } from './commands/image'
-import { mediaCommand } from './commands/media'
 import { mergeCommand } from './commands/merge'
-import { searchCommand } from './commands/search'
 import { selectionCommand } from './commands/selection'
 import { infoCommand } from './commands/info'
-import { installCommand } from './commands/install'
-import { mcpCommand } from './commands/mcp'
 import { openCommand } from './commands/open'
 import { pdfCommand } from './commands/pdf'
 import { renderCommand } from './commands/render'
 import { sheetCommand } from './commands/sheet'
-import { skillCommand } from './commands/skill'
 import { slidesCommand } from './commands/slides'
 import { CommandRegistry, commandHelp, type CommandContext } from './registry'
 import {
@@ -61,16 +54,9 @@ export function defaultRegistry(): CommandRegistry {
     .register(mergeCommand)
     .register(pdfCommand)
     .register(renderCommand)
-    .register(guideCommand)
-    .register(searchCommand)
-    .register(imageCommand)
-    .register(mediaCommand)
     .register(openCommand)
     .register(selectionCommand)
     .register(capabilitiesCommand)
-    .register(installCommand)
-    .register(mcpCommand)
-    .register(skillCommand)
 }
 
 export interface RunIo {
@@ -124,7 +110,7 @@ export async function runCli(argv: readonly string[], opts: RunOptions = {}): Pr
               name,
               registry.list().map((d) => d.name),
             ),
-            'run `genoffice help` for the command list',
+            'run `apexoffice help` for the command list',
           ),
         },
       ),
@@ -145,7 +131,7 @@ export async function runCli(argv: readonly string[], opts: RunOptions = {}): Pr
           reason: 'unknown_option',
           suggestion: withGuess(
             didYouMean(unknown[0]!, known),
-            `run \`genoffice help ${def.name}\` for its options`,
+            `run \`apexoffice help ${def.name}\` for its options`,
             '--',
           ),
         },
@@ -229,7 +215,7 @@ function globalHelp(registry: CommandRegistry): string {
   const defs = registry.list()
   const width = Math.max(...defs.map((d) => d.name.length))
   return [
-    `genoffice ${VERSION} — GenOffice command line`,
+    `genoffice ${VERSION} — Apex Office command line`,
     '',
     'Usage: genoffice <command> [options]',
     '',
@@ -255,7 +241,7 @@ if (isMain) {
   const exit = (code: number) => process.stdout.write('', () => process.exit(code))
   runCli(process.argv.slice(2)).then(exit, (err) => {
     process.stderr.write(
-      `genoffice: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
+      `apexoffice: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
     )
     exit(EXIT.conversion)
   })

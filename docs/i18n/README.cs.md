@@ -2,12 +2,12 @@
   <a href="https://genoffice.ai/">
     <picture>
       <source srcset="../assets/readme/hero-dark.webp" media="(prefers-color-scheme: dark)">
-      <img src="../assets/readme/hero.webp" alt="GenOffice — open-source AI kancelářský balík: Docs, Sheets, Slides, PDF, Markdown a HTML s vestavěným AI panelem" width="100%">
+      <img src="../assets/readme/hero.webp" alt="Apex Office — open-source AI kancelářský balík: Docs, Sheets, Slides, PDF, Markdown a HTML s vestavěným AI panelem" width="100%">
     </picture>
   </a>
 </p>
 
-<h1 align="center">GenOffice</h1>
+<h1 align="center">Apex Office</h1>
 
 <p align="center"><b>První plnohodnotný open-source AI kancelářský balík na světě.</b><br>
 Soubory Word, Excel, PowerPoint a PDF, upravované vámi a vaší AI, ukládané zpět ve skutečných formátech.</p>
@@ -31,7 +31,7 @@ Soubory Word, Excel, PowerPoint a PDF, upravované vámi a vaší AI, ukládané
   <a href="../../PRIVACY.md"><b>Soukromí</b></a>
 </p>
 
-GenOffice je bezplatná open-source alternativa k Microsoft Office pro macOS,
+Apex Office je bezplatná open-source alternativa k Microsoft Office pro macOS,
 Windows a Linux. Otevírá a ukládá nativní soubory `.docx`, `.xlsx` a `.pptx`,
 upravuje PDF, Markdown a HTML a ke každému dokumentu přidává AI agenta —
 nejde o přilepené chatovací okno, ale o editor, který soubor přečte,
@@ -80,8 +80,8 @@ promptem, který si můžete přečíst v panelu.
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/docs-report.webp" alt="GenOffice Docs vykresluje dvoukolonovou stránku výroční zprávy s celostránkovým titulním obrázkem, podbarvenou tabulkou KPI, záhlavím a zápatím, při 80% přiblížení se sbaleným AI panelem"></td>
-<td width="50%"><img src="../assets/readme/docs-ai.webp" alt="GenOffice Docs: přehled společnosti s bannerovým obrázkem; AI zestručnila sekci Overview a vložila novou sekci s odrážkami, panel nabízí vrácení jedním kliknutím"></td>
+<td width="50%"><img src="../assets/readme/docs-report.webp" alt="Apex Office Docs vykresluje dvoukolonovou stránku výroční zprávy s celostránkovým titulním obrázkem, podbarvenou tabulkou KPI, záhlavím a zápatím, při 80% přiblížení se sbaleným AI panelem"></td>
+<td width="50%"><img src="../assets/readme/docs-ai.webp" alt="Apex Office Docs: přehled společnosti s bannerovým obrázkem; AI zestručnila sekci Overview a vložila novou sekci s odrážkami, panel nabízí vrácení jedním kliknutím"></td>
 </tr>
 <tr>
 <td><b>Otevře soubor přesně tak, jak jej rozvrhl Word</b> — dvoukolonové sekce, obrázky přes celou stránku, podbarvené tabulky, záhlaví a zápatí, stránkování podle Wordových metrik řádkování. Styly, komentáře, sledované změny, rovnice, ruční poznámky i ovládací prvky obsahu se zachovají beze změny. Záložka <b>Mailings</b> promění dokument v šablonu hromadné korespondence: vyberte seznam příjemců <code>.xlsx</code> nebo <code>.csv</code>, vložte skutečná pole <code>MERGEFIELD</code>, prohlížejte náhled záznam po záznamu a sloučte vše do jednoho dokumentu, nebo do jednoho <code>.docx</code> na každý záznam.</td>
@@ -93,8 +93,8 @@ promptem, který si můžete přečíst v panelu.
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/sheets-ai.webp" alt="GenOffice Sheets: AI přidala list Summary s tržbami podle regionu a kategorie pomocí vzorců SUMIF, plus sloupcový graf, a hlásí 43 provedených změn s tlačítkem Zpět"></td>
-<td width="50%"><img src="../assets/readme/sheets-qa.webp" alt="GenOffice Sheets: na dotaz, který region vedl v tržbách za Q2, AI odpovídá Evropa s rozpadem podle kategorií a jako odkazy cituje buňky, které použila, vedle listu Orders"></td>
+<td width="50%"><img src="../assets/readme/sheets-ai.webp" alt="Apex Office Sheets: AI přidala list Summary s tržbami podle regionu a kategorie pomocí vzorců SUMIF, plus sloupcový graf, a hlásí 43 provedených změn s tlačítkem Zpět"></td>
+<td width="50%"><img src="../assets/readme/sheets-qa.webp" alt="Apex Office Sheets: na dotaz, který region vedl v tržbách za Q2, AI odpovídá Evropa s rozpadem podle kategorií a jako odkazy cituje buňky, které použila, vedle listu Orders"></td>
 </tr>
 <tr>
 <td><b>Vytvořte to</b> — z jedné věty agent přidá list Summary se skutečnými vzorci <code>SUMIF</code> podle regionu a kategorie, vloží sloupcový graf a všech 43 změn provede jako jednu dávku, kterou lze vrátit.</td>
@@ -104,15 +104,15 @@ promptem, který si můžete přečíst v panelu.
 
 ### 3 · Slides — od promptu k prezentaci `.pptx`
 
-<img src="../assets/readme/slides-generate.webp" alt="Časosběrný záznam GenOffice Slides generujícího investorskou prezentaci Aurora Home: AI plánuje osnovu v panelu, snímky se postupně objevují na plátně a hotová prezentace končí závěrečnou výzvou k akci" width="100%">
+<img src="../assets/readme/slides-generate.webp" alt="Časosběrný záznam Apex Office Slides generujícího investorskou prezentaci Aurora Home: AI plánuje osnovu v panelu, snímky se postupně objevují na plátně a hotová prezentace končí závěrečnou výzvou k akci" width="100%">
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/slides-cover.webp" alt="GenOffice Slides: titulní snímek AI vygenerované investorské prezentace Aurora Home na ploše, s původním jednořádkovým promptem a shrnutím AI o tom, co vytvořila, v panelu"></td>
-<td width="50%"><img src="../assets/readme/slides-ai.webp" alt="GenOffice Slides: navržený závěrečný snímek téže 11snímkové prezentace, s pruhem miniatur vlevo a AI panelem shrnujícím dějovou linku"></td>
+<td width="50%"><img src="../assets/readme/slides-cover.webp" alt="Apex Office Slides: titulní snímek AI vygenerované investorské prezentace Aurora Home na ploše, s původním jednořádkovým promptem a shrnutím AI o tom, co vytvořila, v panelu"></td>
+<td width="50%"><img src="../assets/readme/slides-ai.webp" alt="Apex Office Slides: navržený závěrečný snímek téže 11snímkové prezentace, s pruhem miniatur vlevo a AI panelem shrnujícím dějovou linku"></td>
 </tr>
 <tr>
-<td><b>Jeden vstupní řádek</b> — „Vytvoř 10snímkovou investorskou prezentaci pro Aurora Home…“. GenOffice naplánuje dějovou linku, vyhledá čísla a vytvoří každý snímek na ploše jako skutečný soubor `.pptx`.</td>
+<td><b>Jeden vstupní řádek</b> — „Vytvoř 10snímkovou investorskou prezentaci pro Aurora Home…“. Apex Office naplánuje dějovou linku, vyhledá čísla a vytvoří každý snímek na ploše jako skutečný soubor `.pptx`.</td>
 <td><b>Hotová prezentace na výstupu</b> — jedenáct navržených snímků s konzistentní typografií, obrázky a závěrečnou výzvou k akci; dál upravujte pomocí předloh, rozvržení, chytrých vodicích čar a nedestruktivního oříznutí, nebo požádejte panel o změnu stylu, přepsání a přeuspořádání. Vložíte-li <code>.glb</code>, získáte skutečný 3D model: v editoru jej otočíte tažením, ukládá se tak, jak PowerPoint ukládá 3D, a v PowerPointu zůstává stále 3D.</td>
 </tr>
 </table>
@@ -126,8 +126,8 @@ způsobem.
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/pdf-edit.webp" alt="GenOffice PDF: režim Upravit text obtahuje na stránce každý textový blok pro úpravu na místě, zatímco AI panel odpovídá na dotaz ke zprávě s citacemi stránek"></td>
-<td width="50%"><img src="../assets/readme/pdf-convert.webp" alt="GenOffice Docs zobrazuje dokument Word lokálně převedený z čtvrtletní zprávy Helios v PDF, otevřený na druhé záložce vedle původního PDF"></td>
+<td width="50%"><img src="../assets/readme/pdf-edit.webp" alt="Apex Office PDF: režim Upravit text obtahuje na stránce každý textový blok pro úpravu na místě, zatímco AI panel odpovídá na dotaz ke zprávě s citacemi stránek"></td>
+<td width="50%"><img src="../assets/readme/pdf-convert.webp" alt="Apex Office Docs zobrazuje dokument Word lokálně převedený z čtvrtletní zprávy Helios v PDF, otevřený na druhé záložce vedle původního PDF"></td>
 </tr>
 <tr>
 <td><b>Upravujte přímo na stránce</b> — režim Upravit text obtahuje každý textový blok pro přepsání na místě; obsahový proud se přepisuje přes PDFium s původními fonty, ne pomocí zakrývací anotace. Zeptejte se AI na dlouhou zprávu a získejte odpovědi s citacemi stránek.</td>
@@ -141,11 +141,11 @@ způsobem.
 **návrhový brief** — hook, paletu, typografii a stylové směry — a teprve
 podle těchto tokenů vytvoří jeden samostatný soubor `.html`.
 
-<img src="../assets/readme/html-restyle-motion.webp" alt="Časosběrný záznam GenOffice HTML měnícího styl vstupní stránky Lumen: jeden požadavek Restyle v panelu změní temnou stránku Midnight Studio na teplou verzi Solar Daybreak, zatímco všechny sekce a veškerý obsah zůstávají na místě" width="100%">
+<img src="../assets/readme/html-restyle-motion.webp" alt="Časosběrný záznam Apex Office HTML měnícího styl vstupní stránky Lumen: jeden požadavek Restyle v panelu změní temnou stránku Midnight Studio na teplou verzi Solar Daybreak, zatímco všechny sekce a veškerý obsah zůstávají na místě" width="100%">
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/html-ai.webp" alt="GenOffice HTML: vygenerovaná vstupní stránka pro solární stolní lampu ve tmavém stylu Midnight Studio, zobrazená v živém náhledu s AI panelem shrnujícím právě vytvořenou stránku"></td>
+<td width="50%"><img src="../assets/readme/html-ai.webp" alt="Apex Office HTML: vygenerovaná vstupní stránka pro solární stolní lampu ve tmavém stylu Midnight Studio, zobrazená v živém náhledu s AI panelem shrnujícím právě vytvořenou stránku"></td>
 <td width="50%"><img src="../assets/readme/html-restyle.webp" alt="Tatáž vstupní stránka Lumen přestylovaná AI do teplého stylu Solar Daybreak: papírové pozadí, patkové titulky a oranžová akcentní barva, se zachováním všech sekcí a veškerého textu"></td>
 </tr>
 <tr>
@@ -155,8 +155,8 @@ podle těchto tokenů vytvoří jeden samostatný soubor `.html`.
 </table>
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/html-dashboard.webp" alt="GenOffice HTML: vygenerované rozhraní osobního dashboardu pro nezávislého designéra ve stylu teplého lnu, s levým panelem, patkovým pozdravem a čtyřmi metrickými kartami"></td>
-<td width="50%"><img src="../assets/readme/html-report.webp" alt="GenOffice HTML: vygenerovaná datová zpráva o trhu elektromobilů ve stylu novinového listu, s patkovou hlavičkou, hlavním údajem 17,3 milionu a řádkem statistik"></td>
+<td width="50%"><img src="../assets/readme/html-dashboard.webp" alt="Apex Office HTML: vygenerované rozhraní osobního dashboardu pro nezávislého designéra ve stylu teplého lnu, s levým panelem, patkovým pozdravem a čtyřmi metrickými kartami"></td>
+<td width="50%"><img src="../assets/readme/html-report.webp" alt="Apex Office HTML: vygenerovaná datová zpráva o trhu elektromobilů ve stylu novinového listu, s patkovou hlavičkou, hlavním údajem 17,3 milionu a řádkem statistik"></td>
 </tr>
 <tr>
 <td><b>Návrhy rozhraní</b> — startovací šablona „osobní dashboard“ promění personu ve funkční rozvržení: levý panel, pozdrav, sparkline fakturovaných hodin, karty faktur a vytížení — vše skutečné HTML, které lze předat vývojáři.</td>
@@ -168,8 +168,8 @@ podle těchto tokenů vytvoří jeden samostatný soubor `.html`.
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/markdown-ai.webp" alt="GenOffice Markdown: vybraný odstavec zobrazuje vyskakovací okno Ask AI se zadanou instrukcí a návrhovými čipy jako Vylepšit, Zestručnit, Rozšířit a Opravit gramatiku, plus tlačítka Odeslat hned a Přidat do fronty"></td>
-<td width="50%"><img src="../assets/readme/markdown-render.webp" alt="GenOffice Markdown vykresluje dokument s poznámkami k vydání obsahující tabulku, vývojový diagram Mermaid a seznam úkolů, s úvodními prompty AI panelu vlevo"></td>
+<td width="50%"><img src="../assets/readme/markdown-ai.webp" alt="Apex Office Markdown: vybraný odstavec zobrazuje vyskakovací okno Ask AI se zadanou instrukcí a návrhovými čipy jako Vylepšit, Zestručnit, Rozšířit a Opravit gramatiku, plus tlačítka Odeslat hned a Přidat do fronty"></td>
+<td width="50%"><img src="../assets/readme/markdown-render.webp" alt="Apex Office Markdown vykresluje dokument s poznámkami k vydání obsahující tabulku, vývojový diagram Mermaid a seznam úkolů, s úvodními prompty AI panelu vlevo"></td>
 </tr>
 <tr>
 <td><b>Zeptejte se AI na výběr</b> — vyberte jakoukoli část textu a objeví se čip <b>Ask AI</b>: zadejte instrukci nebo vyberte návrh, odešlete ji hned, nebo zařaďte více zakotvených úprav do fronty a spusťte je najednou. Stejný vstupní bod existuje v každé aplikaci.</td>
@@ -183,23 +183,23 @@ doplňování názvů poznámek a `![[…]]` vloží poznámku nebo obrázek př
 do textu. Panel **Backlinks** vypíše každou poznámku, která ukazuje na tu
 otevřenou, a pohled **Graph** zmapuje odkazy celého trezoru.
 
-### 7 · CLI — váš kódovací agent řídí GenOffice, na vašem počítači
+### 7 · CLI — váš kódovací agent řídí Apex Office, na vašem počítači
 
-GenOffice obsahuje příkazový řádek `genoffice` a agentní skill. Nainstalujte
+Apex Office obsahuje příkazový řádek `genoffice` a agentní skill. Nainstalujte
 skill a Claude Code, Codex, Cursor, Gemini CLI, GitHub Copilot, OpenCode nebo
 Windsurf mohou vytvářet, převádět, číst a upravovat skutečné soubory Office
 přes stejné enginy jako aplikace, aniž by otevřely jediné okno.
 
-<img src="../assets/readme/cli-deck-in-app.webp" alt="GenOffice Slides zobrazuje osmisnímkovou prezentaci o sluneční soustavě, kterou kódovací agent vytvořil přes příkazový řádek genoffice: titulní snímek na ploše, osm miniatur vlevo a otevřený AI panel" width="100%">
+<img src="../assets/readme/cli-deck-in-app.webp" alt="Apex Office Slides zobrazuje osmisnímkovou prezentaci o sluneční soustavě, kterou kódovací agent vytvořil přes příkazový řádek genoffice: titulní snímek na ploše, osm miniatur vlevo a otevřený AI panel" width="100%">
 
 <table>
 <tr>
 <td width="50%"><img src="../assets/readme/cli-slides-grid.webp" alt="Osm vykreslených snímků prezentace o sluneční soustavě vedle sebe: titul, časová osa průzkumu, čtyři klíčová čísla, sloupcový graf průměrů planet, kamenné světy versus obři, 99,8 % Slunce jako hlavní číslo, mřížka čtyř obrů a závěry"></td>
-<td width="50%"><img src="../assets/readme/cli-integrations.webp" alt="Nastavení GenOffice, stránka Integrace: skill genoffice nainstalovaný do Claude Code, s tlačítky Instalovat u položek Codex a Cursor"></td>
+<td width="50%"><img src="../assets/readme/cli-integrations.webp" alt="Nastavení Apex Office, stránka Integrace: skill genoffice nainstalovaný do Claude Code, s tlačítky Instalovat u položek Codex a Cursor"></td>
 </tr>
 <tr>
 <td><b>Jeden prompt vašemu agentovi</b> — „Vytvoř osmisnímkovou prezentaci o sluneční soustavě.“ Agent si přečte skill, napíše stylový list, osnovu a jednu specifikaci stránky na snímek, vygeneruje obě fotografie pomocí <code>genoffice image</code> a nechá <code>genoffice slides check</code> odmítnout vše, co přetéká nebo se překrývá, než <code>genoffice create</code> sestaví soubor <code>.pptx</code> a <code>slides render</code> vrátí ke kontrole jeden PNG na snímek.</td>
-<td><b>Nainstalujte jednou, v Nastavení → Integrace</b> — GenOffice vypíše kódovací agenty, které na tomto počítači najde, a zapíše skill do každého, který vyberete. Nebo si skill stáhněte jako zip, případně spusťte <code>npx skills add genspark-ai/genoffice</code>. Příkazy a celý pracovní postup najdete v sekci <a href="#command-line-and-agent-skill">Příkazový řádek a agentní skill</a>.</td>
+<td><b>Nainstalujte jednou, v Nastavení → Integrace</b> — Apex Office vypíše kódovací agenty, které na tomto počítači najde, a zapíše skill do každého, který vyberete. Nebo si skill stáhněte jako zip, případně spusťte <code>npx skills add genspark-ai/genoffice</code>. Příkazy a celý pracovní postup najdete v sekci <a href="#command-line-and-agent-skill">Příkazový řádek a agentní skill</a>.</td>
 </tr>
 </table>
 
@@ -212,12 +212,12 @@ plus referenční příručky k operacím jako zdroje (resources). Druhý,
 HTTP server uvnitř aplikace umožňuje agentovi sestavit dokument Word přímo
 ve viditelné záložce editoru, zatímco se díváte.
 
-<img src="../assets/readme/mcp-deck-motion.webp" alt="Zrychlený záznam toho, jak Claude Code staví osmislajdovou investorskou prezentaci o obnovitelné energii přes MCP server genoffice: hledá obrázky a fotografie, kontroluje každou kandidátní fotografii pomocí media, deck_start zapíše stylový list a osnovu, deck_page přidává vždy jednu zkontrolovanou stránku, deck_build sestaví .pptx a slides_render vrátí obrázek každého slajdu; hotová prezentace se pak otevře v GenOffice Slides" width="100%">
+<img src="../assets/readme/mcp-deck-motion.webp" alt="Zrychlený záznam toho, jak Claude Code staví osmislajdovou investorskou prezentaci o obnovitelné energii přes MCP server genoffice: hledá obrázky a fotografie, kontroluje každou kandidátní fotografii pomocí media, deck_start zapíše stylový list a osnovu, deck_page přidává vždy jednu zkontrolovanou stránku, deck_build sestaví .pptx a slides_render vrátí obrázek každého slajdu; hotová prezentace se pak otevře v Apex Office Slides" width="100%">
 
 <table>
 <tr>
-<td width="50%"><img src="../assets/readme/mcp-deck-in-app.webp" alt="GenOffice Slides zobrazuje osmislajdovou prezentaci Renewable Energy 2026, kterou Claude Code postavil přes MCP server genoffice: titulní slajd s fotografií větrné farmy na ploše a osm miniatur vlevo"></td>
-<td width="50%"><img src="../assets/readme/mcp-integrations.webp" alt="Nastavení GenOffice, stránka Integrations, část MCP: jednořádkový příkaz claude mcp add pro Claude Code, blok JSON pro Cursor, Claude Desktop a další MCP klienty, a níže možnost lokálního HTTP serveru"></td>
+<td width="50%"><img src="../assets/readme/mcp-deck-in-app.webp" alt="Apex Office Slides zobrazuje osmislajdovou prezentaci Renewable Energy 2026, kterou Claude Code postavil přes MCP server genoffice: titulní slajd s fotografií větrné farmy na ploše a osm miniatur vlevo"></td>
+<td width="50%"><img src="../assets/readme/mcp-integrations.webp" alt="Nastavení Apex Office, stránka Integrations, část MCP: jednořádkový příkaz claude mcp add pro Claude Code, blok JSON pro Cursor, Claude Desktop a další MCP klienty, a níže možnost lokálního HTTP serveru"></td>
 </tr>
 <tr>
 <td><b>Jeden prompt, 38 volání nástrojů, žádný shell</b> — „Vytvoř osmislajdovou investorskou prezentaci o obnovitelné energii v roce 2026, se skutečnou fotografií na titulní straně a všude, kde fotografie pomůže.“ Agent stáhne obrázky a fotografie pomocí <code>search</code>, zeptá se <code>media</code>, zda je každá kandidátní fotografie skutečnou fotografií, zavolá <code>deck_start</code> se stylovým listem a osnovou, poté <code>deck_page</code> pro každý slajd; každá stránka je zkontrolována proti osnově a paletě, než je přijata, <code>deck_build</code> sestaví <code>.pptx</code>, <code>slides_audit</code> hledá přetečení, <code>slides_render</code> vrátí PNG pro každý slajd jako obrazový obsah, na který se model může podívat, a <code>deck_replace</code> opraví tři stránky, které se mu nelíbily.</td>
@@ -225,7 +225,7 @@ ve viditelné záložce editoru, zatímco se díváte.
 </tr>
 </table>
 
-## Proč GenOffice
+## Proč Apex Office
 
 - **Open source**, Apache-2.0, vyvíjený otevřeně na GitHubu.
 - **Váš k provozování.** Nativní aplikace pro macOS, Windows a Linux; soubory
@@ -276,7 +276,7 @@ vlastní barvy dokumentu.
 ## Skilly
 
 Skill je soubor `SKILL.md`, který AI říká, jak dobře zvládnout jeden úkol: týdenní report, NDA, plán hodiny.
-GenOffice jich sadu dodává a přijímá i vaše vlastní, ve stejném formátu, jaký používají programovací agenti.
+Apex Office jich sadu dodává a přijímá i vaše vlastní, ve stejném formátu, jaký používají programovací agenti.
 
 - **Nastavení → Skilly.** **Nainstalujte** doporučený skill nebo **Importujte** složku, zip či jediný `SKILL.md`. Při importu se nic nespouští. Karta **Vše** zobrazí celý doporučený katalog na jednom místě, s popisy v jazyce aplikace.
 - **V chatu.** Otevřete nabídku **+** vedle pole pro zprávu v kterémkoli AI panelu, zvolte **Skilly**, jeden zaškrtněte a odešlete. Skill putuje jen s touto zprávou.
@@ -290,7 +290,7 @@ GenOffice jich sadu dodává a přijímá i vaše vlastní, ve stejném formátu
 Vše, co aplikace umí se souborem, umí příkazový řádek `genoffice`
 z terminálu: prohlížet, převádět, vytvářet, číst a upravovat Word, Excel,
 PowerPoint, PDF, Markdown a HTML na stejných enginech, bez grafického
-rozhraní. Instaluje se spolu s GenOffice, nepotřebuje vlastní runtime
+rozhraní. Instaluje se spolu s Apex Office, nepotřebuje vlastní runtime
 a nikdy žádný dokument nikam neodesílá. Ve spojení s přibaleným **agentním
 skillem** promění kódovacího agenta v dokumentového pracovníka, který
 vytváří skutečné soubory Office místo přibližných napodobenin v Markdownu.
@@ -304,7 +304,7 @@ MCP klientem.
 
 | Jak                                    | Co se stane                                                                                                                                                                                |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Nastavení → Integrace** v aplikaci   | Vypíše agenty nalezené na tomto počítači; jedním kliknutím zapíše skill do každého, který vyberete. Když nové vydání GenOffice přinese novější skill, objeví se tlačítko **Aktualizovat**. |
+| **Nastavení → Integrace** v aplikaci   | Vypíše agenty nalezené na tomto počítači; jedním kliknutím zapíše skill do každého, který vyberete. Když nové vydání Apex Office přinese novější skill, objeví se tlačítko **Aktualizovat**. |
 | **Stáhnout jako zip** na téže stránce  | Rozložení, které claude.ai, desktopové aplikace Claude a další asistenti přijímají jako nahraný skill.                                                                                     |
 | `npx skills add genspark-ai/genoffice` | Nainstaluje z tohoto repozitáře do jakéhokoli agenta podporujícího skilly.                                                                                                                 |
 
@@ -338,7 +338,7 @@ v Claude Code. Agent za ní postupoval podle fázovaného pracovního postupu ze
 skillu a CLI zkontrolovalo každou fázi, než začala další:
 
 ```bash
-genoffice capabilities --json                        # which cloud tools GenOffice has configured
+genoffice capabilities --json                        # which cloud tools Apex Office has configured
 genoffice guide slides design                        # the deck workflow and layout library
 genoffice image "the eight planets in a row …" --aspect 16:9 --out deck/assets/cover.jpg
 genoffice slides check deck/outline.json --json      # 8 pages, no findings
@@ -352,7 +352,7 @@ genoffice open deck/solar-system.pptx
 ```
 
 Uvnitř `genoffice` neprobíhá žádné volání modelu: agent přemýšlí, CLI staví
-a kontroluje a výsledek se otevře v GenOffice nebo PowerPointu jako obyčejný
+a kontroluje a výsledek se otevře v Apex Office nebo PowerPointu jako obyčejný
 soubor `.pptx`.
 
 <a id="mcp-server"></a>
@@ -366,8 +366,8 @@ zkopírování v **Nastavení → Integrace → MCP**:
 
 | Cesta                                | Co to je                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **A · `genoffice mcp`** (doporučeno) | stdio server, který si asistent spustí sám; GenOffice nemusí být otevřené. Jeden nástroj na příkaz (`info`, `convert`, `create_docx`, `create_xlsx`, `create_pptx`, `create_pdf`, `docs_read` / `docs_apply` / `docs_check`, `sheet_*`, `slides_*`, `render`, `guide`, `search`, `image`, `media`, `open`) plus fázovaný postup sestavování prezentace `deck_start` → `deck_page` → `deck_build` → `deck_replace`. Operace, specifikace a Markdown se předávají přímo v argumentech, takže funguje i klient bez souborového systému. |
-| **B · Lokální HTTP server**          | Běží uvnitř aplikace GenOffice na `http://127.0.0.1:3093/mcp` (Streamable HTTP, se starším SSE). Jeho nástroje ovládají viditelnou záložku editoru Word: `create_session`, `insert_content`, `replace_blocks`, `apply_ops`, `read_document`, `save_session` — a vy sledujete, jak dokument vzniká. Ve výchozím stavu vypnutý; zapíná se ve stejném panelu nastavení.                                                                                                                                                                 |
+| **A · `genoffice mcp`** (doporučeno) | stdio server, který si asistent spustí sám; Apex Office nemusí být otevřené. Jeden nástroj na příkaz (`info`, `convert`, `create_docx`, `create_xlsx`, `create_pptx`, `create_pdf`, `docs_read` / `docs_apply` / `docs_check`, `sheet_*`, `slides_*`, `render`, `guide`, `search`, `image`, `media`, `open`) plus fázovaný postup sestavování prezentace `deck_start` → `deck_page` → `deck_build` → `deck_replace`. Operace, specifikace a Markdown se předávají přímo v argumentech, takže funguje i klient bez souborového systému. |
+| **B · Lokální HTTP server**          | Běží uvnitř aplikace Apex Office na `http://127.0.0.1:3093/mcp` (Streamable HTTP, se starším SSE). Jeho nástroje ovládají viditelnou záložku editoru Word: `create_session`, `insert_content`, `replace_blocks`, `apply_ops`, `read_document`, `save_session` — a vy sledujete, jak dokument vzniká. Ve výchozím stavu vypnutý; zapíná se ve stejném panelu nastavení.                                                                                                                                                                 |
 
 ```bash
 # Claude Code
@@ -386,7 +386,7 @@ instrukce k pracovnímu postupu a zpřístupňuje referenční příručky k ope
 jako zdroje `genoffice://guide/*`, takže skill není potřeba; skill a MCP
 server mohou koexistovat a asistent si jeden z nich vybere. Cloudové funkce
 (`search`, `image`, `media`) stále jdou přes poskytovatele nastaveného v
-GenOffice; všechno ostatní běží lokálně a `GENOFFICE_ALLOWED_ROOTS` omezuje
+Apex Office; všechno ostatní běží lokálně a `GENOFFICE_ALLOWED_ROOTS` omezuje
 každý nástroj na složky, které uvedete.
 
 Prezentace o obnovitelné energii z dema výše je to, jak jeden prompt v
@@ -411,7 +411,7 @@ deck_replace(dir, n, page) ×3 · slides_render(file, out)
 Osmatřicet volání, zhruba třináct minut, a asistent se ani jednou nedotkl
 shellu: obrázky, fotografie, průvodci, kontroly i rendery cestovaly jako
 výsledky volání MCP nástrojů. Pouze `search` a `media` opustily počítač, k
-poskytovateli nastavenému v GenOffice.
+poskytovateli nastavenému v Apex Office.
 
 <a id="download"></a>
 
@@ -433,7 +433,7 @@ podepsané. Starší verze jsou na stránce [Releases](https://github.com/genspa
 <details>
 <summary><b>Instalace na Linuxu</b></summary>
 
-Balíček deb se instaluje pomocí apt — stáhne závislosti a přidá GenOffice
+Balíček deb se instaluje pomocí apt — stáhne závislosti a přidá Apex Office
 do nabídky aplikací:
 
 ```bash
@@ -501,37 +501,37 @@ pull requestů najdete v [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ## Komunita
 
-GenOffice je v aktivním vývoji a vaše zpětná vazba jej utváří.
+Apex Office je v aktivním vývoji a vaše zpětná vazba jej utváří.
 
 - **Nahlaste chybu nebo navrhněte funkci** v
   [GitHub Issues](https://github.com/genspark-ai/genoffice/issues).
-- **Připojte se ke skupinovému chatu GenOffice** na
+- **Připojte se ke skupinovému chatu Apex Office** na
   [GenTeam](https://genoffice.ai/join), kde si můžete promluvit s týmem
   i ostatními uživateli.
-- **Ohvězdičkujte repozitář**, pokud je pro vás GenOffice užitečný — je to
+- **Ohvězdičkujte repozitář**, pokud je pro vás Apex Office užitečný — je to
   nejlepší způsob, jak projekt podpořit.
 
 ## Často kladené otázky
 
 <details>
-<summary><b>Je GenOffice zdarma?</b></summary>
+<summary><b>Je Apex Office zdarma?</b></summary>
 
-Ano. GenOffice je bezplatný a open-source pod licencí Apache-2.0 — žádná
+Ano. Apex Office je bezplatný a open-source pod licencí Apache-2.0 — žádná
 zkušební verze, žádný placený tarif pro samotné aplikace.
 
 </details>
 
 <details>
-<summary><b>Umí GenOffice otevírat soubory Microsoft Word, Excel a PowerPoint?</b></summary>
+<summary><b>Umí Apex Office otevírat soubory Microsoft Word, Excel a PowerPoint?</b></summary>
 
-Ano. GenOffice otevírá a ukládá nativní soubory `.docx`, `.xlsx` a `.pptx`.
+Ano. Apex Office otevírá a ukládá nativní soubory `.docx`, `.xlsx` a `.pptx`.
 Ukládání zachovává bajty: části souboru, kterých jste se nedotkli, se zapíší
 zpět beze změny, takže dokumenty dál fungují v Microsoft Office.
 
 </details>
 
 <details>
-<summary><b>Funguje GenOffice offline?</b></summary>
+<summary><b>Funguje Apex Office offline?</b></summary>
 
 Úprava dokumentů je zcela lokální — soubory neopustí váš počítač při
 otevírání, úpravách, ukládání ani konverzi. AI funkce (agenti, vyhledávání,
@@ -541,7 +541,7 @@ Genspark, nebo s vlastním API klíčem k modelu.
 </details>
 
 <details>
-<summary><b>Umí GenOffice upravovat soubory PDF?</b></summary>
+<summary><b>Umí Apex Office upravovat soubory PDF?</b></summary>
 
 Ano — skutečná úprava textu a obrázků v PDF, která přepisuje obsahový proud
 stránky se zachováním původních fontů, ne pomocí zakrývacích anotací.
@@ -549,7 +549,7 @@ stránky se zachováním původních fontů, ne pomocí zakrývacích anotací.
 </details>
 
 <details>
-<summary><b>Umí GenOffice převádět PDF do Wordu, Excelu nebo PowerPointu?</b></summary>
+<summary><b>Umí Apex Office převádět PDF do Wordu, Excelu nebo PowerPointu?</b></summary>
 
 Ano — zcela na zařízení: extrakce na úrovni znaků přes PDFium plus analýza
 rozvržení na základě geometrie, žádná cloudová služba, žádné nahrávání.
@@ -561,7 +561,7 @@ OCR, takže se převedou na editovatelný text, ne na obrázek stránky.
 <details>
 <summary><b>Můžu použít vlastní AI model nebo API klíč?</b></summary>
 
-Ano. Kromě bezklíčového přihlášení Genspark GenOffice podporuje vlastní klíč
+Ano. Kromě bezklíčového přihlášení Genspark Apex Office podporuje vlastní klíč
 pro Claude, OpenAI, Gemini, DeepSeek, Kimi, GLM, Qwen, Doubao, MiniMax, Grok,
 Mistral, OpenRouter, Requesty a OpenCode Zen/Go, plus jakýkoli OpenAI kompatibilní
 endpoint — včetně lokálních serverů s modely. Vyhledávání, generování obrázků
@@ -581,7 +581,7 @@ stavu.
 </details>
 
 <details>
-<summary><b>Umí GenOffice převádět HTML do Wordu?</b></summary>
+<summary><b>Umí Apex Office převádět HTML do Wordu?</b></summary>
 
 Ano — Export as Word v aplikaci HTML vytvoří nativní, editovatelný soubor
 `.docx` zcela na zařízení. Stránka se vykreslí ve vestavěném Chromiu
@@ -593,9 +593,9 @@ obrázky.
 </details>
 
 <details>
-<summary><b>Můžu GenOffice ovládat z nástrojů Claude Code, Codex, Cursor nebo ze skriptu?</b></summary>
+<summary><b>Můžu Apex Office ovládat z nástrojů Claude Code, Codex, Cursor nebo ze skriptu?</b></summary>
 
-Ano. GenOffice nainstaluje příkazový řádek `genoffice`, který spouští stejné
+Ano. Apex Office nainstaluje příkazový řádek `genoffice`, který spouští stejné
 enginy bez grafického rozhraní: prohlížejte, převádějte, vytvářejte, čtěte
 a upravujte dokumenty z terminálu nebo ze skriptu, s výstupem `--json` pro
 programy. Přibalený agentní skill naučí Claude Code, Codex, Cursor, Gemini
@@ -606,13 +606,13 @@ v **Nastavení → Integrace**. Viz
 </details>
 
 <details>
-<summary><b>Sbírá GenOffice nějaká data?</b></summary>
+<summary><b>Sbírá Apex Office nějaká data?</b></summary>
 
 Oficiální balíčkované verze standardně odesílají omezenou analytiku
 používání a hlášení lze kdykoli vypnout v Nastavení → Obecné. Analytika
 nikdy neodesílá obsah dokumentu, názvy souborů, cesty k souborům, identitu
 účtu ani e-mailové adresy. Úplný výčet událostí a zveřejnění dat najdete
-v dokumentu [GenOffice Privacy](../../PRIVACY.md).
+v dokumentu [Apex Office Privacy](../../PRIVACY.md).
 
 </details>
 
@@ -624,7 +624,7 @@ externích odkazů) a modely hrozeb pro obsah generovaný AI najdete v
 
 ## Poděkování
 
-GenOffice by nebyl možný bez těchto open-source projektů:
+Apex Office by nebyl možný bez těchto open-source projektů:
 
 - [Electron](https://www.electronjs.org/) — desktopový runtime pro každou aplikaci.
 - [Univer](https://github.com/dream-num/univer) (Apache-2.0) — jádro
@@ -669,10 +669,10 @@ MIT/Apache-2.0/BSD-3-Clause/OFL.
 
 ## Licence
 
-GenOffice je licencován pod [Apache License 2.0](../../LICENSE), s jednou
+Apex Office je licencován pod [Apache License 2.0](../../LICENSE), s jednou
 výjimkou: adresář `ee/` je vyhrazen pro budoucí podnikové moduly a je kryt
-[GenOffice Enterprise License](../../ee/LICENSE).
+[Apex Office Enterprise License](../../ee/LICENSE).
 
-Názvy a loga GenOffice a Genspark jsou ochranné známky společnosti Mainfunc,
+Názvy a loga Apex Office a Genspark jsou ochranné známky společnosti Mainfunc,
 Inc. Licence Apache-2.0 neuděluje oprávnění je používat (viz oddíl 6); forky
 by měly používat vlastní branding.

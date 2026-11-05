@@ -4,16 +4,16 @@ import { appBinaryForResources } from '../src/resources'
 
 describe('appBinaryForResources', () => {
   it('finds the app in a custom Windows install directory', () => {
-    expect(appBinaryForResources(join('D:\\Apps\\GenOffice', 'resources'), 'win32')).toBe(
-      join('D:\\Apps\\GenOffice', 'GenOffice.exe'),
+    expect(appBinaryForResources(join('D:\\Apps\\Apex Office', 'resources'), 'win32')).toBe(
+      join('D:\\Apps\\Apex Office', 'Apex Office.exe'),
     )
   })
 
   it('resolves the same binary for the default Windows install directory', () => {
     const localAppData = 'C:\\Users\\test\\AppData\\Local'
-    const resources = join(localAppData, 'Programs', 'GenOffice', 'resources')
+    const resources = join(localAppData, 'Programs', 'Apex Office', 'resources')
     expect(appBinaryForResources(resources, 'win32')).toBe(
-      join(localAppData, 'Programs', 'GenOffice', 'GenOffice.exe'),
+      join(localAppData, 'Programs', 'Apex Office', 'Apex Office.exe'),
     )
   })
 

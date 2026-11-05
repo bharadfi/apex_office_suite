@@ -10,7 +10,7 @@ const webResponse = () =>
     organic_results: [
       {
         position: 1,
-        title: 'GenOffice',
+        title: 'Apex Office',
         link: 'https://genoffice.ai/',
         snippet: 'A free, open-source office suite.',
       },
@@ -59,7 +59,7 @@ describe('SearchApi web search', () => {
     expect(r).toEqual({
       results: [
         {
-          title: 'GenOffice',
+          title: 'Apex Office',
           url: 'https://genoffice.ai/',
           snippet: 'A free, open-source office suite.',
         },
