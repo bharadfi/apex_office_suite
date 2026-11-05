@@ -8,6 +8,7 @@ import type { DocFontStyle } from './doc-font'
 import { EDIT_FONTS, SYNTHETIC_BOLD_STROKE_EM } from '../shared/ipc'
 import type { TextEditInput, TextEditValidation, TextInsertInput } from '../shared/ipc'
 import type { TextBlock } from './text-block'
+import type { OcrLine } from './ocr-bake'
 import { joinBlockLines } from './text-wrap'
 
 export const EDIT_FONT_BY_ID = new Map<string, (typeof EDIT_FONTS)[number]>(
@@ -496,6 +497,12 @@ export interface TextDraft {
   seedFont?: DocFontStyle
   /** Page color sampled around the run at open (CSS); see LocalTextEdit.paper */
   paper?: string
+  /** Set when the run is a recognised line of a scanned page: it is replaced by new text over a
+      box in the page's colour instead of rebuilt from a text object */
+  ocr?: OcrLine
+  /** The face the line was matched to when the editor opened; a commit that still has it and the
+      original text changes nothing */
+  ocrGuess?: { font?: string; bold?: true; italic?: true }
   /** EDIT_FONTS id; undefined = automatic rebuild font */
   font?: string
   /** Style toggles; true = on, undefined = off (resolved via font variants at save) */

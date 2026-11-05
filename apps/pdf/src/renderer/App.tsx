@@ -15,6 +15,7 @@ import {
   type AutoOcrResult,
   type AutoOcrStop,
   type OcrPageData,
+  type OcrWord,
 } from './ocr-layer'
 import type { CropRect, FileOpCanceled, FileOpResult, RotateDelta } from './file-ops'
 import {
@@ -268,9 +269,10 @@ import {
   textEraseKey,
   textEraseProbe,
 } from './text-edit-preview'
-import { samplePaperColor } from './paper-sample'
+import { samplePaperColor, sampleInkColor } from './paper-sample'
 import type { LocalTextEdit, LocalTextInsert, TextDraft } from './text-edit-preview'
-import { buildOcrBakeInserts } from './ocr-bake'
+import { buildOcrBakeInserts, ocrLineAt, type OcrLine } from './ocr-bake'
+import { guessLineFont } from './ocr-font-guess'
 import { planEditOps, reduceBucket } from './edit-ops'
 import type { Bucket, Op, OpContext, PlanResult } from './edit-ops'
 import { rectsNear } from './edit-state'
@@ -2509,6 +2511,7 @@ export default function App() {
             fromPage: () => currentOrigIdxRef.current,
             ...(pending === null ? {} : { pending }),
             signal: controller.signal,
+            concurrency: 3,
             geom: (origIdx) => pageGeomRef.current(origIdx),
             render: renderPageForOcr,
             ocrPage: (png) => window.pdfApi.ocrPage(png),
@@ -3311,6 +3314,90 @@ export default function App() {
     return { span, group, raw: group.starts[i]! + off }
   }
 
+  /** Open the floating editor over a recognised line of a scanned page. The ink and paper are read
+      off the page picture, so the new text matches what it replaces. */
+  const startOcrLineEdit = (origIdx: number, line: OcrLine) => {
+    const rect = line.rect
+    const paper = samplePaper(origIdx, rect)
+    const box = pdfRectToCss(pageGeom(origIdx), rect, scale)
+    const ink =
+      sampleInkColor(document.querySelector(`.pdf-page[data-page="${origIdx}"]`), box, paper) ??
+      undefined
+    const guess = guessLineFont(
+      document.querySelector(`.pdf-page[data-page="${origIdx}"]`),
+      box,
+      line.insert.text,
+      editFonts,
+    )
+    setSelected(null)
+    draftSelectedRef.current = false
+    draftPreselectRef.current = null
+    setTextDraft({
+      origIdx,
+      rect: [...rect],
+      oldText: line.insert.text,
+      fontSize: line.insert.fontSize,
+      value: line.insert.text,
+      paper,
+      seedInk: ink,
+      ocr: line,
+      ...(guess ? { ocrGuess: guess, ...guess } : {}),
+    })
+  }
+
+  /** Commit an edited recognised line: the new text over a box in the page's colour, and the line
+      leaves the recognition data so its old invisible words are not saved beside the new text */
+  const commitOcrDraft = (d: TextDraft & { ocr: OcrLine }) => {
+    setTextDraft(null)
+    const g = d.ocrGuess
+    const unchanged =
+      d.value === d.oldText &&
+      !d.size &&
+      !d.color &&
+      d.font === g?.font &&
+      d.bold === g?.bold &&
+      d.italic === g?.italic
+    if (unchanged || !d.value.trim()) return
+    const { insert } = d.ocr
+    const h = d.rect[3] - d.rect[1]
+    const padX = Math.max(1.5, h * 0.15)
+    const padY = Math.max(1, h * 0.12)
+    const widest = Math.max(
+      d.rect[2],
+      d.rect[0] + measureTextWidth(d.value, `${d.size ?? d.fontSize}px sans-serif`),
+    )
+    applyEditOps([
+      {
+        op: 'addTextInsert',
+        input: {
+          pageIndex: d.origIdx,
+          origin: insert.origin,
+          text: d.value,
+          fontSize: d.size ?? d.fontSize,
+          color: hexTo255(d.color ?? d.seedInk ?? '#000000'),
+          ...(d.font ? { font: d.font } : {}),
+          ...(d.bold ? { bold: true } : {}),
+          ...(d.italic ? { italic: true } : {}),
+          ...(insert.lineLeading ? { lineLeading: insert.lineLeading } : {}),
+          ...(insert.rotate ? { rotate: insert.rotate } : {}),
+          cover: {
+            rect: [d.rect[0] - padX, d.rect[1] - padY, widest + padX, d.rect[3] + padY],
+            color: hexTo255(d.paper ?? '#ffffff'),
+          },
+        },
+      },
+    ])
+    const gone = new Set<OcrWord>(d.ocr.words)
+    setOcrPages((prev) => {
+      const data = prev.get(d.origIdx)
+      if (!data) return prev
+      return new Map(prev).set(d.origIdx, {
+        ...data,
+        words: data.words.filter((w) => !gone.has(w)),
+      })
+    })
+  }
+
   /** Click on a text-layer span in edit mode → open the floating editor over that run */
   const startTextEdit = (origIdx: number, e: ReactMouseEvent<HTMLDivElement>) => {
     if (!readOnly && dragEditFromSelection(origIdx, e)) {
@@ -3318,6 +3405,23 @@ export default function App() {
       return
     }
     const span = (e.target as HTMLElement).closest('.textLayer span')
+    const ocr = ocrPages.get(origIdx)
+    if (!span && ocr && !readOnly) {
+      // a recognised page has no text objects to rebuild: its lines are edited as new text over a
+      // box that hides the picture's words
+      const pageBox = e.currentTarget.getBoundingClientRect()
+      const point = viewToPdf(
+        pageGeom(origIdx),
+        (e.clientX - pageBox.left) / scale,
+        (e.clientY - pageBox.top) / scale,
+      )
+      const line = ocrLineAt(origIdx, ocr.words, pageGeom(origIdx), point)
+      if (line) {
+        e.stopPropagation()
+        startOcrLineEdit(origIdx, line)
+        return
+      }
+    }
     const caret = caretFromPoint(e)
     // A plain click inside a multi-line clustered block edits the paragraph
     // (WPS-style); Alt+click keeps the line-level editor as the fallback for
@@ -3723,6 +3827,10 @@ export default function App() {
   const commitTextDraft = (): LocalTextEdit[] => {
     const d = textDraft
     if (!d) return textEdits
+    if (d.ocr) {
+      commitOcrDraft({ ...d, ocr: d.ocr })
+      return textEdits
+    }
     const merged = mergeTextDraft(textEdits, d)
     if (merged === 'overflow') {
       // Keep the editor open so the user can shorten the text (or Escape out)
@@ -9456,6 +9564,21 @@ export default function App() {
                                   {pendingTextInsert.text}
                                 </div>
                               )}
+                              {textInserts
+                                .filter(
+                                  (insert) =>
+                                    insert.input.pageIndex === origIdx && insert.input.cover,
+                                )
+                                .map((insert) => (
+                                  <div
+                                    key={`cover-${insert.id}`}
+                                    className="pdf-textinsert-cover"
+                                    style={{
+                                      ...pdfRectToCss(geom, insert.input.cover!.rect, scale),
+                                      background: `rgb(${insert.input.cover!.color.join(', ')})`,
+                                    }}
+                                  />
+                                ))}
                               {textInserts
                                 .filter((insert) => insert.input.pageIndex === origIdx)
                                 .map((insert) => {

@@ -12,7 +12,10 @@ test('Edit text opens on text in a PDF that also has a form field', async () => 
   const font = await doc.embedFont(StandardFonts.Helvetica)
   const page = doc.addPage([400, 300])
   page.drawText("Insured's Name", { x: 40, y: 220, size: 14, font })
-  doc.getForm().createTextField('far.away').addToPage(page, { x: 40, y: 60, width: 120, height: 20 })
+  doc
+    .getForm()
+    .createTextField('far.away')
+    .addToPage(page, { x: 40, y: 60, width: 120, height: 20 })
   await writeFile(pdfPath, await doc.save({ useObjectStreams: false }))
 
   const launched = await launchShell({

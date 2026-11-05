@@ -2512,6 +2512,13 @@ button {
   outline: 1px solid var(--pdf-textedit-ring);
 }
 
+/* box hiding the picture text an edited OCR line replaces; sits under the new text */
+.pdf-textinsert-cover {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+}
+
 .pdf-textinsert-preview {
   position: absolute;
   z-index: 4;

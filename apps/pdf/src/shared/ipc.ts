@@ -542,6 +542,9 @@ export interface TextInsertInput {
       The OCR bake layer's inserts: white glyphs would still show on grey paper,
       photos and dark headers, and light up under selection. */
   invisible?: boolean
+  /** A filled box painted under the text, in PDF user space with a 0-255 RGB colour. Editing
+      text that is only a picture: the box hides the picture's old words behind the new ones. */
+  cover?: { rect: [number, number, number, number]; color: [number, number, number] }
 }
 
 /** Dry-run match result for one pending text edit */

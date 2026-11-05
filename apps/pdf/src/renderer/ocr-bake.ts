@@ -96,12 +96,15 @@ function groupDisplayLines(words: DispWord[]): DispWord[][] {
   return lines
 }
 
-/** one invisible insert per line: origin at the line's left baseline, size from its box height */
-export function buildOcrBakeInserts(
-  origIdx: number,
-  words: OcrWord[],
-  geom: PageGeom,
-): TextInsertInput[] {
+/** A recognised line: its words, the box they cover (PDF user space), and the text insert that
+    reproduces it (origin at the line's left baseline, size from its box height) */
+export interface OcrLine {
+  words: OcrWord[]
+  rect: [number, number, number, number]
+  insert: TextInsertInput
+}
+
+export function ocrLines(origIdx: number, words: OcrWord[], geom: PageGeom): OcrLine[] {
   const rotate = ((geom.rot % 360) + 360) % 360
   // Everything — grouping, the line box, the baseline — happens in DISPLAY
   // space (the page as the reader sees it, after its /Rotate), because the
@@ -121,15 +124,52 @@ export function buildOcrBakeInserts(
       text += word.text
     })
     const [ux, uy] = viewToPdf(geom, left, bottom - height * 0.22)
+    const rects = line.map((w) => w.word.rect)
     return {
-      pageIndex: origIdx,
-      origin: [ux, uy],
-      text,
-      fontSize: Math.max(4, Math.min(height * 0.82, 72)),
-      color: BAKE_COLOR,
-      lineLeading: height * 1.1,
-      rotate,
-      invisible: true,
+      words: line.map((w) => w.word),
+      rect: [
+        Math.min(...rects.map((r) => r[0])),
+        Math.min(...rects.map((r) => r[1])),
+        Math.max(...rects.map((r) => r[2])),
+        Math.max(...rects.map((r) => r[3])),
+      ],
+      insert: {
+        pageIndex: origIdx,
+        origin: [ux, uy],
+        text,
+        fontSize: Math.max(4, Math.min(height * 0.82, 72)),
+        color: BAKE_COLOR,
+        lineLeading: height * 1.1,
+        rotate,
+        invisible: true,
+      },
     }
   })
+}
+
+/** one invisible insert per line: origin at the line's left baseline, size from its box height */
+export function buildOcrBakeInserts(
+  origIdx: number,
+  words: OcrWord[],
+  geom: PageGeom,
+): TextInsertInput[] {
+  return ocrLines(origIdx, words, geom).map((line) => line.insert)
+}
+
+/** The recognised line under a point of the page (PDF user space), if any */
+export function ocrLineAt(
+  origIdx: number,
+  words: OcrWord[],
+  geom: PageGeom,
+  point: readonly [number, number],
+): OcrLine | null {
+  return (
+    ocrLines(origIdx, words, geom).find(
+      (l) =>
+        point[0] >= l.rect[0] &&
+        point[0] <= l.rect[2] &&
+        point[1] >= l.rect[1] &&
+        point[1] <= l.rect[3],
+    ) ?? null
+  )
 }

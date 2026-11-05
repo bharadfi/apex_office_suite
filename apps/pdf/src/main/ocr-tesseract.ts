@@ -6,11 +6,12 @@
  * 98% against 86% on a table page), needs no helper program compiled for each platform, and
  * works the same everywhere. It is slower (a few seconds a page), which suits a background pass.
  *
- * The engine keeps one worker alive between pages, handles one page at a time, and lets the
- * worker go after a quiet minute so an idle viewer holds no recognition memory.
+ * The engine runs a few workers side by side (pages are independent) and lets them go after a
+ * quiet minute so an idle viewer holds no recognition memory.
  */
 import { existsSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import { availableParallelism } from 'node:os'
 import { dirname, join } from 'node:path'
 import { createWorker, OEM, type Worker } from 'tesseract.js'
 import type { PdfOcrLine } from '../shared/ipc'
@@ -130,19 +131,30 @@ export function tesseractPaths(
   }
 }
 
-/** One Tesseract worker, created on first use, one page at a time, released when idle */
+/** Workers to run side by side: pages are independent, so more cores read more pages at once */
+export function defaultPoolSize(cpus = availableParallelism()): number {
+  return Math.max(1, Math.min(3, Math.floor(cpus / 2)))
+}
+
+/**
+ * Tesseract workers (up to `size`), created on first use, one page per worker at a time,
+ * all released when idle
+ */
 export class TesseractEngine {
-  private worker: Promise<Worker> | null = null
+  private workers: Promise<Worker>[] = []
+  private free: Worker[] = []
+  private waiting: ((worker: Worker) => void)[] = []
+  private active = 0
   private idleTimer: NodeJS.Timeout | null = null
-  private queue: Promise<unknown> = Promise.resolve()
 
   constructor(
     private readonly paths: TesseractPaths,
     private readonly idleMs = 60_000,
+    private readonly size = defaultPoolSize(),
   ) {}
 
-  private start(): Promise<Worker> {
-    this.worker ??= createWorker('eng', OEM.LSTM_ONLY, {
+  private create(): Promise<Worker> {
+    const worker: Promise<Worker> = createWorker('eng', OEM.LSTM_ONLY, {
       ...(this.paths.workerPath ? { workerPath: this.paths.workerPath } : {}),
       corePath: this.paths.corePath,
       langPath: this.paths.langPath,
@@ -150,20 +162,36 @@ export class TesseractEngine {
       // the data ships with the app: nothing is downloaded and no cache is written beside it
       cacheMethod: 'none',
     }).catch((err) => {
-      this.worker = null
+      this.workers = this.workers.filter((w) => w !== worker)
       throw err
     })
-    return this.worker
+    this.workers.push(worker)
+    return worker
   }
 
-  /** Recognise one PNG. Calls queue up and run one at a time. */
-  recognize(png: Uint8Array): Promise<PdfOcrLine[]> {
-    const run = async (): Promise<PdfOcrLine[]> => {
-      const size = pngSize(png)
-      if (!size) return []
-      this.cancelIdle()
+  /** A worker to use: a free one, a new one while under the limit, or the next one released */
+  private acquire(): Promise<Worker> {
+    const idle = this.free.pop()
+    if (idle) return Promise.resolve(idle)
+    if (this.workers.length < this.size) return this.create()
+    return new Promise((resolve) => this.waiting.push(resolve))
+  }
+
+  private release(worker: Worker): void {
+    const waiter = this.waiting.shift()
+    if (waiter) waiter(worker)
+    else this.free.push(worker)
+  }
+
+  /** Recognise one PNG. Up to `size` calls run at once; the rest wait their turn. */
+  async recognize(png: Uint8Array): Promise<PdfOcrLine[]> {
+    const size = pngSize(png)
+    if (!size) return []
+    this.active += 1
+    this.cancelIdle()
+    try {
+      const worker = await this.acquire()
       try {
-        const worker = await this.start()
         const { data } = await worker.recognize(Buffer.from(png), {}, { blocks: true })
         return blocksToLines(
           (data.blocks ?? []) as unknown as RecognizedBlocks[],
@@ -171,20 +199,28 @@ export class TesseractEngine {
           size.height,
         )
       } finally {
-        this.scheduleIdle()
+        this.release(worker)
       }
+    } finally {
+      this.active -= 1
+      if (this.active === 0) this.scheduleIdle()
     }
-    const next = this.queue.then(run, run)
-    this.queue = next.catch(() => undefined)
-    return next
   }
 
-  /** Let the worker go now. A later call starts a new one. */
+  /** Let the workers go now. A later call starts new ones. */
   async dispose(): Promise<void> {
     this.cancelIdle()
-    const pending = this.worker
-    this.worker = null
-    if (pending) await (await pending.catch(() => null))?.terminate()
+    const all = this.workers
+    this.workers = []
+    this.free = []
+    await Promise.all(
+      all.map((w) =>
+        w.then(
+          (worker) => worker.terminate(),
+          () => undefined,
+        ),
+      ),
+    )
   }
 
   private scheduleIdle(): void {

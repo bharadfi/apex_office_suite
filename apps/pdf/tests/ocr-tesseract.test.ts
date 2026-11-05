@@ -5,6 +5,7 @@ import { afterAll, describe, expect, it } from 'vitest'
 import {
   MIN_WORD_CONFIDENCE,
   TesseractEngine,
+  defaultPoolSize,
   blocksToLines,
   pngSize,
   tesseractPaths,
@@ -160,6 +161,23 @@ describe('TesseractEngine (the real engine)', () => {
       results[0]!.map((l) => l.text).join(' '),
     ])
     expect(results[0]!.length).toBeGreaterThan(0)
+  }, 120_000)
+
+  it('reads pages on several workers at once and keeps each page its own', async () => {
+    const pool = new TesseractEngine(paths, 200, 2)
+    try {
+      const results = await Promise.all([
+        pool.recognize(png),
+        pool.recognize(png),
+        pool.recognize(png),
+      ])
+      for (const r of results) expect(r.map((l) => l.text).join(' ')).toMatch(/quick/i)
+      expect(defaultPoolSize(1)).toBe(1)
+      expect(defaultPoolSize(4)).toBe(2)
+      expect(defaultPoolSize(32)).toBe(3)
+    } finally {
+      await pool.dispose()
+    }
   }, 120_000)
 
   it('gives nothing for something that is not a PNG', async () => {

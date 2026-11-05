@@ -2210,6 +2210,17 @@ export function applyTextInserts(
             if (!face || face.failed) continue // recorded as skipped with the face
             const created: number[] = []
             try {
+              if (input.cover) {
+                // paper-coloured box first, so the new text sits on top of it and hides what
+                // it replaces (a picture of text has no text object to remove)
+                const [x0, y0, x1, y1] = input.cover.rect
+                const box = m._FPDFPageObj_CreateNewRect(x0, y0, x1 - x0, y1 - y0)
+                if (!box) throw new Error('could not create the cover box')
+                created.push(box)
+                const [r, g, b] = input.cover.color
+                m._FPDFPageObj_SetFillColor(box, r, g, b, 255)
+                m._FPDFPath_SetDrawMode(box, 1, 0)
+              }
               const font = face.font
               const matrixPtr = m._malloc(24)
               try {

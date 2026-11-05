@@ -212,7 +212,7 @@ export interface AutoOcrResult {
   pending: number[] | null
 }
 
-/** Recognize the document's scanned pages sequentially, in the background.
+/** Recognize the document's scanned pages in the background, a few at a time.
     Reads the shared text index (so the document is not extracted a second time),
     visits pages from the current one and wraps around, and reports what it did.
     `signal` stops the pass: the renderer wires it to the user's Stop and to the
@@ -229,6 +229,8 @@ export async function runAutoOcr(opts: {
       followed rather than rebuilt, and a page is not paid for a second time. */
   pending?: readonly number[]
   signal: AbortSignal
+  /** Pages recognized at the same time (default 1) */
+  concurrency?: number
   limit?: number
   geom: (origIdx: number) => PageGeom
   render: (doc: PDFDocumentProxy, origIdx: number, geom: PageGeom) => Promise<string | null>
@@ -266,36 +268,59 @@ export async function runAutoOcr(opts: {
   })
   let done = 0
   let attempted = 0
-  for (let at = 0; at < queue.length; at += 1) {
-    if (attempted >= limit) return finish('cap', done, attempted, queue.slice(at))
-    if (opts.signal.aborted) return finish('cancelled', done, attempted, null)
-    opts.onProgress(done, total)
-    // one geometry snapshot for render and box conversion: a rotation between
-    // the two awaits must not remap boxes through different axes
-    const geom = opts.geom(queue[at]!)
-    const png = await opts.render(opts.doc, queue[at]!, geom)
-    // a cancel after the render must not pay for the engine call
-    if (opts.signal.aborted) return finish('cancelled', done, attempted, null)
-    if (!png) {
+  let next = 0
+  let stopped: 'cap' | 'cancelled' | 'noEngine' | null = null
+  let capAt = 0
+  // Pages are claimed in queue order by `concurrency` lanes, so the pages a cap or
+  // a cancel leaves are always a suffix of the queue. A page already in flight
+  // when a stop arrives is finished and kept: its work is paid for.
+  const lane = async (): Promise<void> => {
+    while (stopped === null && next < queue.length) {
+      if (attempted >= limit) {
+        stopped = 'cap'
+        capAt = next
+        return
+      }
+      if (opts.signal.aborted) {
+        stopped = 'cancelled'
+        return
+      }
+      const at = next
+      next += 1
       attempted += 1
-      continue // no bitmap; the next page may still render
+      opts.onProgress(done, total)
+      // one geometry snapshot for render and box conversion: a rotation between
+      // the two awaits must not remap boxes through different axes
+      const geom = opts.geom(queue[at]!)
+      const png = await opts.render(opts.doc, queue[at]!, geom)
+      // a cancel after the render must not pay for the engine call
+      if (opts.signal.aborted) {
+        attempted -= 1
+        stopped ??= 'cancelled'
+        return
+      }
+      if (!png) continue // no bitmap; the next page may still render
+      let lines: PdfOcrLine[] | null
+      try {
+        lines = await opts.ocrPage(png)
+      } catch {
+        continue // this page failed; the rest may still recognize
+      }
+      if (lines === null) {
+        attempted -= 1
+        stopped = 'noEngine'
+        return
+      }
+      const data = buildOcrPageData(lines, geom)
+      if (data) {
+        opts.onPage(queue[at]!, data)
+        done += 1
+      }
     }
-    let lines: PdfOcrLine[] | null
-    try {
-      lines = await opts.ocrPage(png)
-    } catch {
-      attempted += 1
-      continue // this page failed; the rest may still recognize
-    }
-    if (lines === null) return finish('noEngine', done, attempted, null)
-    // an engine call already in flight is kept: the work is paid for
-    const data = buildOcrPageData(lines, geom)
-    if (data) {
-      opts.onPage(queue[at]!, data)
-      done += 1
-    }
-    attempted += 1
   }
+  await Promise.all(Array.from({ length: Math.max(1, opts.concurrency ?? 1) }, lane))
+  if (stopped === 'cap') return finish('cap', done, attempted, queue.slice(capAt))
+  if (stopped) return finish(stopped, done, attempted, null)
   return finish('complete', done, attempted, null)
 }
 

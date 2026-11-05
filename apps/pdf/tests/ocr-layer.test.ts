@@ -284,6 +284,37 @@ describe('runAutoOcr', () => {
     expect(engineCalls).toBe(1)
   })
 
+  it('recognizes several pages at once, claims them in order, and leaves a suffix at the cap', async () => {
+    const { doc } = scannedDoc(10)
+    let inFlight = 0
+    let peak = 0
+    const claimed: number[] = []
+    const result = await runAutoOcr({
+      doc,
+      cache: createSearchIndexCache(),
+      fromPage: () => 0,
+      signal: new AbortController().signal,
+      concurrency: 3,
+      limit: 7,
+      geom: () => GEOM,
+      render: async () => 'png',
+      ocrPage: async () => {
+        inFlight += 1
+        peak = Math.max(peak, inFlight)
+        await new Promise((resolve) => setTimeout(resolve, 5))
+        inFlight -= 1
+        return [LINE]
+      },
+      onPage: (origIdx) => claimed.push(origIdx),
+      onProgress: () => undefined,
+    })
+    expect(peak).toBe(3)
+    expect(result.stop).toBe('cap')
+    expect(result.done).toBe(7)
+    expect(result.pending).toEqual([7, 8, 9])
+    expect([...claimed].sort((a, b) => a - b)).toEqual(span(0, 7))
+  })
+
   it('extracts the document text once when the index is already cached', async () => {
     // search / paragraph boxes / AI built the index first; the pass must reuse it
     const { doc, extractions } = scannedDoc(3)
