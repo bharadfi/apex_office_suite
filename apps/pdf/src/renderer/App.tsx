@@ -11371,6 +11371,9 @@ export default function App() {
                       <option value={PRINT_TO_PDF}>{t('printToPdf')}</option>
                     </select>
                   </label>
+                  {printDevice !== PRINT_TO_PDF && /pdf/i.test(printDevice) && (
+                    <div className="pdf-modal-row pdf-print-hint">{t('printPdfDriverHint')}</div>
+                  )}
                   {printDevice === PRINT_TO_PDF && (
                     <div className="pdf-modal-row pdf-print-hint">{t('printToPdfHint')}</div>
                   )}

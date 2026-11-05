@@ -40,6 +40,8 @@ const extraStrings = {
   printToPdf: 'Save as PDF (built in)',
   printToPdfHint:
     'Writes the pages to a new PDF with the text kept as text. A PDF printer driver redraws each line letter by letter, which reads badly.',
+  printPdfDriverHint:
+    'A PDF printer driver turns the text into outlines, so the file it writes has no text to select or edit. Choose Save as PDF (built in) to keep the text.',
   printToPdfSaved: 'Saved {name}.',
   ocrNoEngine: 'Text recognition is not available, so scanned pages stay as pictures.',
   // Page labels
@@ -91,6 +93,8 @@ const localizedExtraStrings = {
     printToPdf: '另存为 PDF（内置）',
     printToPdfHint:
       '把页面写成新的 PDF，文字保持为文字。PDF 打印机驱动会把每行文字逐字重绘，读起来很差。',
+    printPdfDriverHint:
+      'PDF 打印机驱动会把文字转成轮廓，生成的文件没有可选择或编辑的文字。选择“另存为 PDF（内置）”可保留文字。',
     printToPdfSaved: '已保存 {name}。',
     compareRangeThis: '本文件的页码',
     compareRangeOther: '另一个文件的页码',
@@ -158,6 +162,8 @@ const localizedExtraStrings = {
     printToPdf: '另存為 PDF（內建）',
     printToPdfHint:
       '把頁面寫成新的 PDF，文字保持為文字。PDF 印表機驅動程式會把每行文字逐字重繪，讀起來很差。',
+    printPdfDriverHint:
+      'PDF 印表機驅動程式會把文字轉成外框，產生的檔案沒有可選取或編輯的文字。選擇「另存為 PDF（內建）」可保留文字。',
     printToPdfSaved: '已儲存 {name}。',
     compareRangeThis: '本文件的頁碼',
     compareRangeOther: '另一個文件的頁碼',
