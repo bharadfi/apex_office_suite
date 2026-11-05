@@ -7280,9 +7280,7 @@ app.whenReady().then(async () => {
     }),
     logFilePath: join(app.getPath('userData'), 'mcp-log.txt'),
   })
-  void startMcpFromSettings(currentMcpSettings()).catch((error) => {
-    console.error('[mcp] failed to start on boot:', error)
-  })
+  // the local agent (MCP) server is not offered in Apex Office: it never starts
   installUiScale()
   createShellWindow()
   // deferred to ready: labels need currentLang(), which reads app.getLocale()

@@ -11,7 +11,6 @@ import { ImageAwareLink, LocalImage } from './localImage'
 import { BlockDragHandle } from './blockDragHandle'
 import { BlockKeymap } from './blockKeymap'
 import { AiHighlight } from './aiHighlight'
-import { AiQueueAnchors } from './aiQueueAnchors'
 import { InactiveSelection } from './inactiveSelection'
 import { Highlight } from './highlight'
 import { SearchHighlight } from './searchHighlight'
@@ -173,7 +172,6 @@ export function buildExtensions(options: BuildExtensionsOptions): AnyExtension[]
     BlockDragHandle,
     BlockKeymap,
     AiHighlight,
-    AiQueueAnchors,
     InactiveSelection,
     SearchHighlight,
     Placeholder.configure({ placeholder: () => t('placeholder') }),
