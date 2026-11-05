@@ -105,7 +105,8 @@ import { Speaker } from './speech'
 import { Scanner } from './scanner'
 import { scansToPdf } from './scan-pdf'
 import { shrinkDocument } from './pdf-shrink'
-import { checkAccessibility } from './pdf-accessibility'
+import { applyAccessibilityFixes, checkAccessibility } from './pdf-accessibility'
+import { readSecurity } from './pdf-security'
 import { SANITIZE_CATEGORIES, inspectHidden, sanitizeHidden } from './pdf-sanitize'
 import { PDFDocument } from 'pdf-lib'
 import {
@@ -1975,6 +1976,51 @@ function registerPdfIpc(): void {
         ignoreEncryption: true,
       })
       return { ok: true as const, counts: inspectHidden(doc) }
+    } catch (err) {
+      return { ok: false as const, reason: err instanceof Error ? err.message : String(err) }
+    }
+  })
+
+  // Accessibility fixes: written to a copy picked through the save dialog; the open document is untouched
+  ipcMain.handle(PDF_CHANNELS.fixAccessibility, async (e, path: unknown, language: unknown) => {
+    if (typeof path !== 'string' || !allowedByWc.get(e.sender.id)?.has(path)) {
+      return { ok: false as const, reason: 'pdf: path not granted to this view' }
+    }
+    const parent = BrowserWindow.fromWebContents(e.sender)
+    const base = basename(path).replace(/\.pdf$/i, '')
+    const filters = [{ name: tm('filterPdf'), extensions: ['pdf'] }]
+    const picked = parent
+      ? await dialog.showSaveDialog(parent, { defaultPath: base + '-accessible.pdf', filters })
+      : await dialog.showSaveDialog({ defaultPath: base + '-accessible.pdf', filters })
+    if (picked.canceled || !picked.filePath) return { ok: false as const, canceled: true }
+    try {
+      const doc = await PDFDocument.load(new Uint8Array(await readFile(path)), {
+        updateMetadata: false,
+      })
+      const applied = applyAccessibilityFixes(doc, {
+        language: typeof language === 'string' ? language : '',
+        title: base,
+      })
+      await writePdfAtomically(
+        picked.filePath,
+        await doc.save({ useObjectStreams: true, updateFieldAppearances: false }),
+      )
+      return { ok: true as const, targetPath: picked.filePath, applied }
+    } catch (err) {
+      return { ok: false as const, reason: err instanceof Error ? err.message : String(err) }
+    }
+  })
+
+  ipcMain.handle(PDF_CHANNELS.readSecurity, async (e, path: unknown) => {
+    if (typeof path !== 'string' || !allowedByWc.get(e.sender.id)?.has(path)) {
+      return { ok: false as const, reason: 'pdf: path not granted to this view' }
+    }
+    try {
+      const doc = await PDFDocument.load(new Uint8Array(await readFile(path)), {
+        updateMetadata: false,
+        ignoreEncryption: true,
+      })
+      return { ok: true as const, info: readSecurity(doc) }
     } catch (err) {
       return { ok: false as const, reason: err instanceof Error ? err.message : String(err) }
     }

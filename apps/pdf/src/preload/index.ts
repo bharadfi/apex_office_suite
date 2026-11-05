@@ -34,6 +34,9 @@ const api: PdfApi = {
     ipcRenderer.invoke(PDF_CHANNELS.compareReadOpen, path, password),
   reduceFileSize: (path) => ipcRenderer.invoke(PDF_CHANNELS.reduceFileSize, path),
   inspectHidden: (path) => ipcRenderer.invoke(PDF_CHANNELS.inspectHidden, path),
+  fixAccessibility: (path, language) =>
+    ipcRenderer.invoke(PDF_CHANNELS.fixAccessibility, path, language),
+  readSecurity: (path) => ipcRenderer.invoke(PDF_CHANNELS.readSecurity, path),
   checkAccessibility: (path) => ipcRenderer.invoke(PDF_CHANNELS.checkAccessibility, path),
   removeHidden: (path, categories) =>
     ipcRenderer.invoke(PDF_CHANNELS.removeHidden, path, categories),

@@ -5439,3 +5439,8 @@ button {
   color: var(--text-muted);
   font-size: 12px;
 }
+
+.pdf-prop-heading {
+  font-weight: 600;
+  padding: 8px 0 2px;
+}

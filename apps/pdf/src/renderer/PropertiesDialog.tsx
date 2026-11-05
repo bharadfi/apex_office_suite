@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactElement } from 'react'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
-import type { MetadataInput } from '../shared/ipc'
+import type { MetadataInput, PdfSecurityInfo } from '../shared/ipc'
 import type { TFunc } from './i18n/locale'
 import { useModalDialog } from './modal-dialog'
 
@@ -16,6 +16,16 @@ interface RawInfo {
   ModDate?: string
   PDFFormatVersion?: string
 }
+
+const PERMISSIONS: [
+  keyof NonNullable<PdfSecurityInfo['encryption']>['permissions'],
+  Parameters<TFunc>[0],
+][] = [
+  ['printing', 'secPermPrint'],
+  ['modifying', 'secPermModify'],
+  ['copying', 'secPermCopy'],
+  ['annotating', 'secPermAnnotate'],
+]
 
 /** PDF date string D:YYYYMMDDHHmmSS… → locally readable */
 function fmtPdfDate(raw?: string): string {
@@ -33,6 +43,7 @@ const fmtSize = (bytes: number): string =>
 /** Document properties: first four fields are editable and become unsaved changes; the rest are read-only */
 export function PropertiesDialog({
   doc,
+  filePath,
   fileName,
   fileSize,
   pageCount,
@@ -43,6 +54,8 @@ export function PropertiesDialog({
   onApply,
 }: {
   doc: PDFDocumentProxy
+  /** The open file, read again for its security properties */
+  filePath: string
   fileName: string
   fileSize: number
   pageCount: number
@@ -56,6 +69,17 @@ export function PropertiesDialog({
   const [info, setInfo] = useState<RawInfo | null>(null)
   const [form, setForm] = useState<MetadataInput>({})
   const dialogRef = useModalDialog(onCancel)
+  const [security, setSecurity] = useState<PdfSecurityInfo | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    void window.pdfApi.readSecurity(filePath).then((found) => {
+      if (!cancelled && found.ok) setSecurity(found.info)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [filePath])
 
   useEffect(() => {
     let cancelled = false
@@ -118,6 +142,29 @@ export function PropertiesDialog({
           {row(t('propCreated'), fmtPdfDate(info?.CreationDate))}
           {row(t('propModified'), fmtPdfDate(info?.ModDate))}
         </div>
+        {security && (
+          <div className="pdf-prop-table" role="group" aria-label={t('secHeading')}>
+            <div className="pdf-prop-heading">{t('secHeading')}</div>
+            {row(
+              t('secEncryption'),
+              security.encryption
+                ? (security.encryption.method ?? t('secEncryptedUnknown'))
+                : t('secNotEncrypted'),
+            )}
+            {security.encryption &&
+              PERMISSIONS.map(([key, label]) =>
+                row(
+                  t(label),
+                  security.encryption!.permissions[key] ? t('secAllowed') : t('secBlocked'),
+                ),
+              )}
+            {row(t('secSignatures'), String(security.signatures))}
+            {security.signatures > 0 &&
+              row(t('secCertified'), security.certified ? t('secYes') : t('secNo'))}
+            {row(t('secScripts'), String(security.scripts))}
+            {row(t('secAttachments'), String(security.attachments))}
+          </div>
+        )}
         <div className="pdf-modal-actions">
           <button className="pdf-modal-btn" onClick={onCancel}>
             {readOnly ? t('ok') : t('cancel')}

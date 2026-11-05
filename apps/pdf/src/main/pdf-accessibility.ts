@@ -1,5 +1,5 @@
 import { PDFArray, PDFBool, PDFDict, PDFDocument, PDFHexString, PDFName, PDFString } from 'pdf-lib'
-import type { AccessibilityCheck } from '../shared/ipc'
+import type { AccessibilityCheck, AccessibilityFixId } from '../shared/ipc'
 
 /**
  * Accessibility check: whether the file carries what assistive software reads. Each check inspects
@@ -115,4 +115,54 @@ export function checkAccessibility(doc: PDFDocument): AccessibilityCheck[] {
     add('screenReaderAccess', 'pass')
   }
   return out
+}
+
+/**
+ * Fix what can be fixed without understanding the pages: set the language when none is set, set the
+ * title from the given text when the file has none and show it in the title bar, and give pages with
+ * fields or links a tab order that follows the structure. Tags and alternate text need a person.
+ * Returns the fixes that changed something.
+ */
+export function applyAccessibilityFixes(
+  doc: PDFDocument,
+  options: { language: string; title: string },
+): AccessibilityFixId[] {
+  const applied: AccessibilityFixId[] = []
+  const catalog = doc.catalog
+  if (!(textOf(doc, catalog.get(N('Lang')))?.trim() ?? '') && options.language.trim()) {
+    catalog.set(N('Lang'), PDFString.of(options.language.trim()))
+    applied.push('language')
+  }
+  const info = dictOf(doc, doc.context.trailerInfo.Info)
+  const hasTitle = (textOf(doc, info?.get(N('Title')))?.trim() ?? '') !== ''
+  if (!hasTitle && options.title.trim()) doc.setTitle(options.title.trim())
+  const showing = lookup(
+    doc,
+    dictOf(doc, catalog.get(N('ViewerPreferences')))?.get(N('DisplayDocTitle')),
+  )
+  if ((hasTitle || options.title.trim()) && !(showing instanceof PDFBool && showing.asBoolean())) {
+    const prefs =
+      dictOf(doc, catalog.get(N('ViewerPreferences'))) ??
+      (() => {
+        const created = doc.context.obj({})
+        catalog.set(N('ViewerPreferences'), created)
+        return created
+      })()
+    prefs.set(N('DisplayDocTitle'), doc.context.obj(true))
+    applied.push('title')
+  } else if (!hasTitle && options.title.trim()) {
+    applied.push('title')
+  }
+  let tabbed = false
+  for (const page of doc.getPages()) {
+    const annots = arrayOf(doc, page.node.get(N('Annots')))
+    if (!annots || annots.size() === 0) continue
+    const tabs = lookup(doc, page.node.get(N('Tabs')))
+    if (!(tabs instanceof PDFName) || tabs.decodeText() !== 'S') {
+      page.node.set(N('Tabs'), N('S'))
+      tabbed = true
+    }
+  }
+  if (tabbed) applied.push('tabOrder')
+  return applied
 }

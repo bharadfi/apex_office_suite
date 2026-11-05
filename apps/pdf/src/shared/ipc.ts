@@ -8,6 +8,22 @@ export type SanitizeCategory =
   'metadata' | 'attachments' | 'scripts' | 'comments' | 'bookmarks' | 'links' | 'thumbnails'
 export type HiddenInfoCounts = Record<SanitizeCategory, number>
 
+export interface PdfSecurityInfo {
+  /** null = the file is not encrypted. method null = encrypted in a way this reader does not name. */
+  encryption: {
+    method: string | null
+    permissions: PdfPermissions
+  } | null
+  /** Signature fields that hold a signature */
+  signatures: number
+  /** The first signature certifies the document (it limits what may change afterwards) */
+  certified: boolean
+  scripts: number
+  attachments: number
+}
+
+export type AccessibilityFixId = 'language' | 'title' | 'tabOrder'
+
 export interface AccessibilityCheck {
   id:
     | 'tagged'
@@ -54,6 +70,8 @@ export const PDF_CHANNELS = {
   reduceFileSize: 'pdf:reduce-file-size',
   inspectHidden: 'pdf:inspect-hidden',
   checkAccessibility: 'pdf:check-accessibility',
+  readSecurity: 'pdf:read-security',
+  fixAccessibility: 'pdf:fix-accessibility',
   removeHidden: 'pdf:remove-hidden',
   insertBlankPage: 'pdf:insert-blank-page',
   splitPdf: 'pdf:split-pdf',
@@ -1161,6 +1179,19 @@ export interface PdfApi {
   inspectHidden(
     path: string,
   ): Promise<{ ok: true; counts: HiddenInfoCounts } | { ok: false; reason: string }>
+  /** Write a copy with the fixable accessibility problems fixed (language, title, tab order), to a path picked in a save dialog */
+  fixAccessibility(
+    path: string,
+    language: string,
+  ): Promise<
+    | { ok: true; targetPath: string; applied: AccessibilityFixId[] }
+    | { ok: false; canceled: true }
+    | { ok: false; reason: string }
+  >
+  /** Encryption, permissions, signatures, scripts and attached files, as the file states them */
+  readSecurity(
+    path: string,
+  ): Promise<{ ok: true; info: PdfSecurityInfo } | { ok: false; reason: string }>
   /** Whether the file carries what assistive software reads (tags, language, title, alternate text, field descriptions, tab order) */
   checkAccessibility(
     path: string,

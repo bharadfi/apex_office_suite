@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { PDFDocument, PDFName, PDFString } from 'pdf-lib'
@@ -31,6 +31,18 @@ test('Accessibility check lists what a screen reader would miss', async () => {
     const tagged = dialog.locator('.pdf-a11y-row.is-fail', { hasText: 'Tagged PDF' })
     await expect(tagged).toContainText('no structure tree')
     await expect(dialog).toContainText('Not tested here')
+
+    // fix what can be fixed: the copy gets a title, and the check passes it
+    const outPath = join(dir, 'accessible.pdf')
+    await launched.app.evaluate(({ dialog: box }, target) => {
+      box.showSaveDialog = (async () => ({ canceled: false, filePath: target })) as never
+    }, outPath)
+    await dialog.getByRole('button', { name: 'Fix and save a copy' }).click()
+    await expect(
+      viewer.getByText('Saved accessible.pdf with the accessibility fixes.'),
+    ).toBeVisible()
+    const fixed = await PDFDocument.load(await readFile(outPath), { updateMetadata: false })
+    expect(fixed.getTitle()).toBe('plain')
   } finally {
     await closeAndSaveVideo(launched, 'pdf-accessibility-check-problems')
   }

@@ -5,6 +5,8 @@ import { useModalDialog } from './modal-dialog'
 
 type Key = Parameters<TFunc>[0]
 
+const FIXABLE: AccessibilityCheck['id'][] = ['language', 'title', 'tabOrder']
+
 const LABELS: Record<AccessibilityCheck['id'], { label: Key; fix: Key }> = {
   tagged: { label: 'a11yTagged', fix: 'a11yTaggedFix' },
   language: { label: 'a11yLanguage', fix: 'a11yLanguageFix' },
@@ -21,12 +23,17 @@ export function AccessibilityDialog({
   t,
   checks,
   failed,
+  busy,
+  onFix,
   onClose,
 }: {
   t: TFunc
   /** null while the file is being read */
   checks: AccessibilityCheck[] | null
   failed: string | null
+  busy: boolean
+  /** Save a copy with the fixable problems fixed */
+  onFix: () => void
   onClose: () => void
 }): ReactElement {
   const dialogRef = useModalDialog(onClose)
@@ -78,7 +85,13 @@ export function AccessibilityDialog({
           </ul>
         )}
         <div className="pdf-modal-hint">{t('a11yNotTested')}</div>
+        <div className="pdf-modal-hint">{t('a11yFixNote')}</div>
         <div className="pdf-modal-actions">
+          {FIXABLE.some((id) => checks?.some((c) => c.id === id && c.status === 'fail')) && (
+            <button type="button" className="pdf-modal-btn" disabled={busy} onClick={onFix}>
+              {t('a11yFix')}
+            </button>
+          )}
           <button type="button" className="pdf-modal-btn primary" onClick={onClose}>
             {t('ok')}
           </button>

@@ -956,6 +956,7 @@ export default function App() {
   const [a11yDlg, setA11yDlg] = useState<{
     checks: AccessibilityCheck[] | null
     failed: string | null
+    busy: boolean
   } | null>(null)
   const [hiddenDlg, setHiddenDlg] = useState<{
     counts: HiddenInfoCounts | null
@@ -6666,10 +6667,26 @@ export default function App() {
   /** Remove Hidden Information: read what the file carries, let the user choose, save a clean copy */
   const openAccessibilityCheck = async (): Promise<void> => {
     if (!filePath) return
-    setA11yDlg({ checks: null, failed: null })
+    setA11yDlg({ checks: null, failed: null, busy: false })
     const found = await window.pdfApi.checkAccessibility(filePath)
     setA11yDlg(
-      found.ok ? { checks: found.checks, failed: null } : { checks: null, failed: found.reason },
+      found.ok
+        ? { checks: found.checks, failed: null, busy: false }
+        : { checks: null, failed: found.reason, busy: false },
+    )
+  }
+
+  const fixAccessibility = async (): Promise<void> => {
+    if (!filePath) return
+    setA11yDlg((d) => (d ? { ...d, busy: true } : d))
+    const outcome = await window.pdfApi.fixAccessibility(filePath, navigator.language || 'en-US')
+    if (outcome.ok) {
+      setA11yDlg(null)
+      showNotice(t('a11yFixed', { name: outcome.targetPath.replace(/^.*[\\/]/, '') }))
+      return
+    }
+    setA11yDlg((d) =>
+      d ? { ...d, busy: false, failed: 'canceled' in outcome ? d.failed : outcome.reason } : d,
     )
   }
 
@@ -11158,6 +11175,7 @@ export default function App() {
             {propsDlg && (
               <PropertiesDialog
                 doc={doc}
+                filePath={filePath}
                 fileName={fileName}
                 fileSize={fileSize}
                 pageCount={pageCount}
@@ -11243,6 +11261,8 @@ export default function App() {
                 t={t}
                 checks={a11yDlg.checks}
                 failed={a11yDlg.failed}
+                busy={a11yDlg.busy}
+                onFix={() => void fixAccessibility()}
                 onClose={() => setA11yDlg(null)}
               />
             )}

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { PDFDocument, PDFName, PDFString } from 'pdf-lib'
-import { checkAccessibility } from '../src/main/pdf-accessibility'
+import { applyAccessibilityFixes, checkAccessibility } from '../src/main/pdf-accessibility'
 
 const N = (name: string) => PDFName.of(name)
 const statusOf = (doc: PDFDocument, id: string) => checkAccessibility(doc).find((c) => c.id === id)!
@@ -58,5 +58,34 @@ describe('checkAccessibility', () => {
     expect(statusOf(long, 'bookmarks').status).toBe('fail')
     expect(statusOf(long, 'fieldTips')).toEqual({ id: 'fieldTips', status: 'fail', count: 1 })
     expect(statusOf(long, 'tabOrder')).toEqual({ id: 'tabOrder', status: 'fail', count: 1 })
+  })
+})
+
+describe('applyAccessibilityFixes', () => {
+  it('sets the language, the title and the tab order, and the check then passes them', async () => {
+    const doc = await PDFDocument.create()
+    doc.addPage([100, 100])
+    const ctx = doc.context
+    const link = ctx.register(ctx.obj({ Type: 'Annot', Subtype: 'Link', Rect: [0, 0, 10, 10] }))
+    doc.getPage(0).node.set(N('Annots'), ctx.obj([link]))
+    const plain = await PDFDocument.load(await doc.save(), { updateMetadata: false })
+    expect(applyAccessibilityFixes(plain, { language: 'en-US', title: 'Policy' }).sort()).toEqual([
+      'language',
+      'tabOrder',
+      'title',
+    ])
+    for (const id of ['language', 'title', 'tabOrder'])
+      expect(statusOf(plain, id).status).toBe('pass')
+    // a second run has nothing left to do
+    expect(applyAccessibilityFixes(plain, { language: 'en-US', title: 'Policy' })).toEqual([])
+  })
+
+  it('keeps a language and a title the file already has', async () => {
+    const doc = await bare()
+    doc.catalog.set(N('Lang'), PDFString.of('fr-FR'))
+    doc.setTitle('Existing')
+    applyAccessibilityFixes(doc, { language: 'en-US', title: 'Other' })
+    expect(doc.getTitle()).toBe('Existing')
+    expect(statusOf(doc, 'title').status).toBe('pass') // shown in the title bar now
   })
 })
