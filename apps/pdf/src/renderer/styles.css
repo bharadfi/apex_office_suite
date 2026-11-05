@@ -898,6 +898,13 @@ button {
   position: absolute;
   inset: 0;
   z-index: 2;
+  /* the layer spans the page; only the controls on it take clicks, so text under
+     the gaps stays clickable (Edit text) and selectable */
+  pointer-events: none;
+}
+
+.pdf-form-layer > * {
+  pointer-events: auto;
 }
 
 .pdf-form-input {
