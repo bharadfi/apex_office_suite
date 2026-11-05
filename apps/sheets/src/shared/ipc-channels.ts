@@ -69,6 +69,18 @@ export const IPC_CHANNELS = {
   recalcWorkbook: 'workbook:recalc',
   listExternalLinks: 'workbook:list-external-links',
   updateExternalLinks: 'workbook:update-external-links',
+  readExternalLinkUsage: 'workbook:read-external-link-usage',
+  selectExternalLinkSource: 'workbook:select-external-link-source',
+  /// Cross-workbook range picking (genoffice#2109): the tab editing a formula
+  /// arms a pick, the user clicks a range in another workbook's tab, main
+  /// relays the selection back and re-activates the editing tab.
+  listWorkbookTabs: 'workbook:list-tabs',
+  armWorkbookPick: 'workbook:pick-arm',
+  sendWorkbookPickSelection: 'workbook:pick-select',
+  cancelWorkbookPick: 'workbook:pick-cancel',
+  workbookPickArmed: 'workbook:pick-armed',
+  workbookPickSelected: 'workbook:pick-selected',
+  workbookPickCancelled: 'workbook:pick-cancelled',
   revealLinkSource: 'shell:reveal-link-source',
   readWorkbookMedia: 'workbook:read-media',
   readPivotDefinition: 'workbook:read-pivot-definition',
@@ -79,6 +91,10 @@ export const IPC_CHANNELS = {
   readLocalImage: 'shell:read-local-image',
   closeWorkbook: 'workbook:close',
   saveWorkbook: 'workbook:save',
+  /** The workbook's refreshable data connections (web queries for now). */
+  listWorkbookConnections: 'workbook:list-connections',
+  /** Fetch a web query's table; main resolves the URL from the connection id. */
+  refreshWorkbookConnection: 'workbook:refresh-connection',
   /** Chunked upload of a large save's cell edits, consumed by the next save */
   saveEditsBegin: 'workbook:save-edits-begin',
   saveEditsChunk: 'workbook:save-edits-chunk',
