@@ -106,7 +106,6 @@ import { collectPdfInternalLinks } from './pdf-internal-links'
 import type { PdfInternalLink } from '../shared/ipc'
 import { showToast } from './components/toast-bus'
 import { buildStandaloneHtml } from './html-export'
-import { aiPanelInitiallyOpen } from '@genoffice/ui'
 
 /** An export waiting for the pagination preview to mount; resolve settles the caller's exportPdf promise. */
 export type PendingPdfExport = {
@@ -131,9 +130,7 @@ export interface FileActionContext {
   setShowPrintDialog: (show: boolean) => void
   setStatus: (status: string) => void
   setRecent: (paths: string[]) => void
-  setShowAi: (show: boolean) => void
   setDoc: Dispatch<SetStateAction<DocState | null>>
-  setAiPanelKey: Dispatch<SetStateAction<number>>
   setDocCss: (css: string) => void
   /** true while a phased open streams the document tail (editor stays read-only) */
   setDocLoading: (loading: boolean) => void
@@ -526,7 +523,6 @@ export async function loadFile(
     // Done here, not in the main process's loadDocx — Review > Compare also
     // opens files without replacing the current document.
     discardStalePasswordIntents()
-    ctx.setAiPanelKey((k) => k + 1)
     ctx.setDocCss(docStyleCss(parsed))
     ctx.setSection(readSectionSettings(parsed))
     ctx.setSections(readSections(parsed))
@@ -676,7 +672,6 @@ export async function newFile(ctx: FileActionContext): Promise<boolean | undefin
     // a fresh blank draft starts unencrypted: drop any pending password left by
     // the previous draft (its DocState, including the encrypted flag, is gone)
     discardStalePasswordIntents()
-    ctx.setAiPanelKey((k) => k + 1)
     ctx.setDocCss(docStyleCss(parsed))
     ctx.setSection(readSectionSettings(parsed))
     ctx.setSections(readSections(parsed))
@@ -725,7 +720,6 @@ export async function newFile(ctx: FileActionContext): Promise<boolean | undefin
     ctx.setCompareResult(null)
     ctx.dirtyRef.current = false
     // same rule as the first render, so the "open in new documents" setting holds for Cmd+N too
-    ctx.setShowAi(aiPanelInitiallyOpen('aidocs.showAi'))
     ctx.setStatus(t('appNewDocCreated'))
     return true
   } catch (err) {

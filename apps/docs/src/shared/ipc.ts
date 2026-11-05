@@ -729,7 +729,7 @@ export interface DesktopApi {
   onCloseSaveRequest(handler: () => void): () => void
   reportCloseSaveResult(ok: boolean): void
   /** keep the native View menu's checkbox items in sync with renderer state */
-  reportViewMenuState(state: { aiSidebar: boolean; darkCanvas: boolean }): void
+  reportViewMenuState(state: { darkCanvas: boolean }): void
   /** the skills the user installed (userData/skills), for the AI panel's skills skill */
   skillsList(): Promise<UserSkillEntry[]>
   /** the body of one installed skill, by name — the main process resolves the path */

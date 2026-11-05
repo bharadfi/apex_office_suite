@@ -6294,13 +6294,12 @@ function sendCommand(command: MenuCommand, payload?: string): void {
  * place (buildDocsMenu also re-runs on every tab focus switch).
  * Defaults mirror the renderer's initial state: sidebar shown, light canvas.
  */
-const viewMenuStateByWebContents = new Map<number, { aiSidebar: boolean; darkCanvas: boolean }>()
+const viewMenuStateByWebContents = new Map<number, { darkCanvas: boolean }>()
 
-function activeViewMenuState(): { aiSidebar: boolean; darkCanvas: boolean } {
+function activeViewMenuState(): { darkCanvas: boolean } {
   const id = activeDocsWebContents()?.id
   return (
     (id !== undefined ? viewMenuStateByWebContents.get(id) : undefined) ?? {
-      aiSidebar: true,
       darkCanvas: false,
     }
   )
@@ -6379,9 +6378,6 @@ export function buildDocsMenu(): void {
           accelerator: 'Shift+CmdOrCtrl+S',
           click: () => sendCommand('save-as'),
         },
-        // also in the native File menu, the only entry on macOS: the ribbon's
-        // File tab is Windows/Linux-only
-        { label: labels.nameWithAi, click: () => sendCommand('name-with-ai') },
         { type: 'separator' },
         { label: tm('menuPageSetup'), click: () => sendCommand('page-setup') },
         { label: tm('menuExportPdf'), click: () => sendCommand('export-pdf') },
@@ -6457,13 +6453,6 @@ export function buildDocsMenu(): void {
           ],
         },
         { type: 'separator' },
-        {
-          id: 'docs-menu-ai-sidebar',
-          type: 'checkbox',
-          checked: activeViewMenuState().aiSidebar,
-          label: tm('menuAiSidebar'),
-          click: () => sendCommand('toggle-ai'),
-        },
         {
           id: 'docs-menu-dark-mode',
           type: 'checkbox',
@@ -6615,9 +6604,6 @@ export function buildDocsMenu(): void {
         { label: tm('menuAutoCorrect'), click: () => sendCommand('autocorrect-options') },
         // Word for Mac keeps Settings in the application menu
         ...(isMac ? [] : [settingsMenuItem(labels, () => sendCommand('preferences'))]),
-        { type: 'separator' },
-        // Runs the same AI proofread as Review > Editor (renderer shows the one-time ack)
-        { label: tm('menuAiProofread'), click: () => sendCommand('ai-proofread') },
       ],
     },
     windowMenuTemplate(process.platform, appMenuLabels(getUiLang())),
@@ -6794,8 +6780,8 @@ const closeCheckWaiters = new Map<number, (state: DocsCloseState) => void>()
 const closeSaveWaiters = new Map<number, (ok: boolean) => void>()
 
 ipcMain.on('docs:view-menu-state', (event, state: unknown) => {
-  const s = state as { aiSidebar?: unknown; darkCanvas?: unknown } | null
-  const next = { aiSidebar: s?.aiSidebar === true, darkCanvas: s?.darkCanvas === true }
+  const s = state as { darkCanvas?: unknown } | null
+  const next = { darkCanvas: s?.darkCanvas === true }
   if (!viewMenuStateByWebContents.has(event.sender.id)) {
     const id = event.sender.id
     event.sender.once('destroyed', () => viewMenuStateByWebContents.delete(id))
@@ -6805,8 +6791,6 @@ ipcMain.on('docs:view-menu-state', (event, state: unknown) => {
   // picked up by the buildDocsMenu run its next focus triggers
   if (event.sender.id !== activeDocsWebContents()?.id) return
   const menu = Menu.getApplicationMenu()
-  const ai = menu?.getMenuItemById('docs-menu-ai-sidebar')
-  if (ai) ai.checked = next.aiSidebar
   const dark = menu?.getMenuItemById('docs-menu-dark-mode')
   if (dark) dark.checked = next.darkCanvas
 })
