@@ -14,6 +14,7 @@ import {
 } from 'pdf-lib'
 import type { PDFObject } from 'pdf-lib'
 import type { CertificateInfo, PdfSignatureInfo, PdfSignatureProblem } from '../shared/ipc'
+import { decryptDocument } from './pdf-crypt'
 import { findValidityLayers } from './validity-layers'
 
 const A = forge.asn1
@@ -234,6 +235,9 @@ function derElementLength(bytes: Buffer): number {
   if (bytes.length < 2) throw new Error('short der')
   const first = bytes[1]!
   if (first < 0x80) return 2 + first
+  // BER indefinite length (many signers write the outer wrapper this way): the element ends at its
+  // own end-of-contents marker, which the parser finds, so hand it everything and let it stop there
+  if (first === 0x80) return bytes.length
   const lengthBytes = first & 0x7f
   if (lengthBytes === 0 || lengthBytes > 4 || bytes.length < 2 + lengthBytes) {
     throw new Error('bad der length')
@@ -246,7 +250,13 @@ function derElementLength(bytes: Buffer): number {
 function parseSignedData(contents: Buffer): ParsedSignedData {
   const total = derElementLength(contents)
   if (total > contents.length) throw new Error('truncated')
-  const root = A.fromDer(forge.util.createBuffer(contents.subarray(0, total).toString('binary')))
+  // node-forge's typings only declare the `strict` flag; its options object also takes
+  // parseAllBytes, which lets an indefinite-length element stop at its own end marker
+  const options = { parseAllBytes: false } as unknown as boolean
+  const root = A.fromDer(
+    forge.util.createBuffer(contents.subarray(0, total).toString('binary')),
+    options,
+  )
   const [contentType, wrapper] = children(root)
   if (!contentType || !wrapper || oidOf(contentType) !== OID_SIGNED_DATA) {
     throw new Error('not signed data')
@@ -496,8 +506,7 @@ function verifyOne(
   }
 
   const byteRange = decodeByteRange(value.lookup(PDFName.of('ByteRange')))
-  const contentsObj = value.lookup(PDFName.of('Contents'))
-  if (!byteRange || !(contentsObj instanceof PDFHexString || contentsObj instanceof PDFString)) {
+  if (!byteRange) {
     return fail('malformed')
   }
   const [start1, length1, start2, length2] = byteRange as [number, number, number, number]
@@ -507,6 +516,14 @@ function verifyOne(
   // an attacker could swap (signature wrapping), so it is rejected rather than trusted.
   if (start1 !== 0 || end1 > start2 || end2 > bytes.length) return fail('malformed')
   if (bytes[end1] !== 0x3c || bytes[start2 - 1] !== 0x3e) return fail('malformed')
+  // The signature is the hex between the ranges in the file itself: an encrypted document leaves it
+  // unencrypted (ISO 32000 7.6.2), so reading the bytes works whether or not the file is protected
+  const hex = bytes
+    .subarray(end1 + 1, start2 - 1)
+    .toString('latin1')
+    .replace(/\s+/g, '')
+  if (hex.length % 2 !== 0 || /[^0-9a-fA-F]/.test(hex)) return fail('malformed')
+  const contents = Buffer.from(hex, 'hex')
   const trailing = bytes.subarray(end2)
   info.coversWholeDocument = trailing.every((b) => b === 0x0a || b === 0x0d || b === 0x20)
 
@@ -519,7 +536,7 @@ function verifyOne(
 
   let parsed: ParsedSignedData
   try {
-    parsed = parseSignedData(Buffer.from(contentsObj.asBytes()))
+    parsed = parseSignedData(contents)
   } catch {
     return fail('malformed')
   }
@@ -607,13 +624,14 @@ function pageIndexOf(pdf: PDFDocument, field: FieldWithValue): number {
 /**
  * Read and check every certificate signature in a PDF. Nothing the file says about itself is
  * trusted: integrity comes from re-hashing the raw bytes the signature's /ByteRange names.
- * Encrypted or unparsable files report no signatures rather than throwing.
+ * A protected file needs password to be read; unparsable files report no signatures rather than throwing.
  * `userTrusted` holds SHA-256 fingerprints of certificates the user chose to trust: a chain
  * holding one counts as trusted, the same as one that reaches a system root.
  */
 export async function readPdfSignatures(
   input: Uint8Array,
   userTrusted: ReadonlySet<string> = new Set(),
+  password?: string,
 ): Promise<PdfSignatureInfo[]> {
   const bytes = Buffer.from(input.buffer, input.byteOffset, input.byteLength)
   if (!bytes.includes(BYTE_RANGE_MARKER)) return []
@@ -621,7 +639,18 @@ export async function readPdfSignatures(
   try {
     pdf = await PDFDocument.load(bytes, { updateMetadata: false, throwOnInvalidObject: false })
   } catch {
-    return []
+    if (password === undefined) return []
+    // A password-protected file: read its structure from an unlocked copy, but keep checking the
+    // signature against the file's own bytes, which are what the signer hashed
+    try {
+      const opened = await decryptDocument(bytes, password)
+      pdf = await PDFDocument.load(opened.bytes, {
+        updateMetadata: false,
+        throwOnInvalidObject: false,
+      })
+    } catch {
+      return []
+    }
   }
   return collectSignatureFields(pdf).map((field) =>
     verifyOne(bytes, field, pageIndexOf(pdf, field), userTrusted),

@@ -51,7 +51,8 @@ const api: PdfApi = {
   exportImages: (request) => ipcRenderer.invoke(PDF_CHANNELS.exportImages, request),
   convertOffice: (format) => ipcRenderer.invoke(PDF_CHANNELS.convertOffice, format),
   createDocument: (request) => ipcRenderer.invoke(PDF_CHANNELS.createDocument, request),
-  listDigitalSignatures: (path) => ipcRenderer.invoke(PDF_CHANNELS.listDigitalSignatures, path),
+  listDigitalSignatures: (path, password) =>
+    ipcRenderer.invoke(PDF_CHANNELS.listDigitalSignatures, path, password),
   pickCertificate: () => ipcRenderer.invoke(PDF_CHANNELS.pickCertificate),
   listSystemCertificates: (storePassword) =>
     ipcRenderer.invoke(PDF_CHANNELS.listSystemCertificates, storePassword),

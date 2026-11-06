@@ -1268,7 +1268,7 @@ export interface PdfApi {
   /** AI create_document: build a new standalone file in the default folder and open it in a new tab */
   createDocument(request: CreateDocumentRequest): Promise<CreateDocumentResult>
   /** Read and verify the digital (certificate) signatures embedded in a granted PDF */
-  listDigitalSignatures(path: string): Promise<PdfSignatureInfo[]>
+  listDigitalSignatures(path: string, password?: string): Promise<PdfSignatureInfo[]>
   /** The copy of a granted, signed PDF to display or print: each signature box showing its own verdict mark. null when there is nothing to redraw */
   signatureDisplayCopy(path: string): Promise<ArrayBuffer | null>
   /** The page-label ranges of a granted PDF ([] when it has none, or is protected and cannot be read here) */

@@ -2403,7 +2403,7 @@ function registerPdfIpc(): void {
 
   ipcMain.handle(
     PDF_CHANNELS.listDigitalSignatures,
-    async (e, path: unknown): Promise<PdfSignatureInfo[]> => {
+    async (e, path: unknown, password: unknown): Promise<PdfSignatureInfo[]> => {
       if (typeof path !== 'string' || !allowedByWc.get(e.sender.id)?.has(path)) return []
       // the user's list only adds trust: a failure reading it must never hide the signatures
       let userTrusted: ReadonlySet<string> = new Set()
@@ -2413,7 +2413,11 @@ function registerPdfIpc(): void {
         /* judged without it */
       }
       try {
-        return await readPdfSignatures(new Uint8Array(await readFile(path)), userTrusted)
+        return await readPdfSignatures(
+          new Uint8Array(await readFile(path)),
+          userTrusted,
+          typeof password === 'string' ? password : undefined,
+        )
       } catch {
         return []
       }

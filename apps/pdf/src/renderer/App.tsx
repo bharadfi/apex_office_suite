@@ -7463,7 +7463,7 @@ export default function App() {
     }
     let cancelled = false
     void window.pdfApi
-      .listDigitalSignatures(filePath)
+      .listDigitalSignatures(filePath, diskPasswordRef.current ?? undefined)
       .then((list) => {
         if (!cancelled) setDigitalSignatures(list)
       })
@@ -7478,7 +7478,11 @@ export default function App() {
   const changeTrust = async (change: () => Promise<void>): Promise<void> => {
     await change()
     if (!filePath) return
-    setDigitalSignatures(await window.pdfApi.listDigitalSignatures(filePath).catch(() => []))
+    setDigitalSignatures(
+      await window.pdfApi
+        .listDigitalSignatures(filePath, diskPasswordRef.current ?? undefined)
+        .catch(() => []),
+    )
     await refreshDisplayCopy()
   }
   /**
