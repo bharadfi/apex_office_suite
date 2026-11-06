@@ -3,7 +3,7 @@
   "productName": "Apex Office",
   "version": "1.0.0",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/bharadfi/genoffice",
+  "homepage": "https://github.com/bharadfi/apex_office_suite",
   "private": true,
   "description": "Apex Office: the all-in-one productivity suite for documents, spreadsheets, presentations, PDF, Markdown and HTML",
   "main": "out/main/index.js",

@@ -48,7 +48,7 @@ source format.
 ## Install
 
 1. Download `ApexOffice-Setup-<version>.exe` from the
-   [Releases](https://github.com/bharadfi/genoffice/releases) page.
+   [Releases](https://github.com/bharadfi/apex_office_suite/releases) page.
 2. Run it and choose where to install (the default is your user profile; no
    administrator rights are needed).
 3. Start **Apex Office** from the Start menu, or just double-click a document.
