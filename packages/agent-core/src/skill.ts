@@ -10,7 +10,7 @@ export interface ExecutedToolCall {
 /**
  * A skill packages one capability domain for the agent loop: its system
  * prompt section, its tools, per-turn context, and the tool executor.
- * AI Docs ships a docx skill; Excel / PPT skills plug in the same way.
+ * Docs ships a docx skill; Excel / PPT skills plug in the same way.
  */
 export interface AgentSkill {
   id: string

@@ -49,7 +49,7 @@ Menü nereye sağ tıkladığınıza göre değişir:
 
 ## AI ile oluşturma
 
-- Giriş'teki AI Slides kartı: bir konu veya ana hat verin, AI sunuyu oluştursun; bulut oluşturma başarısız olursa yerel oluşturmaya geri düşer.
+- Giriş'teki Slides kartı: bir konu veya ana hat verin, AI sunuyu oluştursun; bulut oluşturma başarısız olursa yerel oluşturmaya geri düşer.
 - Ardından AI paneliyle ayarlamaya devam edin.
 - Bir metin seçimine ya da resim/video/ses öğesine sağ tıklayın ▸ **Seçimi AI'dan gizle** ile onu modelin gözünden uzak tutun (ayrıntılar AI paneli bölümünde); gizli içerik taşıyan bir slayt otomatik ekran görüntüsü denetimini atlar.
 

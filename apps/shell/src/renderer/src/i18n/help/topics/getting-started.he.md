@@ -16,7 +16,7 @@
 
 אחת מאלה:
 
-- לחצו על כרטיסיית יצירה מהירה בקטע [התחלה מהירה](help://getting-started) של **הבית** (AI Docs, AI Sheets, AI Slides, ...).
+- לחצו על כרטיסיית יצירה מהירה בקטע [התחלה מהירה](help://getting-started) של **הבית** (Docs, Sheets, Slides, ...).
 - תפריט **File ▸ חדש**: Docs (⌘N/ctrl+N), Sheets, Slides, Markdown, HTML או PDF.
 - גררו קובץ לחלון, או לחצו עליו פעמיים במנהל הקבצים שלכם (אם Apex Office היא האפליקציית ברירת המחדל).
 

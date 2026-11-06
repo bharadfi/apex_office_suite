@@ -46,12 +46,12 @@ The new file lands in the folder currently selected in the sidebar; with no sele
 
 What each card does:
 
-- **AI Docs** (.docx): a blank text document in the Docs editor. The file is only written to disk on **first save**; new documents open with the AI panel expanded (turn that off under Settings → "Open the AI panel in new documents").
-- **AI Sheets** (.xlsx): a blank spreadsheet in the Sheets editor. Until you save, no file exists on disk — the name is reserved for the first save; after the first AI generation the file can also be renamed automatically from its content.
-- **AI Slides** (.pptx): a blank presentation in the Slides editor.
-- **AI Markdown** (.md): a blank Markdown document in the Markdown editor.
-- **AI HTML** (.html): a blank web page in the HTML editor.
-- **AI PDF** (.pdf): different from the rest — it **immediately** creates a real blank single-page PDF in the target folder and opens it as a regular file (the PDF editor works on real files). Good for annotating, redacting or adding text; the file can be renamed automatically from its content on first save.
+- **Docs** (.docx): a blank text document in the Docs editor. The file is only written to disk on **first save**; new documents open with the AI panel expanded (turn that off under Settings → "Open the AI panel in new documents").
+- **Sheets** (.xlsx): a blank spreadsheet in the Sheets editor. Until you save, no file exists on disk — the name is reserved for the first save; after the first AI generation the file can also be renamed automatically from its content.
+- **Slides** (.pptx): a blank presentation in the Slides editor.
+- **Markdown** (.md): a blank Markdown document in the Markdown editor.
+- **HTML** (.html): a blank web page in the HTML editor.
+- **PDF** (.pdf): different from the rest — it **immediately** creates a real blank single-page PDF in the target folder and opens it as a regular file (the PDF editor works on real files). Good for annotating, redacting or adding text; the file can be renamed automatically from its content on first save.
 - **Open local files**: a system file picker for Word (.docx/.doc), Excel (.xlsx/.xlsm/.xls/.csv/.tsv), PowerPoint (.pptx/.ppt), PDF, Markdown (.md/.markdown) and web pages (.html/.htm). Multi-select works; each file gets its own tab. Plain-text files (.txt, .json) open here too — they land in the Markdown editor's source view.
 
 > Tip: File ▸ New in the menu bar creates the same document types (⌘N/Ctrl+N defaults to a text document); dragging a file into the window opens it.

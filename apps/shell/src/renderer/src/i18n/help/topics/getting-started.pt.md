@@ -16,7 +16,7 @@ A janela tem três partes:
 
 De qualquer uma destas formas:
 
-- Clique num cartão de criação rápida na secção [Início rápido](help://getting-started) do **Início** (AI Docs, AI Sheets, AI Slides, ...).
+- Clique num cartão de criação rápida na secção [Início rápido](help://getting-started) do **Início** (Docs, Sheets, Slides, ...).
 - Menu **Arquivo ▸ Novo**: Docs (⌘N/ctrl+N), Sheets, Slides, Markdown, HTML ou PDF.
 - Arraste um ficheiro para a janela, ou clique duas vezes nele no gestor de ficheiros (se o Apex Office for a aplicação predefinida).
 

@@ -16,7 +16,7 @@ La fenêtre comporte trois parties :
 
 Chacun de ces moyens convient :
 
-- Cliquez sur une carte de création rapide de la section [Démarrage rapide](help://getting-started) de **Accueil** (AI Docs, AI Sheets, AI Slides, …).
+- Cliquez sur une carte de création rapide de la section [Démarrage rapide](help://getting-started) de **Accueil** (Docs, Sheets, Slides, …).
 - Menu **Fichier ▸ Nouveau** : Docs (⌘N/ctrl+N), Sheets, Slides, Markdown, HTML ou PDF.
 - Faites glisser un fichier sur la fenêtre, ou double-cliquez dessus dans votre gestionnaire de fichiers (si Apex Office est l’application par défaut).
 

@@ -46,12 +46,12 @@ Fail baharu akan mendarat dalam folder yang sedang dipilih dalam bar sisi. Jika 
 
 Apa yang setiap kad lakukan:
 
-- **AI Docs** (.docx): dokumen teks kosong dalam editor Docs. Fail hanya ditulis ke cakera semasa **simpanan pertama**. Dokumen baharu dibuka dengan panel AI dikembangkan, dan anda boleh matikan melalui Tetapan → "Buka panel AI dalam dokumen baharu".
-- **AI Sheets** (.xlsx): hamparan kosong dalam editor Sheets. Sebelum anda simpan, tiada fail wujud pada cakera; nama itu dikhaskan untuk simpanan pertama. Selepas penjanaan AI yang pertama, fail tersebut juga boleh dinamakan semula secara automatik berdasarkan kandungannya.
-- **AI Slides** (.pptx): persembahan kosong dalam editor Slides.
-- **AI Markdown** (.md): dokumen Markdown kosong dalam editor Markdown.
-- **AI HTML** (.html): laman web kosong dalam editor HTML.
-- **AI PDF** (.pdf): berbeza daripada yang lain. Ia **segera** mencipta PDF kosong satu halaman yang sebenar dalam folder sasaran, kemudian membukanya sebagai fail biasa. Editor PDF beroperasi pada fail sebenar. Kad ini sesuai untuk membuat anotasi, redact atau menambah teks, dan semasa simpanan pertama fail itu boleh dinamakan semula secara automatik berdasarkan kandungannya.
+- **Docs** (.docx): dokumen teks kosong dalam editor Docs. Fail hanya ditulis ke cakera semasa **simpanan pertama**. Dokumen baharu dibuka dengan panel AI dikembangkan, dan anda boleh matikan melalui Tetapan → "Buka panel AI dalam dokumen baharu".
+- **Sheets** (.xlsx): hamparan kosong dalam editor Sheets. Sebelum anda simpan, tiada fail wujud pada cakera; nama itu dikhaskan untuk simpanan pertama. Selepas penjanaan AI yang pertama, fail tersebut juga boleh dinamakan semula secara automatik berdasarkan kandungannya.
+- **Slides** (.pptx): persembahan kosong dalam editor Slides.
+- **Markdown** (.md): dokumen Markdown kosong dalam editor Markdown.
+- **HTML** (.html): laman web kosong dalam editor HTML.
+- **PDF** (.pdf): berbeza daripada yang lain. Ia **segera** mencipta PDF kosong satu halaman yang sebenar dalam folder sasaran, kemudian membukanya sebagai fail biasa. Editor PDF beroperasi pada fail sebenar. Kad ini sesuai untuk membuat anotasi, redact atau menambah teks, dan semasa simpanan pertama fail itu boleh dinamakan semula secara automatik berdasarkan kandungannya.
 - **Buka Fail Setempat**: pemilih fail sistem untuk Word (.docx/.doc), Excel (.xlsx/.xlsm/.xls/.csv/.tsv), PowerPoint (.pptx/.ppt), PDF, Markdown (.md/.markdown) dan laman web (.html/.htm). Pelbagai fail boleh dipilih, dan setiap fail mendapat tabnya sendiri. Fail teks (.txt, .json) turut dibuka di sini — ia masuk ke paparan sumber penyunting Markdown.
 
 > Petua: Fail ▸ Baharu pada bar menu mencipta jenis dokumen yang sama. Pintasan ⌘N/Ctrl+N secara lalai mencipta dokumen teks. Menyeret fail ke dalam tingkap akan membukanya.

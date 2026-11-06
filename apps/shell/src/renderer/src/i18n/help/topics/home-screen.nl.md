@@ -46,12 +46,12 @@ Het nieuwe bestand komt in de map die op dat moment in de zijbalk geselecteerd i
 
 Wat elke kaart doet:
 
-- **AI Docs** (.docx): een leeg tekstdocument in de Docs-editor. Het bestand wordt pas bij de **eerste keer opslaan** naar schijf geschreven; nieuwe documenten openen met het AI-paneel uitgeklapt (zet dat uit in Instellingen → "AI-paneel openen in nieuwe documenten").
-- **AI Sheets** (.xlsx): een leeg spreadsheet in de Sheets-editor. Zolang je niet opslaat bestaat er geen bestand op schijf — de naam is gereserveerd voor de eerste keer opslaan; na de eerste AI-generatie kan het bestand ook automatisch op basis van de inhoud worden hernoemd.
-- **AI Slides** (.pptx): een lege presentatie in de Slides-editor.
-- **AI Markdown** (.md): een leeg Markdown-document in de Markdown-editor.
-- **AI HTML** (.html): een lege webpagina in de HTML-editor.
-- **AI PDF** (.pdf): anders dan de rest — maakt **onmiddellijk** een echt leeg pdf-bestand van één pagina in de doelmap en opent het als gewoon bestand (de pdf-editor werkt met echte bestanden). Handig om aantekeningen te maken, gebieden zwart te maken of tekst toe te voegen; bij de eerste keer opslaan kan het bestand automatisch op basis van de inhoud worden hernoemd.
+- **Docs** (.docx): een leeg tekstdocument in de Docs-editor. Het bestand wordt pas bij de **eerste keer opslaan** naar schijf geschreven; nieuwe documenten openen met het AI-paneel uitgeklapt (zet dat uit in Instellingen → "AI-paneel openen in nieuwe documenten").
+- **Sheets** (.xlsx): een leeg spreadsheet in de Sheets-editor. Zolang je niet opslaat bestaat er geen bestand op schijf — de naam is gereserveerd voor de eerste keer opslaan; na de eerste AI-generatie kan het bestand ook automatisch op basis van de inhoud worden hernoemd.
+- **Slides** (.pptx): een lege presentatie in de Slides-editor.
+- **Markdown** (.md): een leeg Markdown-document in de Markdown-editor.
+- **HTML** (.html): een lege webpagina in de HTML-editor.
+- **PDF** (.pdf): anders dan de rest — maakt **onmiddellijk** een echt leeg pdf-bestand van één pagina in de doelmap en opent het als gewoon bestand (de pdf-editor werkt met echte bestanden). Handig om aantekeningen te maken, gebieden zwart te maken of tekst toe te voegen; bij de eerste keer opslaan kan het bestand automatisch op basis van de inhoud worden hernoemd.
 - **Lokaal bestand openen**: een systeemkiezer voor Word (.docx/.doc), Excel (.xlsx/.xlsm/.xls/.csv/.tsv), PowerPoint (.pptx/.ppt), pdf, Markdown (.md/.markdown) en webpagina's (.html/.htm). Je kunt meerdere bestanden selecteren; elk bestand krijgt een eigen tabblad. Tekstbestanden (.txt, .json) openen hier ook — ze landen in de bronweergave van de Markdown-editor.
 
 > Tip: Bestand ▸ Nieuw in de menubalk maakt dezelfde soort documenten (⌘N/Ctrl+N maakt standaard een tekstdocument); een bestand naar het venster slepen opent het.

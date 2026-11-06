@@ -46,12 +46,12 @@ Il nuovo file viene creato nella cartella attualmente selezionata nella barra la
 
 Cosa fa ogni scheda:
 
-- **AI Docs** (.docx): un documento di testo vuoto nell'editor Docs. Il file viene scritto su disco solo al **primo salvataggio**; i nuovi documenti si aprono con il pannello IA espanso (puoi disattivarlo in Impostazioni → «Apri il pannello IA nei nuovi documenti»).
-- **AI Sheets** (.xlsx): un foglio di calcolo vuoto nell'editor Sheets. Finché non salvi, su disco non esiste alcun file — il nome è prenotato per il primo salvataggio; dopo la prima generazione con l'IA il file può anche essere rinominato automaticamente in base al suo contenuto.
-- **AI Slides** (.pptx): una presentazione vuota nell'editor Slides.
-- **AI Markdown** (.md): un documento Markdown vuoto nell'editor Markdown.
-- **AI HTML** (.html): una pagina web vuota nell'editor HTML.
-- **AI PDF** (.pdf): diverso dagli altri — crea **immediatamente** un vero PDF vuoto di una sola pagina nella cartella di destinazione e lo apre come file normale (l'editor PDF lavora su file reali). Utile per annotare, oscurare o aggiungere testo; al primo salvataggio il file può essere rinominato automaticamente in base al suo contenuto.
+- **Docs** (.docx): un documento di testo vuoto nell'editor Docs. Il file viene scritto su disco solo al **primo salvataggio**; i nuovi documenti si aprono con il pannello IA espanso (puoi disattivarlo in Impostazioni → «Apri il pannello IA nei nuovi documenti»).
+- **Sheets** (.xlsx): un foglio di calcolo vuoto nell'editor Sheets. Finché non salvi, su disco non esiste alcun file — il nome è prenotato per il primo salvataggio; dopo la prima generazione con l'IA il file può anche essere rinominato automaticamente in base al suo contenuto.
+- **Slides** (.pptx): una presentazione vuota nell'editor Slides.
+- **Markdown** (.md): un documento Markdown vuoto nell'editor Markdown.
+- **HTML** (.html): una pagina web vuota nell'editor HTML.
+- **PDF** (.pdf): diverso dagli altri — crea **immediatamente** un vero PDF vuoto di una sola pagina nella cartella di destinazione e lo apre come file normale (l'editor PDF lavora su file reali). Utile per annotare, oscurare o aggiungere testo; al primo salvataggio il file può essere rinominato automaticamente in base al suo contenuto.
 - **Apri file locale**: un selettore di file di sistema per Word (.docx/.doc), Excel (.xlsx/.xlsm/.xls/.csv/.tsv), PowerPoint (.pptx/.ppt), PDF, Markdown (.md/.markdown) e pagine web (.html/.htm). È possibile selezionare più file; ogni file ottiene la propria scheda. Anche i file di testo (.txt, .json) si aprono da qui — atterrano nella vista sorgente dell'editor Markdown.
 
 > Suggerimento: File ▸ Nuovo nella barra dei menu crea gli stessi tipi di documento (⌘N/Ctrl+N crea per impostazione predefinita un documento di testo); trascinando un file nella finestra lo si apre.

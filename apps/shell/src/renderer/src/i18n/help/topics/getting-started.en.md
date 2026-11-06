@@ -16,7 +16,7 @@ The window has three parts:
 
 Any of:
 
-- Click a quick-create card in the [Quick start](help://getting-started) section of **Home** (AI Docs, AI Sheets, AI Slides, ...).
+- Click a quick-create card in the [Quick start](help://getting-started) section of **Home** (Docs, Sheets, Slides, ...).
 - Menu **File ▸ New**: Docs (⌘N/ctrl+N), Sheets, Slides, Markdown, HTML or PDF.
 - Drag a file onto the window, or double-click it in your file manager (if Apex Office is the default app).
 

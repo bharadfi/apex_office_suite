@@ -16,7 +16,7 @@ Tingkap ini mempunyai tiga bahagian:
 
 Mana-mana satu daripada berikut:
 
-- Klik pada kad penciptaan pantas dalam bahagian [Mula pantas](help://getting-started) pada **Laman Utama** (AI Docs, AI Sheets, AI Slides, ...).
+- Klik pada kad penciptaan pantas dalam bahagian [Mula pantas](help://getting-started) pada **Laman Utama** (Docs, Sheets, Slides, ...).
 - Menu **Fail ▸ Baharu**: Docs (⌘N/ctrl+N), Sheets, Slides, Markdown, HTML atau PDF.
 - Seret fail ke dalam tingkap, atau klik dua kali pada fail dalam pengurus fail anda (jika Apex Office ialah aplikasi lalai).
 

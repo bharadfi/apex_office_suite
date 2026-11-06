@@ -16,7 +16,7 @@ Apex Office는 전적으로 내 컴퓨터에서 동작하는 오피스 스위트
 
 아래 방법 중 하나를 쓰면 됩니다.
 
-- **홈**의 [빠른 시작](help://getting-started) 영역에 있는 빠른 생성 카드(AI Docs, AI Sheets, AI Slides 등)를 누릅니다.
+- **홈**의 [빠른 시작](help://getting-started) 영역에 있는 빠른 생성 카드(Docs, Sheets, Slides 등)를 누릅니다.
 - 메뉴 **파일 ▸ 새로 만들기**: Docs(⌘N/ctrl+N), Sheets, Slides, Markdown, HTML, PDF.
 - 파일을 창으로 끌어다 놓거나, 파일 관리자에서 더블클릭합니다(Apex Office가 기본 앱으로 설정된 경우).
 

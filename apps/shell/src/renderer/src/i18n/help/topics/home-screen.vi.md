@@ -46,12 +46,12 @@ Tập tin mới nằm trong thư mục đang được chọn ở thanh bên; n�
 
 Từng thẻ dùng để làm gì:
 
-- **AI Docs** (.docx): tài liệu văn bản trống trong trình soạn thảo Docs. Tập tin chỉ thực sự được ghi xuống đĩa ở **lần lưu đầu tiên**; tài liệu mới mở với bảng AI đang mở rộng (tắt trong Cài đặt → "Mở bảng AI trong tài liệu mới").
-- **AI Sheets** (.xlsx): bảng tính trống trong trình soạn thảo Sheets. Trước khi bạn lưu, trên đĩa chưa có tập tin nào — tên được dành sẵn cho lần lưu đầu tiên; sau lần AI sinh nội dung đầu tiên, tên tập tin còn có thể được đổi tự động theo nội dung.
-- **AI Slides** (.pptx): bản trình bày trống trong trình soạn thảo Slides.
-- **AI Markdown** (.md): tài liệu Markdown trống trong trình soạn thảo Markdown.
-- **AI HTML** (.html): trang web trống trong trình soạn thảo HTML.
-- **AI PDF** (.pdf): khác với những thẻ còn lại — nó **ngay lập tức** tạo một tập tin PDF trắng thật một trang trong thư mục đích và mở nó như một tập tin bình thường (trình soạn thảo PDF làm việc trên tập tin thật). Phù hợp để thêm chú thích, che nội dung hoặc thêm văn bản; tên tập tin có thể được đổi tự động theo nội dung ở lần lưu đầu tiên.
+- **Docs** (.docx): tài liệu văn bản trống trong trình soạn thảo Docs. Tập tin chỉ thực sự được ghi xuống đĩa ở **lần lưu đầu tiên**; tài liệu mới mở với bảng AI đang mở rộng (tắt trong Cài đặt → "Mở bảng AI trong tài liệu mới").
+- **Sheets** (.xlsx): bảng tính trống trong trình soạn thảo Sheets. Trước khi bạn lưu, trên đĩa chưa có tập tin nào — tên được dành sẵn cho lần lưu đầu tiên; sau lần AI sinh nội dung đầu tiên, tên tập tin còn có thể được đổi tự động theo nội dung.
+- **Slides** (.pptx): bản trình bày trống trong trình soạn thảo Slides.
+- **Markdown** (.md): tài liệu Markdown trống trong trình soạn thảo Markdown.
+- **HTML** (.html): trang web trống trong trình soạn thảo HTML.
+- **PDF** (.pdf): khác với những thẻ còn lại — nó **ngay lập tức** tạo một tập tin PDF trắng thật một trang trong thư mục đích và mở nó như một tập tin bình thường (trình soạn thảo PDF làm việc trên tập tin thật). Phù hợp để thêm chú thích, che nội dung hoặc thêm văn bản; tên tập tin có thể được đổi tự động theo nội dung ở lần lưu đầu tiên.
 - **Mở tệp cục bộ**: bộ chọn tập tin của hệ thống cho Word (.docx/.doc), Excel (.xlsx/.xlsm/.xls/.csv/.tsv), PowerPoint (.pptx/.ppt), PDF, Markdown (.md/.markdown) và trang web (.html/.htm). Có thể chọn nhiều; mỗi tập tin mở một thẻ riêng. Tệp văn bản (.txt, .json) cũng mở được ở đây — chúng vào thẳng chế độ mã nguồn của trình soạn Markdown.
 
 > Gợi ý: File ▸ Mới trên dải menu tạo ra cùng những loại tài liệu đó (⌘N/Ctrl+N mặc định tạo tài liệu văn bản); kéo một tập tin vào cửa sổ nghĩa là mở nó.

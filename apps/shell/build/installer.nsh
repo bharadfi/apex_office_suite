@@ -115,6 +115,19 @@
   ${EndIf}
 !macroend
 
+; The shell resolves the handler through the effective ProgID first, so register there as well.
+!macro ApexRegisterThumbnailProgId PROGID
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${PROGID}\ShellEx\${APEX_THUMB_IFACE}" "" "${APEX_THUMB_CLSID}"
+!macroend
+
+!macro ApexUnregisterThumbnailProgId PROGID
+  ReadRegStr $0 SHELL_CONTEXT "Software\Classes\${PROGID}\ShellEx\${APEX_THUMB_IFACE}" ""
+  ${If} $0 == "${APEX_THUMB_CLSID}"
+    DeleteRegKey SHELL_CONTEXT "Software\Classes\${PROGID}\ShellEx\${APEX_THUMB_IFACE}"
+    DeleteRegKey /ifempty SHELL_CONTEXT "Software\Classes\${PROGID}\ShellEx"
+  ${EndIf}
+!macroend
+
 !macro customInstall
   WriteRegStr SHELL_CONTEXT "Software\Classes\CLSID\${APEX_THUMB_CLSID}" "" "Apex Office thumbnail handler"
   WriteRegStr SHELL_CONTEXT "Software\Classes\CLSID\${APEX_THUMB_CLSID}\InprocServer32" "" "$INSTDIR\apex_thumbs.dll"
@@ -128,6 +141,13 @@
   !insertmacro ApexRegisterThumbnails "markdown"
   !insertmacro ApexRegisterThumbnails "html"
   !insertmacro ApexRegisterThumbnails "htm"
+  !insertmacro ApexRegisterThumbnailProgId "Word Document"
+  !insertmacro ApexRegisterThumbnailProgId "Excel Workbook"
+  !insertmacro ApexRegisterThumbnailProgId "Excel Macro-Enabled Workbook"
+  !insertmacro ApexRegisterThumbnailProgId "PowerPoint Presentation"
+  !insertmacro ApexRegisterThumbnailProgId "PDF Document"
+  !insertmacro ApexRegisterThumbnailProgId "Markdown Document"
+  !insertmacro ApexRegisterThumbnailProgId "HTML Document"
   Push "$INSTDIR\resources\cli"
   Call GenOfficeAddToUserPath
   !insertmacro GenOfficeRegisterShellNew "docx" "Word Document"
@@ -152,6 +172,13 @@
   !insertmacro ApexUnregisterThumbnails "markdown"
   !insertmacro ApexUnregisterThumbnails "html"
   !insertmacro ApexUnregisterThumbnails "htm"
+  !insertmacro ApexUnregisterThumbnailProgId "Word Document"
+  !insertmacro ApexUnregisterThumbnailProgId "Excel Workbook"
+  !insertmacro ApexUnregisterThumbnailProgId "Excel Macro-Enabled Workbook"
+  !insertmacro ApexUnregisterThumbnailProgId "PowerPoint Presentation"
+  !insertmacro ApexUnregisterThumbnailProgId "PDF Document"
+  !insertmacro ApexUnregisterThumbnailProgId "Markdown Document"
+  !insertmacro ApexUnregisterThumbnailProgId "HTML Document"
   DeleteRegKey SHELL_CONTEXT "Software\Classes\CLSID\${APEX_THUMB_CLSID}"
   Pop $0
   !insertmacro UPDATEFILEASSOC

@@ -46,12 +46,12 @@ Yeni dosya kenar çubuğunda o anda seçili klasöre düşer; seçim yoksa varsa
 
 Her kartın yaptığı:
 
-- **AI Docs** (.docx): Docs düzenleyicisinde boş bir metin belgesi. Dosya diske yalnızca **ilk kayıtta** yazılır; yeni belgeler AI paneli genişletilmiş açılır (Ayarlar → "Yeni belgelerde AI panelini aç" altından kapatın).
-- **AI Sheets** (.xlsx): Sheets düzenleyicisinde boş bir elektronik tablo. Kaydedene kadar diskte dosya yoktur — ad ilk kayıt için ayrılır; ilk AI üretiminden sonra dosya içeriğinden otomatik olarak da yeniden adlandırılabilir.
-- **AI Slides** (.pptx): Slides düzenleyicisinde boş bir sunu.
-- **AI Markdown** (.md): Markdown düzenleyicisinde boş bir Markdown belgesi.
-- **AI HTML** (.html): HTML düzenleyicisinde boş bir web sayfası.
-- **AI PDF** (.pdf): diğerlerinden farklıdır — hedef klasörde **hemen** gerçek, boş, tek sayfalık bir PDF oluşturur ve onu sıradan bir dosya olarak açar (PDF düzenleyicisi gerçek dosyalar üzerinde çalışır). Ek açıklama, karartma veya metin eklemek için uygundur; dosya ilk kayıtta içeriğinden otomatik olarak yeniden adlandırılabilir.
+- **Docs** (.docx): Docs düzenleyicisinde boş bir metin belgesi. Dosya diske yalnızca **ilk kayıtta** yazılır; yeni belgeler AI paneli genişletilmiş açılır (Ayarlar → "Yeni belgelerde AI panelini aç" altından kapatın).
+- **Sheets** (.xlsx): Sheets düzenleyicisinde boş bir elektronik tablo. Kaydedene kadar diskte dosya yoktur — ad ilk kayıt için ayrılır; ilk AI üretiminden sonra dosya içeriğinden otomatik olarak da yeniden adlandırılabilir.
+- **Slides** (.pptx): Slides düzenleyicisinde boş bir sunu.
+- **Markdown** (.md): Markdown düzenleyicisinde boş bir Markdown belgesi.
+- **HTML** (.html): HTML düzenleyicisinde boş bir web sayfası.
+- **PDF** (.pdf): diğerlerinden farklıdır — hedef klasörde **hemen** gerçek, boş, tek sayfalık bir PDF oluşturur ve onu sıradan bir dosya olarak açar (PDF düzenleyicisi gerçek dosyalar üzerinde çalışır). Ek açıklama, karartma veya metin eklemek için uygundur; dosya ilk kayıtta içeriğinden otomatik olarak yeniden adlandırılabilir.
 - **Yerel dosyaları aç**: Word (.docx/.doc), Excel (.xlsx/.xlsm/.xls/.csv/.tsv), PowerPoint (.pptx/.ppt), PDF, Markdown (.md/.markdown) ve web sayfaları (.html/.htm) için bir sistem dosya seçici. Çoklu seçim çalışır; her dosya kendi sekmesini alır. Düz metin dosyaları (.txt, .json) da buradan açılır — Markdown düzenleyicisinin kaynak görünümüne düşerler.
 
 > İpucu: Menü çubuğundaki Dosya ▸ Yeni aynı belge türlerini oluşturur (⌘N/Ctrl+N varsayılan olarak metin belgesi); bir dosyayı pencereye sürüklemek onu açar.

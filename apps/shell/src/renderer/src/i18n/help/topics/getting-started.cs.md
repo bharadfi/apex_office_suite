@@ -16,7 +16,7 @@ Okno má tři části:
 
 Kterýkoli z těchto způsobů:
 
-- Klikněte na kartu rychlého vytvoření v části [Rychlý start](help://getting-started) na **domovské stránce** (AI Docs, AI Sheets, AI Slides, ...).
+- Klikněte na kartu rychlého vytvoření v části [Rychlý start](help://getting-started) na **domovské stránce** (Docs, Sheets, Slides, ...).
 - Nabídka **Soubor ▸ Nový**: Docs (⌘N/ctrl+N), Sheets, Slides, Markdown, HTML nebo PDF.
 - Přetáhněte soubor do okna, nebo na něj v Průzkumníku dvakrát klikněte (pokud je Apex Office výchozí aplikací).
 

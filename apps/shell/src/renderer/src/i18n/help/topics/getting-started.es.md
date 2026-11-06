@@ -16,7 +16,7 @@ La ventana tiene tres partes:
 
 Sirve cualquiera de estas vías:
 
-- Haga clic en una tarjeta de creación rápida de la sección [Inicio rápido](help://getting-started) de **Inicio** (AI Docs, AI Sheets, AI Slides, …).
+- Haga clic en una tarjeta de creación rápida de la sección [Inicio rápido](help://getting-started) de **Inicio** (Docs, Sheets, Slides, …).
 - Menú **Archivo ▸ Nuevo**: Docs (⌘N/ctrl+N), Sheets, Slides, Markdown, HTML o PDF.
 - Arrastre un archivo a la ventana, o haga doble clic en él en el explorador de archivos (si Apex Office es la aplicación predeterminada).
 

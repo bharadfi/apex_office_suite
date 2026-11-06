@@ -46,12 +46,12 @@ El archivo nuevo va a la carpeta seleccionada en la barra lateral; si no hay nin
 
 Qué hace cada tarjeta:
 
-- **AI Docs** (.docx): un documento de texto en blanco en el editor Docs. El archivo se escribe en el disco solo al **guardar por primera vez**; los documentos nuevos se abren con el panel de IA desplegado (se desactiva en Configuración → «Abrir el panel de IA en documentos nuevos»).
-- **AI Sheets** (.xlsx): una hoja de cálculo en blanco en el editor Sheets. Hasta que no guarde, no existe ningún archivo en el disco; el nombre queda reservado para el primer guardado. Tras la primera generación con IA, el archivo también se puede renombrar automáticamente según su contenido.
-- **AI Slides** (.pptx): una presentación en blanco en el editor Slides.
-- **AI Markdown** (.md): un documento Markdown en blanco en el editor Markdown.
-- **AI HTML** (.html): una página web en blanco en el editor HTML.
-- **AI PDF** (.pdf): distinto de los demás: **crea de inmediato** un PDF real en blanco de una sola página en la carpeta de destino y lo abre como un archivo normal (el editor PDF trabaja con archivos reales). Útil para anotar, censurar o añadir texto; el archivo se puede renombrar automáticamente según su contenido al guardarlo por primera vez.
+- **Docs** (.docx): un documento de texto en blanco en el editor Docs. El archivo se escribe en el disco solo al **guardar por primera vez**; los documentos nuevos se abren con el panel de IA desplegado (se desactiva en Configuración → «Abrir el panel de IA en documentos nuevos»).
+- **Sheets** (.xlsx): una hoja de cálculo en blanco en el editor Sheets. Hasta que no guarde, no existe ningún archivo en el disco; el nombre queda reservado para el primer guardado. Tras la primera generación con IA, el archivo también se puede renombrar automáticamente según su contenido.
+- **Slides** (.pptx): una presentación en blanco en el editor Slides.
+- **Markdown** (.md): un documento Markdown en blanco en el editor Markdown.
+- **HTML** (.html): una página web en blanco en el editor HTML.
+- **PDF** (.pdf): distinto de los demás: **crea de inmediato** un PDF real en blanco de una sola página en la carpeta de destino y lo abre como un archivo normal (el editor PDF trabaja con archivos reales). Útil para anotar, censurar o añadir texto; el archivo se puede renombrar automáticamente según su contenido al guardarlo por primera vez.
 - **Abrir archivo local**: un selector de archivos del sistema para Word (.docx/.doc), Excel (.xlsx/.xlsm/.xls/.csv/.tsv), PowerPoint (.pptx/.ppt), PDF, Markdown (.md/.markdown) y páginas web (.html/.htm). Permite seleccionar varios; cada archivo recibe su propia pestaña. Los archivos de texto (.txt, .json) también se abren aquí — aterrizan en la vista de código del editor Markdown.
 
 > Sugerencia: Archivo ▸ Nuevo en la barra de menús crea los mismos tipos de documento (⌘N/Ctrl+N crea un documento de texto de forma predeterminada); arrastrar un archivo a la ventana lo abre.

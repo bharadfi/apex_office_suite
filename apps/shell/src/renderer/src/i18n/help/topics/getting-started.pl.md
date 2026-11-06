@@ -16,7 +16,7 @@ Okno składa się z trzech części:
 
 Dowolny z tych sposobów:
 
-- Kliknij kartę szybkiego tworzenia w sekcji [Szybki start](help://getting-started) na **stronie głównej** (AI Docs, AI Sheets, AI Slides, ...).
+- Kliknij kartę szybkiego tworzenia w sekcji [Szybki start](help://getting-started) na **stronie głównej** (Docs, Sheets, Slides, ...).
 - Menu **Plik ▸ Nowy**: Docs (⌘N/ctrl+N), Sheets, Slides, Markdown, HTML lub PDF.
 - Przeciągnij plik na okno albo kliknij go dwukrotnie w menedżerze plików (jeśli Apex Office jest aplikacją domyślną).
 

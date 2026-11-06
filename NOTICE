@@ -1,7 +1,8 @@
-GenOffice
-Copyright 2026 Mainfunc, Inc.
+Apex Office
+Copyright 2026 Apex Office contributors
 
-This product includes software developed at Mainfunc, Inc.
+Apex Office is forked from GenOffice, Copyright 2026 Mainfunc, Inc., licensed under
+the Apache License 2.0. This product includes software developed at Mainfunc, Inc.
 
 Bundled third-party components are listed in THIRD-PARTY-NOTICES.txt, which
 tools/gen-third-party-notices.mjs generates at packaging time. It is not

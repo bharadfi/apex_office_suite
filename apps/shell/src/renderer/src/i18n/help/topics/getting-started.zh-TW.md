@@ -16,7 +16,7 @@ Apex Office 是一套完全在你電腦上運作的辦公套件：單一視窗�
 
 以下任一方式：
 
-- 按一下**首頁**的[快速開始](help://getting-started)區卡片（AI Docs、AI Sheets、AI Slides⋯）。
+- 按一下**首頁**的[快速開始](help://getting-started)區卡片（Docs、Sheets、Slides⋯）。
 - 選單 **檔案 ▸ 新增**：Docs（⌘N/ctrl+N）、Sheets、Slides、Markdown、HTML 或 PDF。
 - 把檔案拖進視窗，或在檔案總管中按兩下（前提是 Apex Office 已設為預設應用程式）。
 

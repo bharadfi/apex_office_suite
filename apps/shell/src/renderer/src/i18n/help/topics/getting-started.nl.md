@@ -16,7 +16,7 @@ Het venster bestaat uit drie delen:
 
 Een van de volgende:
 
-- Klik op een snelmakenkaart in het onderdeel [Snel starten](help://getting-started) van **Start** (AI Docs, AI Sheets, AI Slides, ...).
+- Klik op een snelmakenkaart in het onderdeel [Snel starten](help://getting-started) van **Start** (Docs, Sheets, Slides, ...).
 - Menu **Bestand ▸ Nieuw**: Docs (⌘N/ctrl+N), Sheets, Slides, Markdown, HTML of PDF.
 - Sleep een bestand naar het venster, of dubbelklik erop in je bestandsverkenner (als Apex Office de standaardapp is).
 

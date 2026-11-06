@@ -16,7 +16,7 @@ La finestra è composta da tre parti:
 
 Uno qualsiasi di questi:
 
-- Fai clic su una scheda di creazione rapida nella sezione [Avvio rapido](help://getting-started) di **Home** (AI Docs, AI Sheets, AI Slides, ...).
+- Fai clic su una scheda di creazione rapida nella sezione [Avvio rapido](help://getting-started) di **Home** (Docs, Sheets, Slides, ...).
 - Menu **File ▸ Nuovo**: Docs (⌘N/ctrl+N), Sheets, Slides, Markdown, HTML o PDF.
 - Trascina un file sulla finestra, oppure fai doppio clic su di esso nel gestore di file (se Apex Office è l'app predefinita).
 

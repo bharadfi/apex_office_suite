@@ -46,12 +46,12 @@ Die neue Datei landet im aktuell in der Seitenleiste ausgewählten Ordner; ohne 
 
 Was die einzelnen Karten tun:
 
-- **AI Docs** (.docx): ein leeres Textdokument im Docs-Editor. Die Datei wird erst beim **ersten Speichern** auf den Datenträger geschrieben; neue Dokumente öffnen mit ausgeklapptem KI-Bereich (abschaltbar unter Einstellungen → „KI-Panel in neuen Dokumenten öffnen“).
-- **AI Sheets** (.xlsx): eine leere Tabelle im Sheets-Editor. Bis zum Speichern existiert keine Datei auf dem Datenträger — der Name ist für das erste Speichern reserviert; nach der ersten KI-Generierung kann die Datei außerdem automatisch aus ihrem Inhalt benannt werden.
-- **AI Slides** (.pptx): eine leere Präsentation im Slides-Editor.
-- **AI Markdown** (.md): ein leeres Markdown-Dokument im Markdown-Editor.
-- **AI HTML** (.html): eine leere Webseite im HTML-Editor.
-- **AI PDF** (.pdf): anders als die übrigen — es erzeugt **sofort** eine echte leere einseitige PDF im Zielordner und öffnet sie als gewöhnliche Datei (der PDF-Editor arbeitet mit echten Dateien). Praktisch zum Kommentieren, Schwärzen oder Hinzufügen von Text; die Datei kann beim ersten Speichern automatisch aus ihrem Inhalt benannt werden.
+- **Docs** (.docx): ein leeres Textdokument im Docs-Editor. Die Datei wird erst beim **ersten Speichern** auf den Datenträger geschrieben; neue Dokumente öffnen mit ausgeklapptem KI-Bereich (abschaltbar unter Einstellungen → „KI-Panel in neuen Dokumenten öffnen“).
+- **Sheets** (.xlsx): eine leere Tabelle im Sheets-Editor. Bis zum Speichern existiert keine Datei auf dem Datenträger — der Name ist für das erste Speichern reserviert; nach der ersten KI-Generierung kann die Datei außerdem automatisch aus ihrem Inhalt benannt werden.
+- **Slides** (.pptx): eine leere Präsentation im Slides-Editor.
+- **Markdown** (.md): ein leeres Markdown-Dokument im Markdown-Editor.
+- **HTML** (.html): eine leere Webseite im HTML-Editor.
+- **PDF** (.pdf): anders als die übrigen — es erzeugt **sofort** eine echte leere einseitige PDF im Zielordner und öffnet sie als gewöhnliche Datei (der PDF-Editor arbeitet mit echten Dateien). Praktisch zum Kommentieren, Schwärzen oder Hinzufügen von Text; die Datei kann beim ersten Speichern automatisch aus ihrem Inhalt benannt werden.
 - **Lokale Datei öffnen**: eine Systemdateiauswahl für Word (.docx/.doc), Excel (.xlsx/.xlsm/.xls/.csv/.tsv), PowerPoint (.pptx/.ppt), PDF, Markdown (.md/.markdown) und Webseiten (.html/.htm). Mehrfachauswahl ist möglich; jede Datei bekommt ihren eigenen Tab. Textdateien (.txt, .json) lassen sich hier ebenfalls öffnen — sie landen in der Quelltextansicht des Markdown-Editors.
 
 > Tipp: Datei ▸ Neu in der Menüleiste erzeugt dieselben Dokumenttypen (⌘N/Ctrl+N erzeugt standardmäßig ein Textdokument); eine ins Fenster gezogene Datei wird direkt geöffnet.

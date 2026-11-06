@@ -16,7 +16,7 @@ Das Fenster besteht aus drei Teilen:
 
 Eines davon genügt:
 
-- Klicken Sie auf eine Schnellerstellungskarte im Bereich [Schnellstart](help://getting-started) der **Startseite** (AI Docs, AI Sheets, AI Slides, …).
+- Klicken Sie auf eine Schnellerstellungskarte im Bereich [Schnellstart](help://getting-started) der **Startseite** (Docs, Sheets, Slides, …).
 - Menü **Datei ▸ Neu**: Docs (⌘N/ctrl+N), Sheets, Slides, Markdown, HTML oder PDF.
 - Ziehen Sie eine Datei auf das Fenster oder doppelklicken Sie sie im Dateimanager (wenn Apex Office die Standard-App ist).
 

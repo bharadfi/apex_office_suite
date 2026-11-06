@@ -46,12 +46,12 @@ File baru akan masuk ke folder yang sedang dipilih di bilah sisi; jika tidak ada
 
 Apa yang dilakukan tiap kartu:
 
-- **AI Docs** (.docx): dokumen teks kosong di editor Docs. File baru ditulis ke disk saat **penyimpanan pertama**; dokumen baru terbuka dengan panel AI terbentang (nonaktifkan lewat Pengaturan → "Buka panel AI di dokumen baru").
-- **AI Sheets** (.xlsx): spreadsheet kosong di editor Sheets. Sebelum Anda menyimpan, belum ada file di disk — namanya dicadangkan untuk penyimpanan pertama; setelah generasi AI pertama, file juga bisa diberi nama otomatis dari isinya.
-- **AI Slides** (.pptx): presentasi kosong di editor Slides.
-- **AI Markdown** (.md): dokumen Markdown kosong di editor Markdown.
-- **AI HTML** (.html): halaman web kosong di editor HTML.
-- **AI PDF** (.pdf): berbeda dari yang lain — kartu ini **segera** membuat PDF kosong satu halaman yang sungguhan di folder tujuan dan membukanya sebagai file biasa (editor PDF bekerja pada file asli). Bagus untuk memberi anotasi, menutupi bagian, atau menambahkan teks; file bisa diberi nama otomatis dari isinya saat penyimpanan pertama.
+- **Docs** (.docx): dokumen teks kosong di editor Docs. File baru ditulis ke disk saat **penyimpanan pertama**; dokumen baru terbuka dengan panel AI terbentang (nonaktifkan lewat Pengaturan → "Buka panel AI di dokumen baru").
+- **Sheets** (.xlsx): spreadsheet kosong di editor Sheets. Sebelum Anda menyimpan, belum ada file di disk — namanya dicadangkan untuk penyimpanan pertama; setelah generasi AI pertama, file juga bisa diberi nama otomatis dari isinya.
+- **Slides** (.pptx): presentasi kosong di editor Slides.
+- **Markdown** (.md): dokumen Markdown kosong di editor Markdown.
+- **HTML** (.html): halaman web kosong di editor HTML.
+- **PDF** (.pdf): berbeda dari yang lain — kartu ini **segera** membuat PDF kosong satu halaman yang sungguhan di folder tujuan dan membukanya sebagai file biasa (editor PDF bekerja pada file asli). Bagus untuk memberi anotasi, menutupi bagian, atau menambahkan teks; file bisa diberi nama otomatis dari isinya saat penyimpanan pertama.
 - **Buka File Lokal**: pemilih file sistem untuk Word (.docx/.doc), Excel (.xlsx/.xlsm/.xls/.csv/.tsv), PowerPoint (.pptx/.ppt), PDF, Markdown (.md/.markdown), dan halaman web (.html/.htm). Bisa memilih banyak file sekaligus; tiap file mendapat tabnya sendiri. Berkas teks (.txt, .json) juga terbuka di sini — mereka masuk ke tampilan sumber editor Markdown.
 
 > Tip: menu Arquivo ▸ Novo di bilah menu membuat jenis dokumen yang sama (⌘N/Ctrl+N memakai dokumen teks secara bawaan); menyeret file ke jendela akan membukanya.

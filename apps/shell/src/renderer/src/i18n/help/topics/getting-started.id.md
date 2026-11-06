@@ -16,7 +16,7 @@ Jendela ini terdiri dari tiga bagian:
 
 Pilih salah satu:
 
-- Klik salah satu kartu pembuatan cepat di bagian [Mulai cepat](help://getting-started) pada **Beranda** (AI Docs, AI Sheets, AI Slides, ...).
+- Klik salah satu kartu pembuatan cepat di bagian [Mulai cepat](help://getting-started) pada **Beranda** (Docs, Sheets, Slides, ...).
 - Menu **File ▸ Baru**: Docs (⌘N/ctrl+N), Sheets, Slides, Markdown, HTML, atau PDF.
 - Seret sebuah file ke jendela, atau klik dua kali di aplikasi file Anda (jika Apex Office adalah aplikasi default).
 

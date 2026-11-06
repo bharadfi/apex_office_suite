@@ -16,7 +16,7 @@ Cửa sổ gồm ba phần:
 
 Bất kỳ cách nào sau đây:
 
-- Nhấp vào một thẻ tạo nhanh trong mục [Bắt đầu nhanh](help://getting-started) của **Trang chủ** (AI Docs, AI Sheets, AI Slides, ...).
+- Nhấp vào một thẻ tạo nhanh trong mục [Bắt đầu nhanh](help://getting-started) của **Trang chủ** (Docs, Sheets, Slides, ...).
 - Menu **File ▸ Mới**: Docs (⌘N/ctrl+N), Sheets, Slides, Markdown, HTML hoặc PDF.
 - Kéo một tập tin vào cửa sổ, hoặc nhấp đúp vào nó trong trình quản lý tập tin (nếu Apex Office là ứng dụng mặc định).
 

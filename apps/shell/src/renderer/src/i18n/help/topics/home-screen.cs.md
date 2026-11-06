@@ -46,12 +46,12 @@ Nový soubor se uloží do složky právě vybrané v postranním panelu; pokud 
 
 Co která karta dělá:
 
-- **AI Docs** (.docx): prázdný textový dokument v editoru Docs. Soubor se na disk zapíše až při **prvním uložení**; nové dokumenty se otevírají s rozbaleným panelem AI (vypnout to lze v Nastavení → „Otevírat panel AI v nových dokumentech“).
-- **AI Sheets** (.xlsx): prázdný list v editoru Sheets. Dokud neuložíte, na disku žádný soubor není — název je rezervován pro první uložení; po prvním vygenerování pomocí AI lze soubor také automaticky přejmenovat podle jeho obsahu.
-- **AI Slides** (.pptx): prázdná prezentace v editoru Slides.
-- **AI Markdown** (.md): prázdný dokument Markdown v editoru Markdown.
-- **AI HTML** (.html): prázdná webová stránka v editoru HTML.
-- **AI PDF** (.pdf): ostatní se liší — **okamžitě** vytvoří skutečný prázdný jednostránkový PDF v cílové složce a otevře ho jako běžný soubor (editor PDF pracuje se skutečnými soubory). Hodí se pro poznámky, začernění nebo přidávání textu; při prvním uložení lze soubor automaticky přejmenovat podle jeho obsahu.
+- **Docs** (.docx): prázdný textový dokument v editoru Docs. Soubor se na disk zapíše až při **prvním uložení**; nové dokumenty se otevírají s rozbaleným panelem AI (vypnout to lze v Nastavení → „Otevírat panel AI v nových dokumentech“).
+- **Sheets** (.xlsx): prázdný list v editoru Sheets. Dokud neuložíte, na disku žádný soubor není — název je rezervován pro první uložení; po prvním vygenerování pomocí AI lze soubor také automaticky přejmenovat podle jeho obsahu.
+- **Slides** (.pptx): prázdná prezentace v editoru Slides.
+- **Markdown** (.md): prázdný dokument Markdown v editoru Markdown.
+- **HTML** (.html): prázdná webová stránka v editoru HTML.
+- **PDF** (.pdf): ostatní se liší — **okamžitě** vytvoří skutečný prázdný jednostránkový PDF v cílové složce a otevře ho jako běžný soubor (editor PDF pracuje se skutečnými soubory). Hodí se pro poznámky, začernění nebo přidávání textu; při prvním uložení lze soubor automaticky přejmenovat podle jeho obsahu.
 - **Otevřít místní soubor**: systémový výběr souborů pro Word (.docx/.doc), Excel (.xlsx/.xlsm/.xls/.csv/.tsv), PowerPoint (.pptx/.ppt), PDF, Markdown (.md/.markdown) a webové stránky (.html/.htm). Lze vybrat více souborů; každý dostane vlastní kartu. Textové soubory (.txt, .json) se tu také otevírají — přistanou v zobrazení zdroje editoru Markdown.
 
 > Tip: Soubor ▸ Nový v pruhu nabídek vytvoří stejné typy dokumentů (⌘N/Ctrl+N ve výchozím stavu vytvoří textový dokument); přetažení souboru do okna ho otevře.
