@@ -2380,7 +2380,7 @@ function registerPdfIpc(): void {
   // The copy of a signed file to show and print: each signature box with its own verdict mark
   ipcMain.handle(
     PDF_CHANNELS.signatureDisplayCopy,
-    async (e, path: unknown): Promise<ArrayBuffer | null> => {
+    async (e, path: unknown, password: unknown): Promise<ArrayBuffer | null> => {
       if (typeof path !== 'string' || !allowedByWc.get(e.sender.id)?.has(path)) return null
       try {
         const bytes = new Uint8Array(await readFile(path))
@@ -2390,7 +2390,11 @@ function registerPdfIpc(): void {
         } catch {
           /* judged without it */
         }
-        const copy = await signatureDisplayCopy(bytes, userTrusted)
+        const copy = await signatureDisplayCopy(
+          bytes,
+          userTrusted,
+          typeof password === 'string' ? password : undefined,
+        )
         return copy ? copy.slice().buffer : null
       } catch {
         // no copy: the original is shown as it is

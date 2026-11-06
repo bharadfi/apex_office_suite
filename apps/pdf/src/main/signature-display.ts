@@ -1,5 +1,6 @@
 import { PDFDocument } from 'pdf-lib'
 import type { PdfSignatureInfo } from '../shared/ipc'
+import { decryptDocument } from './pdf-crypt'
 import { collectSignatureFields, readPdfSignatures } from './pdf-signatures'
 import { applyVerdicts, type FieldVerdict, type Verdict } from './validity-layers'
 
@@ -34,19 +35,29 @@ export function certifiedCaption(
  * The copy of a signed PDF to DISPLAY or PRINT: each signature box's own verdict mark (and
  * certified caption) drawn in place of the guess the signer baked in. The file on disk is never
  * changed. Returns null when there is nothing to redraw (no signatures, none with a mark layer,
- * a protected or unreadable file), in which case the original is shown as it is.
+ * an unreadable file, or a protected one without its password), in which case the original is shown as it is.
  */
 export async function signatureDisplayCopy(
   bytes: Uint8Array,
   userTrusted: ReadonlySet<string> = new Set(),
+  password?: string,
 ): Promise<Uint8Array | null> {
-  const infos = await readPdfSignatures(bytes, userTrusted)
+  const infos = await readPdfSignatures(bytes, userTrusted, password)
   if (!infos.some((info) => info.validityLayer)) return null
+  const load = (data: Uint8Array) =>
+    PDFDocument.load(data, { updateMetadata: false, throwOnInvalidObject: false })
   let pdf: PDFDocument
   try {
-    pdf = await PDFDocument.load(bytes, { updateMetadata: false, throwOnInvalidObject: false })
+    pdf = await load(bytes)
   } catch {
-    return null
+    // A protected file: the verdicts were judged on its own bytes above; the picture is drawn on
+    // an unlocked in-memory copy, which is only ever shown or printed, never written back
+    if (password === undefined) return null
+    try {
+      pdf = await load((await decryptDocument(bytes, password)).bytes)
+    } catch {
+      return null
+    }
   }
   const fields: FieldVerdict[] = []
   for (const field of collectSignatureFields(pdf)) {

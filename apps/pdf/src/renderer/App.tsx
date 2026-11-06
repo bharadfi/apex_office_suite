@@ -7456,6 +7456,7 @@ export default function App() {
 
   // Re-read the signatures whenever the document on screen is (re)loaded: a save rewrites the
   // file, which is exactly when an old signature stops matching
+  const redrawnDocRef = useRef<PDFDocumentProxy | null>(null)
   useEffect(() => {
     if (!doc || !filePath) {
       setDigitalSignatures([])
@@ -7465,7 +7466,14 @@ export default function App() {
     void window.pdfApi
       .listDigitalSignatures(filePath, diskPasswordRef.current ?? undefined)
       .then((list) => {
-        if (!cancelled) setDigitalSignatures(list)
+        if (cancelled) return
+        setDigitalSignatures(list)
+        // draw each box's own verdict once per loaded document; the redrawn copy becomes the
+        // document on screen, which must not trigger another redraw
+        if (list.some((s) => s.validityLayer) && redrawnDocRef.current !== doc) {
+          redrawnDocRef.current = doc
+          void refreshDisplayCopy()
+        }
       })
       .catch(() => {
         if (!cancelled) setDigitalSignatures([])
@@ -7491,7 +7499,9 @@ export default function App() {
    */
   const refreshDisplayCopy = async (): Promise<void> => {
     if (!doc || !filePath) return
-    const copy = await window.pdfApi.signatureDisplayCopy(filePath).catch(() => null)
+    const copy = await window.pdfApi
+      .signatureDisplayCopy(filePath, diskPasswordRef.current ?? undefined)
+      .catch(() => null)
     if (!copy) return
     const task = loadPdfForView(new Uint8Array(copy), passwordRef.current)
     let next: PDFDocumentProxy
@@ -7502,6 +7512,7 @@ export default function App() {
       return
     }
     const previous = doc
+    redrawnDocRef.current = next
     setDoc(next)
     void previous.loadingTask.destroy()
   }

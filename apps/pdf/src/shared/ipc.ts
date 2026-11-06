@@ -1270,7 +1270,7 @@ export interface PdfApi {
   /** Read and verify the digital (certificate) signatures embedded in a granted PDF */
   listDigitalSignatures(path: string, password?: string): Promise<PdfSignatureInfo[]>
   /** The copy of a granted, signed PDF to display or print: each signature box showing its own verdict mark. null when there is nothing to redraw */
-  signatureDisplayCopy(path: string): Promise<ArrayBuffer | null>
+  signatureDisplayCopy(path: string, password?: string): Promise<ArrayBuffer | null>
   /** The page-label ranges of a granted PDF ([] when it has none, or is protected and cannot be read here) */
   readPageLabels(path: string): Promise<PageLabelRange[]>
   /** Print the real PDF, with each signature box showing its verdict mark and only the chosen pages; resolves when the job is handed over */
