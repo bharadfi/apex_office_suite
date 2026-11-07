@@ -3559,12 +3559,9 @@ async function loadRange(
         state.retryTimers.set(sheetId, timer)
       }
     } else if (isActiveSheet(runtime, sheetId)) {
-      setMessage(
-        t('appStreamingRows', {
-          name: state.file.name,
-          rows: sheet?.rowCount.toLocaleString() ?? '?',
-        }),
-      )
+      // loading finished: the "N rows available" text carried an internal temp
+      // file name and never cleared, so clear the message instead
+      setMessage('')
     }
   } catch (error: unknown) {
     if (lazyWorkbookRef.current === state && isActiveSheet(runtime, sheetId)) {

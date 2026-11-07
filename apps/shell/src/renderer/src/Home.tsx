@@ -47,7 +47,7 @@ const PAGE_SIZE = 50
    width, so it ellipsizes and a hover ScreenTip carries the full list. Keep in
    sync with the main-process open-dialog filter (OPEN_DIALOG_EXTENSIONS). */
 const OPEN_LOCAL_EXTENSIONS =
-  '.docx / .doc / .dot / .odt / .ott / .hwpx / .hwp / .xlsx / .xlsm / .xls / .csv / .tsv / .ods / .ots / .pptx / .odp / .otp / .pdf / .md / .html'
+  '.docx / .docm / .dotx / .doc / .rtf / .odt / .hwp / .xlsx / .xlsm / .xlsb / .xltx / .xls / .csv / .vcf / .ods / .pptx / .pptm / .ppsx / .potx / .odp / .pdf / .md / .html'
 
 /** drag payload of home file/folder rows (JSON array of absolute paths) */
 const DRAG_PATHS_MIME = 'application/x-genoffice-paths'

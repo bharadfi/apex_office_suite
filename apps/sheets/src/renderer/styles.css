@@ -1681,9 +1681,11 @@ button.check-item:hover {
    * unscaled 360px slot paints 720px of content into 360px of grid — the
    * heading clips, the composer overlaps the model name, and both overflow
    * into the document. */
-  grid-template-columns: calc(var(--copilot-width, 360px) * var(--ui-scale)) minmax(0, 1fr);
+  /* The AI panel is gone from Apex Office: the sheet is the only child, so it
+   * takes the whole row. (A leftover two-column template put it in a 360px
+   * slot with the other column empty.) */
+  grid-template-columns: minmax(0, 1fr);
   min-height: 0;
-  transition: grid-template-columns 180ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* formula-bar row + spreadsheet */
@@ -1944,9 +1946,6 @@ button.check-item:hover {
   margin-left: 6px;
 }
 
-.app-shell.copilot-collapsed .sheet-body {
-  grid-template-columns: 34px minmax(0, 1fr);
-}
 
 /* sidebar setting off: the rail is not mounted, so the sheet takes the whole row */
 .app-shell.copilot-off .sheet-body {
