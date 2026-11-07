@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { NumberValueObject, StringValueObject } from '@univerjs/engine-formula'
 
-import { InfoFunction, IsoCeiling, PercentOf, RegexTest } from '../src/renderer/extra-functions'
+import { Amordegrc, InfoFunction, Jis, IsoCeiling, PercentOf, Phonetic, RegexTest } from '../src/renderer/extra-functions'
 
 const n = (x: number) => NumberValueObject.create(x)
 const s = (x: string) => StringValueObject.create(x)
@@ -30,5 +30,16 @@ describe('extra Excel functions', () => {
   it('INFO answers known keys', () => {
     const f = new InfoFunction('INFO')
     expect(val(f.calculate(s('recalc')))).toBe('Automatic')
+  })
+
+  it('JIS widens ASCII and PHONETIC echoes text', () => {
+    expect(val(new Jis('JIS').calculate(s('Ab 1')))).toBe('Ａｂ　１')
+    expect(val(new Phonetic('PHONETIC').calculate(s('東京')))).toBe('東京')
+  })
+
+  it('AMORDEGRC matches the Microsoft documentation example', () => {
+    // =AMORDEGRC(2400,39679,39813,300,1,0.15,1) -> 776
+    const f = new Amordegrc('AMORDEGRC')
+    expect(val(f.calculate(n(2400), n(39679), n(39813), n(300), n(1), n(0.15), n(1)))).toBe(776)
   })
 })
