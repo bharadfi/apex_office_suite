@@ -75,7 +75,7 @@ export const EXT_FAMILY: Record<string, readonly string[]> = {
   // delimited text belongs to the sheets family: Home's own FILTER_FAMILY and
   // the shell's open routing both treat .csv/.tsv as spreadsheets, so a
   // sidebar filtered on "xlsx" must page them in too (csv was missing here).
-  xlsx: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf'],
+  xlsx: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf', 'xlsb'],
   pptx: ['pptx', 'ppt', 'odp', 'otp', 'ppsx', 'pptm', 'ppsm', 'potx', 'potm'],
   // the text app opens txt/json as source too, so the sidebar "md" filter has
   // to page them in the same way Home's FILTER_FAMILY already does — otherwise

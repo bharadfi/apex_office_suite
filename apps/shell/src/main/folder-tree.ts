@@ -57,6 +57,7 @@ export const TREE_FILE_EXTENSIONS: ReadonlySet<string> = new Set([
   'xltm',
   'xlam',
   'vcf',
+  'xlsb',
   'rtf',
   'pdf',
   'md',

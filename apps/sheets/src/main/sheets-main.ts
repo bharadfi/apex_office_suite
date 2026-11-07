@@ -1,4 +1,5 @@
 import { csvToVcf, vcfToCsv } from './vcf-import'
+import { convertXlsbToXlsx } from './xlsb-import'
 import { normalizeOoxmlVariant } from '../../../../packages/odf2ooxml/src/ooxml-variants'
 import { createHash, randomUUID } from 'node:crypto'
 import {
@@ -2082,6 +2083,7 @@ const WORKBOOK_EXTS = new Set([
   'xltm',
   'xlam',
   'vcf',
+  'xlsb',
 ])
 const WORKBOOK_FILTER_EXTENSIONS = [...WORKBOOK_EXTS]
 
@@ -5321,6 +5323,7 @@ async function prepareWorkbookForOpen(
     !odfImport &&
     !templateVariant &&
     extension !== 'vcf' &&
+    extension !== 'xlsb' &&
     extension !== 'csv' &&
     extension !== 'tsv' &&
     extension !== 'xls'
@@ -5365,6 +5368,9 @@ async function prepareWorkbookForOpen(
       )
       emptyCsv = converted.empty
       await writeFile(openPath, converted.buffer)
+    } else if (extension === 'xlsb') {
+      // binary workbook: values and number formats only, opened as an .xlsx copy
+      await writeFile(openPath, await convertXlsbToXlsx(new Uint8Array(await readFile(path))))
     } else if (extension === 'vcf') {
       // contacts: one row per vCard, opened as a converted .xlsx copy
       const converted = await csvToXlsxBufferForOpen(

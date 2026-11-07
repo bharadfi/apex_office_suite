@@ -33,6 +33,7 @@ export const LAUNCHABLE_EXTS = [
   'xltm',
   'xlam',
   'vcf',
+  'xlsb',
   'rtf',
   'pdf',
   'md',
@@ -44,7 +45,7 @@ export const LAUNCHABLE_EXTS = [
 ] as const
 
 const SUPPORTED_LAUNCH_RE = new RegExp(`\\.(${LAUNCHABLE_EXTS.join('|')})$`, 'i')
-const UNSUPPORTED_LAUNCH_RE = /\.(ppt|pps|xlsb|pages|key|numbers)$/i
+const UNSUPPORTED_LAUNCH_RE = /\.(ppt|pps|pages|key|numbers)$/i
 
 interface LaunchPayload {
   launchPaths?: unknown

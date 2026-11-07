@@ -291,6 +291,7 @@ describe('MCP surface over Streamable HTTP (/mcp)', () => {
         'xltm',
         'xlam',
         'vcf',
+        'xlsb',
       ])
       expect(infoJson.families.find((f) => f.family === 'docx')!.editor.open).toEqual([
         'docx',

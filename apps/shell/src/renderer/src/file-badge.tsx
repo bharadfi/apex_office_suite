@@ -30,6 +30,7 @@ const FILE_ICONS: Record<string, string> = {
   xltm: iconXlsx,
   xlam: iconXlsx,
   vcf: iconXlsx,
+  xlsb: iconXlsx,
   rtf: iconDocx,
   pdf: iconPdf,
   md: iconMd,

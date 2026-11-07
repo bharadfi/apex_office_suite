@@ -41,6 +41,7 @@ describe('format registry', () => {
       'xltm',
       'xlam',
       'vcf',
+      'xlsb',
     ])
     expect(formatFamily('pptx').editorOpen).toEqual([
       'pptx',
@@ -58,7 +59,7 @@ describe('format registry', () => {
     // the xlsx family converts .tsv/.ods to .xlsx; docx/pptx take .odt/.odp and
     // legacy Word .doc/.dot the same way
     for (const [family, exts] of [
-      ['xlsx', ['tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf']],
+      ['xlsx', ['tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf', 'xlsb']],
       ['docx', ['odt', 'ott', 'doc', 'dot', 'hwpx', 'hwp', 'docm', 'dotx', 'dotm', 'rtf']],
       ['pptx', ['odp', 'otp', 'ppsx', 'pptm', 'ppsm', 'potx', 'potm']],
     ] as const) {

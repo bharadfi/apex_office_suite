@@ -219,7 +219,7 @@ const FILTERS: { key: string; label: StringKey }[] = [
 /** sidebar filter keys that stand for a family of extensions (mirrors recent-files.ts) */
 const FILTER_FAMILY: Record<string, readonly string[]> = {
   docx: ['docx', 'doc', 'dot', 'odt', 'ott', 'hwpx', 'hwp', 'docm', 'dotx', 'dotm', 'rtf'],
-  xlsx: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf'],
+  xlsx: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf', 'xlsb'],
   pptx: ['pptx', 'ppt', 'odp', 'otp', 'ppsx', 'pptm', 'ppsm', 'potx', 'potm'],
   md: ['md', 'markdown', 'txt', 'json'],
   html: ['html', 'htm'],

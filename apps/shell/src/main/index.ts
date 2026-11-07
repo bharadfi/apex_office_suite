@@ -3883,7 +3883,7 @@ function ensureFileIndexer(): FileIndexer | null {
 
 const SEARCH_EXT_FAMILY: Record<string, readonly string[]> = {
   docx: ['docx', 'doc', 'dot', 'odt', 'ott', 'hwpx', 'hwp', 'docm', 'dotx', 'dotm', 'rtf'],
-  xlsx: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf'],
+  xlsx: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf', 'xlsb'],
   pptx: ['pptx', 'ppt', 'odp', 'otp', 'ppsx', 'pptm', 'ppsm', 'potx', 'potm'],
   md: ['md', 'markdown', 'txt', 'json'],
   html: ['html', 'htm'],
@@ -4403,6 +4403,7 @@ const OPEN_DIALOG_EXTENSIONS = [
   'xltm',
   'xlam',
   'vcf',
+  'xlsb',
   'rtf',
   'pdf',
   'md',
@@ -5065,7 +5066,7 @@ function registerHomeIpc(): void {
         { name: tm('filterWord'), extensions: ['docx', 'doc', 'dot', 'odt', 'ott', 'hwpx', 'hwp', 'docm', 'dotx', 'dotm', 'rtf'] },
         {
           name: tm('filterExcel'),
-          extensions: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf'],
+          extensions: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf', 'xlsb'],
         },
         { name: tm('filterPpt'), extensions: ['pptx', 'ppt', 'odp', 'otp', 'ppsx', 'pptm', 'ppsm', 'potx', 'potm'] },
         { name: tm('filterPdf'), extensions: ['pdf'] },

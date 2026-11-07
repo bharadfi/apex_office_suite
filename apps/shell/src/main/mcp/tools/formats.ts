@@ -69,7 +69,7 @@ export const FORMAT_FAMILIES: readonly FormatFamily[] = [
     // .tsv opens as a converted copy and saves as .xlsx, so it is an open-only
     // format: it must not appear in editorSave. .ods is open-only for the same
     // reason, and Apex Office never writes ODF.
-    editorOpen: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf'],
+    editorOpen: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf', 'xlsb'],
     // the interactive Save As also offers .xlsm/.csv; the explicit-path save the
     // MCP bridge uses writes .xlsx only (sheets-main.ts forces the extension),
     // so mcp.save stays xlsx until that pipeline is widened
