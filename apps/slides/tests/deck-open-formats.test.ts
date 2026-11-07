@@ -14,7 +14,17 @@ import {
  */
 describe('OPENABLE_DECK_EXTENSIONS', () => {
   it('covers every extension the guard accepts', () => {
-    expect(OPENABLE_DECK_EXTENSIONS).toEqual(['pptx', 'ppt', 'odp', 'otp'])
+    expect(OPENABLE_DECK_EXTENSIONS).toEqual([
+      'pptx',
+      'ppt',
+      'odp',
+      'otp',
+      'ppsx',
+      'pptm',
+      'ppsm',
+      'potx',
+      'potm',
+    ])
     for (const extension of OPENABLE_DECK_EXTENSIONS) {
       expect(isOpenableDeckPath(`/tmp/Quarterly Review.${extension.toUpperCase()}`)).toBe(true)
     }
@@ -58,7 +68,7 @@ describe('the ODF import route in the Slides main module', () => {
   it('writes the converted copy atomically, as the Docs and shell routes do', () => {
     // a plain writeFile leaves a half-written .pptx where the user expects a
     // deck when the process dies mid-write
-    expect(source).toContain('await atomicWriteFile(r.filePath, Buffer.from(result.pptx))')
+    expect(source).toContain('await atomicWriteFile(r.filePath, Buffer.from(pptx))')
     expect(source).toContain(
       "import { atomicWriteFile, atomicWriteVia } from '@genoffice/electron-utils/atomic-write'",
     )

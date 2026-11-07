@@ -71,12 +71,12 @@ export function normalizeRecentQuery(
 /** sidebar filter keys that stand for a family of extensions, not one exact ext */
 export const EXT_FAMILY: Record<string, readonly string[]> = {
   // mirrors Home's FILTER_FAMILY and SEARCH_EXT_FAMILY
-  docx: ['docx', 'doc', 'dot', 'odt', 'ott', 'hwpx', 'hwp'],
+  docx: ['docx', 'doc', 'dot', 'odt', 'ott', 'hwpx', 'hwp', 'docm', 'dotx', 'dotm', 'rtf'],
   // delimited text belongs to the sheets family: Home's own FILTER_FAMILY and
   // the shell's open routing both treat .csv/.tsv as spreadsheets, so a
   // sidebar filtered on "xlsx" must page them in too (csv was missing here).
-  xlsx: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots'],
-  pptx: ['pptx', 'ppt', 'odp', 'otp'],
+  xlsx: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf'],
+  pptx: ['pptx', 'ppt', 'odp', 'otp', 'ppsx', 'pptm', 'ppsm', 'potx', 'potm'],
   // the text app opens txt/json as source too, so the sidebar "md" filter has
   // to page them in the same way Home's FILTER_FAMILY already does — otherwise
   // the two views disagree about which files the filter means.

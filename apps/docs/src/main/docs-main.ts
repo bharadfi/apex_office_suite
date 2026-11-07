@@ -88,7 +88,11 @@ import { parseFileToText } from '@genoffice/file-parse'
 import { convertLegacyDocToDocx } from '../../../../packages/doc2docx/src'
 import { convertHtmlToDocx } from '../../../../packages/html2docx/src'
 import { ElectronBrowserDriver } from '../../../../packages/html2docx/src/drivers/electron'
-import { convertOdtToDocx } from '../../../../packages/odf2ooxml/src'
+import {
+  convertOdtToDocx,
+  convertRtfToDocx,
+  normalizeOoxmlVariant,
+} from '../../../../packages/odf2ooxml/src'
 import { convertHwpToDocx } from '../../../../packages/hwp2docx/src'
 import {
   AiCreditsError,
@@ -4139,8 +4143,11 @@ async function prepareDocumentForOpen(
   // .hwp and .hwpx route by content: sites serve each under the other's name
   const isHwp = importKind === 'hwp'
   const word97 = importKind === 'word97'
+  const isOoxml = importKind === 'ooxml'
+  const isRtf = importKind === 'rtf'
   const skipKind = word97 ? 'word97' : isHwp ? 'hwp' : 'odt'
-  if (!readLegacyImportSkip(APP_SETTINGS_PATH(), skipKind)) {
+  // macro/template variants only change the package's content type: no lossy-import warning
+  if (!isOoxml && !isRtf && !readLegacyImportSkip(APP_SETTINGS_PATH(), skipKind)) {
     const options = {
       type: 'warning' as const,
       message: tm(word97 ? 'docImportMsg' : 'odtImportMsg', { ext: extension }),
@@ -4170,7 +4177,7 @@ async function prepareDocumentForOpen(
       title: tm('dlgSaveAs'),
       defaultPath: join(
         dirname(filePath),
-        basename(filePath).replace(/\.(odt|ott|hwpx?|doc|dot)$/i, '.docx'),
+        basename(filePath).replace(/\.(odt|ott|hwpx?|doc|dot|docm|dotx|dotm|rtf)$/i, '.docx'),
       ),
       filters: [{ name: tm('filterWord'), extensions: ['docx'] }],
     },
@@ -4179,12 +4186,18 @@ async function prepareDocumentForOpen(
   if (picked.canceled || !picked.filePath) return null
   try {
     const source = new Uint8Array(await readFile(filePath))
-    const result = word97
-      ? await convertLegacyDocToDocx(source)
-      : isHwp
-        ? await convertHwpToDocx(source)
-        : await convertOdtToDocx(source)
-    await atomicWriteFile(picked.filePath, Buffer.from(result.docx))
+    const docx = isOoxml
+      ? await normalizeOoxmlVariant(source, 'word')
+      : isRtf
+        ? (await convertRtfToDocx(source)).docx
+        : (
+          await (word97
+            ? convertLegacyDocToDocx(source)
+            : isHwp
+              ? convertHwpToDocx(source)
+              : convertOdtToDocx(source))
+        ).docx
+    await atomicWriteFile(picked.filePath, Buffer.from(docx))
   } catch {
     if (parent && !parent.isDestroyed()) {
       await dialog.showMessageBox(parent, {

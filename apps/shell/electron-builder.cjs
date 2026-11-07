@@ -396,7 +396,25 @@ function ensureThirdPartyNotices() {
 // 97-2003 .doc/.dot it would hijack the system editor, so Windows leaves those
 // out (mac/Linux still declare them for Open With). Apex Office opens .doc/.dot
 // through its own Open dialog on every platform.
-const WIN_OPEN_WITH_ONLY_EXTS = new Set(['txt', 'json', 'doc', 'dot'])
+const WIN_OPEN_WITH_ONLY_EXTS = new Set([
+  'txt',
+  'json',
+  'doc',
+  'dot',
+  'rtf',
+  'xltx',
+  'xltm',
+  'xlam',
+  'vcf',
+  'docm',
+  'dotx',
+  'dotm',
+  'ppsx',
+  'pptm',
+  'ppsm',
+  'potx',
+  'potm',
+])
 const FILE_ASSOCIATIONS = [
   {
     ext: 'docx',
@@ -528,6 +546,23 @@ const FILE_ASSOCIATIONS = [
     icon: 'pptx',
     mimeType: 'application/vnd.oasis.opendocument.presentation-template',
   },
+  // Macro-enabled / template / slideshow variants: open as a converted plain
+  // .docx/.pptx copy (VBA dropped, never executed). Open With only on Windows.
+  ...[
+    ['docm', 'Word Macro-Enabled Document', 'docx', 'application/vnd.ms-word.document.macroEnabled.12'],
+    ['dotx', 'Word Template', 'docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.template'],
+    ['dotm', 'Word Macro-Enabled Template', 'docx', 'application/vnd.ms-word.template.macroEnabled.12'],
+    ['rtf', 'Rich Text Document', 'docx', 'application/rtf'],
+    ['xltx', 'Excel Template', 'xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.template'],
+    ['xltm', 'Excel Macro-Enabled Template', 'xlsx', 'application/vnd.ms-excel.template.macroEnabled.12'],
+    ['vcf', 'vCard Contacts', 'xlsx', 'text/vcard'],
+    ['xlam', 'Excel Add-In', 'xlsx', 'application/vnd.ms-excel.addin.macroEnabled.12'],
+    ['ppsx', 'PowerPoint Slide Show', 'pptx', 'application/vnd.openxmlformats-officedocument.presentationml.slideshow'],
+    ['pptm', 'PowerPoint Macro-Enabled Presentation', 'pptx', 'application/vnd.ms-powerpoint.presentation.macroEnabled.12'],
+    ['ppsm', 'PowerPoint Macro-Enabled Slide Show', 'pptx', 'application/vnd.ms-powerpoint.slideshow.macroEnabled.12'],
+    ['potx', 'PowerPoint Template', 'pptx', 'application/vnd.openxmlformats-officedocument.presentationml.template'],
+    ['potm', 'PowerPoint Macro-Enabled Template', 'pptx', 'application/vnd.ms-powerpoint.template.macroEnabled.12'],
+  ].map(([ext, name, icon, mimeType]) => ({ ext, name, role: 'Editor', icon, mimeType })),
   {
     ext: 'pdf',
     name: 'PDF Document',

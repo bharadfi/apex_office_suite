@@ -42,14 +42,26 @@ describe('findOpenableDocPath', () => {
  */
 describe('OPENABLE_DOC_EXTENSIONS', () => {
   it('covers every extension the argv route and the guard accept', () => {
-    expect(OPENABLE_DOC_EXTENSIONS).toEqual(['docx', 'odt', 'ott', 'doc', 'dot', 'hwpx', 'hwp'])
+    expect(OPENABLE_DOC_EXTENSIONS).toEqual([
+      'docx',
+      'odt',
+      'ott',
+      'doc',
+      'dot',
+      'hwpx',
+      'hwp',
+      'docm',
+      'dotx',
+      'dotm',
+      'rtf',
+    ])
     for (const extension of OPENABLE_DOC_EXTENSIONS) {
       expect(isOpenableDocPath(`/tmp/Quarterly Plan.${extension.toUpperCase()}`)).toBe(true)
     }
   })
 
   it('rejects the neighbouring formats Docs does not open', () => {
-    for (const path of ['/tmp/notes.txt', '/tmp/legacy.rtf', '/tmp/deck.odp', '/tmp/book.ods']) {
+    for (const path of ['/tmp/notes.txt', '/tmp/legacy.pages', '/tmp/deck.odp', '/tmp/book.ods']) {
       expect(isOpenableDocPath(path)).toBe(false)
     }
   })
@@ -91,8 +103,8 @@ describe('the open dialog and the external-open guard', () => {
     )
     expect(prepare).toContain("const isHwp = importKind === 'hwp'")
     expect(prepare).toContain("isHwp ? 'hwpImportDetail' : 'odtImportDetail'")
-    expect(prepare).toContain('? await convertHwpToDocx(source)')
-    expect(prepare).toContain(".replace(/\\.(odt|ott|hwpx?|doc|dot)$/i, '.docx')")
+    expect(prepare).toContain('? convertHwpToDocx(source)')
+    expect(prepare).toContain(".replace(/\\.(odt|ott|hwpx?|doc|dot|docm|dotx|dotm|rtf)$/i, '.docx')")
     // loadDocx itself still opens nothing but .docx
     expect(source).toContain('!/\\.docx$/i.test(filePath)) return null')
   })

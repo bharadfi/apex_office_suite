@@ -287,6 +287,10 @@ describe('MCP surface over Streamable HTTP (/mcp)', () => {
         'tsv',
         'ods',
         'ots',
+        'xltx',
+        'xltm',
+        'xlam',
+        'vcf',
       ])
       expect(infoJson.families.find((f) => f.family === 'docx')!.editor.open).toEqual([
         'docx',
@@ -296,11 +300,20 @@ describe('MCP surface over Streamable HTTP (/mcp)', () => {
         'dot',
         'hwpx',
         'hwp',
+        'docm',
+        'dotx',
+        'dotm',
+        'rtf',
       ])
       expect(infoJson.families.find((f) => f.family === 'pptx')!.editor.open).toEqual([
         'pptx',
         'odp',
         'otp',
+        'ppsx',
+        'pptm',
+        'ppsm',
+        'potx',
+        'potm',
       ])
 
       // ── 3. read_docx error paths ──────────────────────────────────────────

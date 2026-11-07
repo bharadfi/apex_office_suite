@@ -9,3 +9,11 @@
 export { convertOdtToDocx, OdfConvertError, type OdtToDocxResult } from './odt-docx'
 export { convertOdpToPptx, type OdpToPptxResult } from './odp-pptx'
 export { MAX_ODF_PART_BYTES } from './odf'
+export {
+  normalizeOoxmlVariant,
+  WORD_VARIANT_EXTENSIONS,
+  POWERPOINT_VARIANT_EXTENSIONS,
+  EXCEL_VARIANT_EXTENSIONS,
+  type OoxmlFamily,
+} from './ooxml-variants'
+export { convertRtfToDocx, type RtfToDocxResult } from './rtf-docx'

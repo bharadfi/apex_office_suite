@@ -1,3 +1,5 @@
+import { csvToVcf, vcfToCsv } from './vcf-import'
+import { normalizeOoxmlVariant } from '../../../../packages/odf2ooxml/src/ooxml-variants'
 import { createHash, randomUUID } from 'node:crypto'
 import {
   createReadStream,
@@ -2068,7 +2070,19 @@ async function saveFileDialog(event: IpcMainInvokeEvent, options: SaveDialogOpti
 /** Workbook file extensions the open pipeline accepts. Single source for the
  *  picker filters, the merge-source check, and the crash re-open check.
  *  .ods opens through the same import conversion as .xls. */
-const WORKBOOK_EXTS = new Set(['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots'])
+const WORKBOOK_EXTS = new Set([
+  'xlsx',
+  'xlsm',
+  'xls',
+  'csv',
+  'tsv',
+  'ods',
+  'ots',
+  'xltx',
+  'xltm',
+  'xlam',
+  'vcf',
+])
 const WORKBOOK_FILTER_EXTENSIONS = [...WORKBOOK_EXTS]
 
 /** register a tab's webContents/client pair and wire up cleanup on teardown */
@@ -3742,7 +3756,10 @@ export function registerSheetsIpc(): void {
     if (pickedPath === undefined) {
       const selection = await saveFileDialog(event, {
         defaultPath: request.fileName,
-        filters: [{ name: tm('filterCsv'), extensions: ['csv'] }],
+        filters: [
+          { name: tm('filterCsv'), extensions: ['csv'] },
+          { name: 'vCard', extensions: ['vcf'] },
+        ],
         ...(request.activeSheetName
           ? {
               title: tm('csvActiveSheetOnlyNotice', { name: request.activeSheetName }),
@@ -3752,6 +3769,22 @@ export function registerSheetsIpc(): void {
       })
       if (selection.canceled || !selection.filePath) return { canceled: true }
       pickedPath = selection.filePath
+    }
+    if (pickedPath.toLowerCase().endsWith('.vcf')) {
+      // contacts export: header names pick the vCard fields, one card per row
+      const cards = csvToVcf(request.content)
+      if (cards === null) {
+        const options = {
+          type: 'warning' as const,
+          message: 'No contact columns found',
+          detail: 'Name the header cells Name, First Name, Last Name, Phone, Email, Company, Address or Notes.',
+        }
+        if (parent) await dialog.showMessageBox(parent, options)
+        else await dialog.showMessageBox(options)
+        return { canceled: true }
+      }
+      await atomicWriteFile(pickedPath, Buffer.from(cards, 'utf8'))
+      return { canceled: false, path: pickedPath }
     }
     const targetPath = pickedPath.toLowerCase().endsWith('.csv') ? pickedPath : `${pickedPath}.csv`
     // UTF-8 BOM so Excel decodes the reopened file correctly. Written beside
@@ -5283,7 +5316,15 @@ async function prepareWorkbookForOpen(
   if (odfImport && !options?.skipRecoveryPrompt && !(await promptOdsImport(parent, extension))) {
     return null
   }
-  if (!odfImport && extension !== 'csv' && extension !== 'tsv' && extension !== 'xls') {
+  const templateVariant = extension === 'xltx' || extension === 'xltm' || extension === 'xlam'
+  if (
+    !odfImport &&
+    !templateVariant &&
+    extension !== 'vcf' &&
+    extension !== 'csv' &&
+    extension !== 'tsv' &&
+    extension !== 'xls'
+  ) {
     // Unsaved work from a lost session: offer the recovery copy. Restoring
     // opens it with restoreTarget pointing back at the original, so a plain
     // Save writes straight back over the file the user opened — the restore
@@ -5324,6 +5365,21 @@ async function prepareWorkbookForOpen(
       )
       emptyCsv = converted.empty
       await writeFile(openPath, converted.buffer)
+    } else if (extension === 'vcf') {
+      // contacts: one row per vCard, opened as a converted .xlsx copy
+      const converted = await csvToXlsxBufferForOpen(
+        vcfToCsv(new TextDecoder('utf-8').decode(await readFile(path))),
+        'Contacts',
+        ',',
+      )
+      await writeFile(openPath, converted.buffer)
+    } else if (templateVariant) {
+      // template/add-in packages differ from .xlsx only in the main content type;
+      // VBA is dropped, never executed
+      await writeFile(
+        openPath,
+        await normalizeOoxmlVariant(new Uint8Array(await readFile(path)), 'excel'),
+      )
     } else {
       await client.convertWorkbook({ path, targetPath: openPath })
     }

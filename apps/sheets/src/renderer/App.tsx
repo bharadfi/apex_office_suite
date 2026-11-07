@@ -453,6 +453,7 @@ import { handleRemoveNotePicture } from './note-picture-actions'
 import { installFormulaNullResultFix } from './formula-null-result'
 import { installNumberFormatFix } from './numfmt-fix'
 import { installIfsEmptySetFix } from './ifs-empty-set'
+import { installExtraFunctions } from './extra-functions'
 import { installCriteriaCompareCacheFix } from './criteria-compare-cache'
 import { installRateFallback } from './rate-function'
 import {
@@ -2256,6 +2257,8 @@ export function App({
     const rateFallbackDisposable = installRateFallback(runtime)
     // MINIFS/MAXIFS over zero matching cells return 0, not blank.
     const ifsEmptySetDisposable = installIfsEmptySetFix(runtime)
+    // PERCENTOF, REGEXTEST, ISO.CEILING, INFO: absent from Univer builtins.
+    const extraFunctionsDisposable = installExtraFunctions(runtime)
     // Repeated *IF(S) '=' compares on text columns survive the inverted-
     // index cache when the criteria was number-coerced ("2026-06").
     const criteriaCompareCacheDisposable = installCriteriaCompareCacheFix()
@@ -3701,6 +3704,7 @@ export function App({
       cellFilenameDisposable.dispose()
       rateFallbackDisposable.dispose()
       ifsEmptySetDisposable.dispose()
+      extraFunctionsDisposable.dispose()
       criteriaCompareCacheDisposable.dispose()
       formulaLexerFixDisposable.dispose()
       sheetRenameFixDisposable.dispose()

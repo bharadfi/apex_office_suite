@@ -11,6 +11,9 @@ export const LAUNCHABLE_EXTS = [
   'ott',
   'hwpx',
   'hwp',
+  'docm',
+  'dotx',
+  'dotm',
   'xlsx',
   'xlsm',
   'xls',
@@ -21,6 +24,16 @@ export const LAUNCHABLE_EXTS = [
   'pptx',
   'odp',
   'otp',
+  'ppsx',
+  'pptm',
+  'ppsm',
+  'potx',
+  'potm',
+  'xltx',
+  'xltm',
+  'xlam',
+  'vcf',
+  'rtf',
   'pdf',
   'md',
   'markdown',
@@ -31,7 +44,7 @@ export const LAUNCHABLE_EXTS = [
 ] as const
 
 const SUPPORTED_LAUNCH_RE = new RegExp(`\\.(${LAUNCHABLE_EXTS.join('|')})$`, 'i')
-const UNSUPPORTED_LAUNCH_RE = /\.(rtf|ppt|pps|xlsb|pages|key|numbers)$/i
+const UNSUPPORTED_LAUNCH_RE = /\.(ppt|pps|xlsb|pages|key|numbers)$/i
 
 interface LaunchPayload {
   launchPaths?: unknown

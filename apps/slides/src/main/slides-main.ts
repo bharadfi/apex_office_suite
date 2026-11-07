@@ -72,7 +72,7 @@ import {
 } from '@genoffice/pptx-ops'
 import { matchesElementRef } from '@genoffice/pptx-engine/identity'
 import { buildPagePptx, parsePageSpec } from '@genoffice/pipelines/slides'
-import { convertOdpToPptx } from '../../../../packages/odf2ooxml/src'
+import { convertOdpToPptx, normalizeOoxmlVariant } from '../../../../packages/odf2ooxml/src'
 import { sniffImageMime } from './media-mime'
 import {
   newPasteCascade,
@@ -161,7 +161,11 @@ import { unplayableAudioCodec } from './mp4-audio-sniff'
 import { audioFrame, videoFrame, videoSize, type Point, type Size } from './video-size'
 import { AUDIO_EXTS, VIDEO_EXTS } from '../shared/media-kinds'
 import { baseName } from '../shared/base-name'
-import { OPENABLE_DECK_EXTENSIONS, deckExtension } from '../shared/deck-open-formats'
+import {
+  OPENABLE_DECK_EXTENSIONS,
+  deckExtension,
+  isPptxVariantExtension,
+} from '../shared/deck-open-formats'
 import type {
   AddChartOp,
   AddCommentOp,
@@ -804,9 +808,11 @@ async function maybeRecoverBytes(
  */
 async function preparePresentationForOpen(filePath: string): Promise<string | null> {
   const extension = deckExtension(filePath)
-  if (extension !== 'odp' && extension !== 'otp') return filePath
+  const isVariant = isPptxVariantExtension(extension)
+  if (extension !== 'odp' && extension !== 'otp' && !isVariant) return filePath
   const parent = dialogParent()
-  if (!readLegacyImportSkip(APP_SETTINGS_PATH(), 'odp')) {
+  // slideshow/template/macro variants differ only in content type: no lossy-import warning
+  if (!isVariant && !readLegacyImportSkip(APP_SETTINGS_PATH(), 'odp')) {
     const options = {
       type: 'warning' as const,
       message: tm('odpImportMsg', { ext: extension }),
@@ -833,17 +839,21 @@ async function preparePresentationForOpen(filePath: string): Promise<string | nu
     dialog,
     parent,
     {
-      defaultPath: join(dirname(filePath), basename(filePath).replace(/\.(odp|otp)$/i, '.pptx')),
+      defaultPath: join(dirname(filePath), basename(filePath).replace(/\.(odp|otp|ppsx|pptm|ppsm|potx|potm)$/i, '.pptx'),
+      ),
       filters: [{ name: 'PowerPoint', extensions: ['pptx'] }],
     },
     getDraftsDir(),
   )
   if (r.canceled || !r.filePath) return null
   try {
-    const result = await convertOdpToPptx(new Uint8Array(await readFile(filePath)))
+    const source = new Uint8Array(await readFile(filePath))
+    const pptx = isVariant
+      ? await normalizeOoxmlVariant(source, 'powerpoint')
+      : (await convertOdpToPptx(source)).pptx
     // atomic like the Docs and shell copies: a plain write leaves a truncated
     // .pptx where the user expects a deck if the process dies mid-write
-    await atomicWriteFile(r.filePath, Buffer.from(result.pptx))
+    await atomicWriteFile(r.filePath, Buffer.from(pptx))
   } catch {
     const errorOptions = {
       type: 'error' as const,

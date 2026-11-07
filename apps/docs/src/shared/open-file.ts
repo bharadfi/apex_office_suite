@@ -6,7 +6,19 @@
  * list instead of drifting apart.
  */
 
-export const OPENABLE_DOC_EXTENSIONS = ['docx', 'odt', 'ott', 'doc', 'dot', 'hwpx', 'hwp'] as const
+export const OPENABLE_DOC_EXTENSIONS = [
+  'docx',
+  'odt',
+  'ott',
+  'doc',
+  'dot',
+  'hwpx',
+  'hwp',
+  'docm',
+  'dotx',
+  'dotm',
+  'rtf',
+] as const
 
 const OPENABLE_DOC_PATTERN = new RegExp(`\\.(${OPENABLE_DOC_EXTENSIONS.join('|')})$`, 'i')
 
@@ -15,7 +27,7 @@ export function isOpenableDocPath(path: string): boolean {
 }
 
 /** Which import filter converts a non-native openable document. */
-export type DocImportKind = 'odf' | 'word97' | 'hwp'
+export type DocImportKind = 'odf' | 'word97' | 'hwp' | 'ooxml' | 'rtf'
 
 /**
  * The import filter an openable document needs: legacy Word 97-2003
@@ -30,6 +42,8 @@ export function docImportKindForPath(path: string): DocImportKind | null {
   if (extension === 'odt' || extension === 'ott') return 'odf'
   if (extension === 'doc' || extension === 'dot') return 'word97'
   if (extension === 'hwp' || extension === 'hwpx') return 'hwp'
+  if (extension === 'rtf') return 'rtf'
+  if (extension === 'docm' || extension === 'dotx' || extension === 'dotm') return 'ooxml'
   return null
 }
 

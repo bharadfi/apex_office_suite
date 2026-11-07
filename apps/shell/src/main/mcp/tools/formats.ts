@@ -58,7 +58,7 @@ export const FORMAT_FAMILIES: readonly FormatFamily[] = [
     // .odt/.ott, legacy Word .doc/.dot and .hwpx/.hwp open as converted copies and save as
     // .docx, so they are open-only formats: they must not appear in editorSave
     // (Apex Office never writes ODF, Word 97-2003 or HWP)
-    editorOpen: ['docx', 'odt', 'ott', 'doc', 'dot', 'hwpx', 'hwp'],
+    editorOpen: ['docx', 'odt', 'ott', 'doc', 'dot', 'hwpx', 'hwp', 'docm', 'dotx', 'dotm', 'rtf'],
     editorSave: ['docx'],
     editorExport: ['pdf'],
     mcp: { generate: 'docx', save: ['docx'], read: 'docx' },
@@ -69,7 +69,7 @@ export const FORMAT_FAMILIES: readonly FormatFamily[] = [
     // .tsv opens as a converted copy and saves as .xlsx, so it is an open-only
     // format: it must not appear in editorSave. .ods is open-only for the same
     // reason, and Apex Office never writes ODF.
-    editorOpen: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots'],
+    editorOpen: ['xlsx', 'xlsm', 'xls', 'csv', 'tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf'],
     // the interactive Save As also offers .xlsm/.csv; the explicit-path save the
     // MCP bridge uses writes .xlsx only (sheets-main.ts forces the extension),
     // so mcp.save stays xlsx until that pipeline is widened
@@ -82,7 +82,7 @@ export const FORMAT_FAMILIES: readonly FormatFamily[] = [
     label: 'presentation',
     // .odp/.otp open as converted copies and save as .pptx — open-only for
     // the same reason as .odt/.ods
-    editorOpen: ['pptx', 'odp', 'otp'],
+    editorOpen: ['pptx', 'odp', 'otp', 'ppsx', 'pptm', 'ppsm', 'potx', 'potm'],
     editorSave: ['pptx'],
     editorExport: ['pdf'],
     mcp: { generate: 'pptx', save: ['pptx'] },

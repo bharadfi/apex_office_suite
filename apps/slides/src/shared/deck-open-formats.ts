@@ -5,7 +5,22 @@
  * instead of drifting apart.
  */
 
-export const OPENABLE_DECK_EXTENSIONS = ['pptx', 'ppt', 'odp', 'otp'] as const
+export const OPENABLE_DECK_EXTENSIONS = [
+  'pptx',
+  'ppt',
+  'odp',
+  'otp',
+  'ppsx',
+  'pptm',
+  'ppsm',
+  'potx',
+  'potm',
+] as const
+
+/** Same package as .pptx apart from the main content type (and an optional VBA project). */
+export function isPptxVariantExtension(extension: string): boolean {
+  return ['ppsx', 'pptm', 'ppsm', 'potx', 'potm'].includes(extension)
+}
 
 const OPENABLE_DECK_PATTERN = new RegExp(`\\.(${OPENABLE_DECK_EXTENSIONS.join('|')})$`, 'i')
 

@@ -24,6 +24,10 @@ describe('format registry', () => {
       'dot',
       'hwpx',
       'hwp',
+      'docm',
+      'dotx',
+      'dotm',
+      'rtf',
     ])
     expect(formatFamily('xlsx').editorOpen).toEqual([
       'xlsx',
@@ -33,17 +37,30 @@ describe('format registry', () => {
       'tsv',
       'ods',
       'ots',
+      'xltx',
+      'xltm',
+      'xlam',
+      'vcf',
     ])
-    expect(formatFamily('pptx').editorOpen).toEqual(['pptx', 'odp', 'otp'])
+    expect(formatFamily('pptx').editorOpen).toEqual([
+      'pptx',
+      'odp',
+      'otp',
+      'ppsx',
+      'pptm',
+      'ppsm',
+      'potx',
+      'potm',
+    ])
   })
 
   it('keeps the converted-copy formats open-only: they convert on open and never save as the source', () => {
     // the xlsx family converts .tsv/.ods to .xlsx; docx/pptx take .odt/.odp and
     // legacy Word .doc/.dot the same way
     for (const [family, exts] of [
-      ['xlsx', ['tsv', 'ods', 'ots']],
-      ['docx', ['odt', 'ott', 'doc', 'dot', 'hwpx', 'hwp']],
-      ['pptx', ['odp', 'otp']],
+      ['xlsx', ['tsv', 'ods', 'ots', 'xltx', 'xltm', 'xlam', 'vcf']],
+      ['docx', ['odt', 'ott', 'doc', 'dot', 'hwpx', 'hwp', 'docm', 'dotx', 'dotm', 'rtf']],
+      ['pptx', ['odp', 'otp', 'ppsx', 'pptm', 'ppsm', 'potx', 'potm']],
     ] as const) {
       const entry = formatFamily(family)
       for (const ext of exts) {
@@ -123,7 +140,19 @@ describe('capabilityReport', () => {
     const report = capabilityReport()
     expect(report.map((r) => r.family)).toEqual(['docx', 'xlsx', 'pptx', 'md', 'html', 'pdf'])
     const docx = report.find((r) => r.family === 'docx')!
-    expect(docx.editor.open).toEqual(['docx', 'odt', 'ott', 'doc', 'dot', 'hwpx', 'hwp'])
+    expect(docx.editor.open).toEqual([
+      'docx',
+      'odt',
+      'ott',
+      'doc',
+      'dot',
+      'hwpx',
+      'hwp',
+      'docm',
+      'dotx',
+      'dotm',
+      'rtf',
+    ])
     expect(docx.editor.export).toEqual(['pdf'])
     expect(docx.mcp).toEqual({ generate: 'docx', save: ['docx'], read: 'docx' })
     // editor-only family carries no mcp key

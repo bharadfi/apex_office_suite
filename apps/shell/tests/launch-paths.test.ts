@@ -6,7 +6,7 @@ describe('collectLaunchPaths', () => {
   it('collects supported argv files in order and removes duplicates', () => {
     expect(
       collectLaunchPaths(
-        ['Apex Office.exe', 'first.docx', 'notes.rtf', 'second.xlsx', 'first.docx'],
+        ['Apex Office.exe', 'first.docx', 'notes.pages', 'second.xlsx', 'first.docx'],
         undefined,
         () => true,
       ),
@@ -87,18 +87,18 @@ describe('collectLaunchPaths', () => {
   it('falls back to the first existing unsupported argv file', () => {
     expect(
       collectLaunchPaths(
-        ['Apex Office.exe', 'missing.doc', 'legacy.rtf'],
+        ['Apex Office.exe', 'missing.doc', 'legacy.pages'],
         undefined,
-        (path) => path === 'legacy.rtf',
+        (path) => path === 'legacy.pages',
       ),
-    ).toEqual(['legacy.rtf'])
+    ).toEqual(['legacy.pages'])
     // .doc is no longer unsupported: an existing one is collected through the
     // docs route instead of the fallback
     expect(
       collectLaunchPaths(
-        ['Apex Office.exe', 'legacy.doc', 'unsupported.rtf'],
+        ['Apex Office.exe', 'legacy.doc', 'unsupported.pages'],
         undefined,
-        (path) => path === 'legacy.doc' || path === 'unsupported.rtf',
+        (path) => path === 'legacy.doc' || path === 'unsupported.pages',
       ),
     ).toEqual(['legacy.doc'])
   })
