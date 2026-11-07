@@ -454,6 +454,7 @@ import { installFormulaNullResultFix } from './formula-null-result'
 import { installNumberFormatFix } from './numfmt-fix'
 import { installIfsEmptySetFix } from './ifs-empty-set'
 import { installExtraFunctions } from './extra-functions'
+import { installExcelFixes } from './excel-fixes'
 import { installCriteriaCompareCacheFix } from './criteria-compare-cache'
 import { installRateFallback } from './rate-function'
 import {
@@ -2259,6 +2260,8 @@ export function App({
     const ifsEmptySetDisposable = installIfsEmptySetFix(runtime)
     // PERCENTOF, REGEXTEST, ISO.CEILING, INFO: absent from Univer builtins.
     const extraFunctionsDisposable = installExtraFunctions(runtime)
+    // EDATE month-end clamping and DOLLAR spacing, matching Excel.
+    const excelFixesDisposable = installExcelFixes(runtime)
     // Repeated *IF(S) '=' compares on text columns survive the inverted-
     // index cache when the criteria was number-coerced ("2026-06").
     const criteriaCompareCacheDisposable = installCriteriaCompareCacheFix()
@@ -3705,6 +3708,7 @@ export function App({
       rateFallbackDisposable.dispose()
       ifsEmptySetDisposable.dispose()
       extraFunctionsDisposable.dispose()
+      excelFixesDisposable.dispose()
       criteriaCompareCacheDisposable.dispose()
       formulaLexerFixDisposable.dispose()
       sheetRenameFixDisposable.dispose()
