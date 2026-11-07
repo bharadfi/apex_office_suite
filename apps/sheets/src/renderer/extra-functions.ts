@@ -14,6 +14,13 @@ import {
   type BaseValueObject,
 } from '@univerjs/engine-formula'
 
+import {
+  ForecastEts,
+  ForecastEtsConfint,
+  ForecastEtsSeasonality,
+  ForecastEtsStat,
+} from './forecast-ets'
+import { GroupBy, PivotBy } from './group-by'
 import type { UniverRuntime } from './univer-state'
 
 type CalcResult = ReturnType<BaseFunction['calculate']>
@@ -242,6 +249,12 @@ export function createExtraFunctionExecutors(): BaseFunction[] {
     new Jis('JIS'),
     new Phonetic('PHONETIC'),
     new Amordegrc('AMORDEGRC'),
+    new ForecastEts('FORECAST.ETS'),
+    new ForecastEtsConfint('FORECAST.ETS.CONFINT'),
+    new ForecastEtsSeasonality('FORECAST.ETS.SEASONALITY'),
+    new ForecastEtsStat('FORECAST.ETS.STAT'),
+    new GroupBy('GROUPBY'),
+    new PivotBy('PIVOTBY'),
   ]
 }
 
