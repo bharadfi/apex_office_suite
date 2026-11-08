@@ -3,6 +3,7 @@ package com.apexoffice.android.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -50,6 +51,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.apexoffice.android.AppKind
@@ -270,10 +273,7 @@ private fun RecentRow(file: RecentFile, onOpen: () -> Unit, onRemove: () -> Unit
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Box(
-            Modifier.size(38.dp).background(kind?.color() ?: Color.Gray, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) { Text((kind?.title ?: "?").first().toString(), color = Color.White, fontWeight = FontWeight.Bold) }
+        RecentThumb(file)
         Column(Modifier.weight(1f)) {
             Text(file.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1)
             Text(
@@ -328,5 +328,37 @@ private fun DocumentPlaceholder(file: RecentFile, onClose: () -> Unit) {
         )
         Spacer(Modifier.height(20.dp))
         OutlinedButton(onClick = onClose) { Text("Back") }
+    }
+}
+
+/** A small page-1 picture of the file, drawn on the device; the coloured letter shows until it is ready. */
+@Composable
+private fun RecentThumb(file: RecentFile) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val kind = file.kind
+    val picture by androidx.compose.runtime.produceState<android.graphics.Bitmap?>(null, file.uri) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching { com.apexoffice.android.Thumbnails.load(context, file) }.getOrNull()
+        }
+    }
+    Box(
+        Modifier
+            .size(width = 48.dp, height = 62.dp)
+            .background((kind?.color() ?: Color.Gray).copy(alpha = 0.18f), RoundedCornerShape(6.dp))
+            .border(1.dp, (kind?.color() ?: Color.Gray).copy(alpha = 0.5f), RoundedCornerShape(6.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        val bmp = picture
+        if (bmp != null) {
+            androidx.compose.foundation.Image(
+                bmp.asImageBitmap(),
+                contentDescription = null,
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                alignment = Alignment.TopCenter,
+                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(6.dp)),
+            )
+        } else {
+            Text((kind?.title ?: "?").first().toString(), color = kind?.color() ?: Color.Gray, fontWeight = FontWeight.Bold)
+        }
     }
 }

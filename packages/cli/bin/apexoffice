@@ -21,7 +21,10 @@ case "$here" in
   */Contents/Resources/cli) app="$here/../../MacOS/GenOffice" ;;
   */resources/cli)
     # Linux install, or the Windows install reached from Git Bash / MSYS
-    if [ -x "$here/../../GenOffice.exe" ]; then app="$here/../../GenOffice.exe"; else app="$here/../../genoffice"; fi
+    if [ -x "$here/../../apexoffice" ]; then app="$here/../../apexoffice"
+    elif [ -x "$here/../../Apex Office.exe" ]; then app="$here/../../Apex Office.exe"
+    elif [ -x "$here/../../GenOffice.exe" ]; then app="$here/../../GenOffice.exe"
+    else app="$here/../../genoffice"; fi
     ;;
   *) app="" ;;
 esac
