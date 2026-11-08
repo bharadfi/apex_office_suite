@@ -9,3 +9,4 @@ keystore.properties
 captures/
 native/*/target/
 app/src/main/jniLibs/
+release/
