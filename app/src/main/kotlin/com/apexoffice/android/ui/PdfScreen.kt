@@ -110,6 +110,7 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
     var showSignatures by remember { mutableStateOf(false) }
     var ocrText by remember { mutableStateOf<String?>(null) }
     var ocrBusy by remember { mutableStateOf(false) }
+    var askPage by remember { mutableStateOf(false) }
 
     LaunchedEffect(uri, password) {
         loading = true
@@ -181,6 +182,7 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
             ) { Text(if (ocrBusy) "Reading…" else "Read text (OCR)") }
             OutlinedButton(enabled = doc != null, onClick = { print(context, uri, name) }) { Text("Print") }
             OutlinedButton(enabled = doc != null, onClick = { scale = 1f }) { Text("Fit width") }
+            OutlinedButton(enabled = doc != null, onClick = { askPage = true }) { Text("Go to page") }
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
@@ -238,6 +240,32 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
                 }
             }
         }
+    }
+
+    if (askPage) {
+        var number by remember { mutableStateOf("") }
+        val total = doc?.pageCount ?: 1
+        AlertDialog(
+            onDismissRequest = { askPage = false },
+            title = { Text("Go to page") },
+            text = {
+                OutlinedTextField(
+                    value = number,
+                    onValueChange = { number = it.filter(Char::isDigit).take(6) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = { Text("1 to $total") },
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val n = (number.toIntOrNull() ?: 1).coerceIn(1, total)
+                    askPage = false
+                    scope.launch { listState.scrollToItem(n - 1) }
+                }) { Text("Go") }
+            },
+            dismissButton = { TextButton(onClick = { askPage = false }) { Text("Cancel") } },
+        )
     }
 
     if (askPassword) {

@@ -74,6 +74,7 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
     var dirty by remember { mutableStateOf(false) }
     var askSave by remember { mutableStateOf(false) }
     var askLeave by remember { mutableStateOf(false) }
+    var present by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<Pair<Slide, Shape>?>(null) }
     val stem = name.substringBeforeLast('.')
 
@@ -108,16 +109,16 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
             if (ok) dirty = false
         }
     }
-    BackHandler { if (dirty) askLeave = true else onClose() }
+    BackHandler { if (present) present = false else if (dirty) askLeave = true else onClose() }
 
-    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
-        TopBar(name, dirty, onBack = { if (dirty) askLeave = true else onClose() }, onSave = { askSave = true }, canSave = deck != null && dirty)
+    Column(Modifier.fillMaxSize().then(if (present) Modifier.background(Color.Black) else Modifier.statusBarsPadding().navigationBarsPadding())) {
+        if (!present) TopBar(name, dirty, onBack = { if (dirty) askLeave = true else onClose() }, onSave = { askSave = true }, canSave = deck != null && dirty)
         val d = deck
         when {
             error != null -> ErrorBox(error!!, onClose)
             d == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Opening…") }
             d.slides.isEmpty() -> ErrorBox("This presentation has no slides.", onClose)
-            else -> SlideViewer(d, version, onEdit = { slide, shape -> editing = slide to shape })
+            else -> SlideViewer(d, version, present, onPresent = { present = true }, onExit = { present = false }, onEdit = { slide, shape -> editing = slide to shape })
         }
     }
 
@@ -166,12 +167,12 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
 }
 
 @Composable
-private fun SlideViewer(deck: Deck, version: Int, onEdit: (Slide, Shape) -> Unit) {
+private fun SlideViewer(deck: Deck, version: Int, present: Boolean, onPresent: () -> Unit, onExit: () -> Unit, onEdit: (Slide, Shape) -> Unit) {
     val pager = rememberPagerState { deck.slides.size }
     val scope = rememberCoroutineScope()
     val thumbs = rememberLazyListState()
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        val wide = maxWidth >= 600.dp
+        val wide = maxWidth >= 600.dp && !present
         Row(Modifier.fillMaxSize()) {
             if (wide) {
                 LazyColumn(
@@ -198,11 +199,12 @@ private fun SlideViewer(deck: Deck, version: Int, onEdit: (Slide, Shape) -> Unit
                 }
             }
             Column(Modifier.weight(1f).fillMaxHeight()) {
-                HorizontalPager(state = pager, modifier = Modifier.weight(1f).fillMaxWidth().background(Color(0xFFE4E7E5)), contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp), pageSpacing = 12.dp) { page ->
+                HorizontalPager(state = pager, modifier = Modifier.weight(1f).fillMaxWidth().background(if (present) Color.Black else Color(0xFFE4E7E5)), contentPadding = androidx.compose.foundation.layout.PaddingValues(if (present) 0.dp else 12.dp), pageSpacing = 12.dp) { page ->
                     val slide = deck.slides[page]
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         SlideImage(deck, slide, 1600, version, Modifier.fillMaxWidth().border(1.dp, Color(0xFFB8C0BB)), onTap = { fx, fy ->
                             // topmost text shape under the tap
+                            if (present) { scope.launch { pager.animateScrollToPage((pager.currentPage + 1).coerceAtMost(deck.slides.size - 1)) }; return@SlideImage }
                             val ex = (fx * deck.width).toLong()
                             val ey = (fy * deck.height).toLong()
                             slide.shapes.lastOrNull { s -> s.hasText && ex in s.frame.x..(s.frame.x + s.frame.w) && ey in s.frame.y..(s.frame.y + s.frame.h) }
@@ -210,11 +212,16 @@ private fun SlideViewer(deck: Deck, version: Int, onEdit: (Slide, Shape) -> Unit
                         })
                     }
                 }
-                Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                if (present) {
+                    Row(Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text("${pager.currentPage + 1} / ${deck.slides.size}  •  tap the slide for the next one", color = Color(0xFFB8C0BB), style = MaterialTheme.typography.bodySmall)
+                        TextButton(onClick = onExit) { Text("Exit", color = Color.White) }
+                    }
+                } else Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                     OutlinedButton(onClick = { scope.launch { pager.animateScrollToPage((pager.currentPage - 1).coerceAtLeast(0)) } }, enabled = pager.currentPage > 0) { Text("←") }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Slide ${pager.currentPage + 1} of ${deck.slides.size}", style = MaterialTheme.typography.bodyMedium)
-                        Text("Tap text to edit it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                        androidx.compose.material3.TextButton(onClick = onPresent) { Text("Present") }
                     }
                     OutlinedButton(onClick = { scope.launch { pager.animateScrollToPage((pager.currentPage + 1).coerceAtMost(deck.slides.size - 1)) } }, enabled = pager.currentPage < deck.slides.size - 1) { Text("→") }
                 }

@@ -165,6 +165,7 @@ fun DocsScreen(uri: Uri, name: String, onClose: () -> Unit) {
     var askSave by remember { mutableStateOf(false) }
     var askLeave by remember { mutableStateOf(false) }
     var askColor by remember { mutableStateOf(false) }
+    var askFind by remember { mutableStateOf(false) }
     var tick by remember { mutableIntStateOf(0) }
     val ext = Formats.extensionOf(name)
     val stem = name.substringBeforeLast('.')
@@ -227,7 +228,7 @@ fun DocsScreen(uri: Uri, name: String, onClose: () -> Unit) {
             )
             FilledTonalButton(onClick = { askSave = true }, enabled = loaded) { Text("Save") }
         }
-        Toolbar(editor, tick, onColor = { askColor = true }, enabled = loaded)
+        Toolbar(editor, tick, onColor = { askColor = true }, onFind = { askFind = true }, enabled = loaded)
         HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
         Box(Modifier.fillMaxSize()) {
             if (error != null) {
@@ -293,6 +294,47 @@ fun DocsScreen(uri: Uri, name: String, onClose: () -> Unit) {
         )
     }
 
+    if (askFind) {
+        var query by remember { mutableStateOf("") }
+        var replacement by remember { mutableStateOf("") }
+        var message by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { askFind = false },
+            title = { Text("Find and replace") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.material3.OutlinedTextField(value = query, onValueChange = { query = it; message = "" }, singleLine = true, label = { Text("Find") })
+                    androidx.compose.material3.OutlinedTextField(value = replacement, onValueChange = { replacement = it }, singleLine = true, label = { Text("Replace with") })
+                    if (message.isNotEmpty()) Text(message, color = MaterialTheme.colorScheme.secondary)
+                }
+            },
+            confirmButton = {
+                Row {
+                    TextButton(enabled = query.isNotEmpty(), onClick = {
+                        val ed = editor ?: return@TextButton
+                        val all = ed.text.toString()
+                        var at = all.indexOf(query, ed.selectionEnd.coerceAtLeast(0), ignoreCase = true)
+                        if (at < 0) at = all.indexOf(query, 0, ignoreCase = true)
+                        if (at >= 0) { ed.requestFocus(); ed.setSelection(at, at + query.length); message = "" } else message = "Not found"
+                    }) { Text("Find next") }
+                    TextButton(enabled = query.isNotEmpty(), onClick = {
+                        val ed = editor ?: return@TextButton
+                        val all = ed.text.toString()
+                        val hits = ArrayList<Int>()
+                        var at = all.indexOf(query, 0, ignoreCase = true)
+                        while (at >= 0) { hits.add(at); at = all.indexOf(query, at + query.length, ignoreCase = true) }
+                        if (hits.isNotEmpty()) {
+                            ed.checkpoint()
+                            for (h in hits.asReversed()) ed.text.replace(h, h + query.length, replacement)
+                        }
+                        message = if (hits.isEmpty()) "Not found" else "Replaced ${hits.size}"
+                    }) { Text("Replace all") }
+                }
+            },
+            dismissButton = { TextButton(onClick = { askFind = false }) { Text("Close") } },
+        )
+    }
+
     if (askColor) {
         val palette = listOf(0xFF000000, 0xFFC53030, 0xFFD9622B, 0xFFB7791F, 0xFF1E8E5A, 0xFF2B6CB0, 0xFF5A67D8, 0xFF8E44AD, 0xFF718096)
         AlertDialog(
@@ -315,7 +357,7 @@ fun DocsScreen(uri: Uri, name: String, onClose: () -> Unit) {
 }
 
 @Composable
-private fun Toolbar(editor: Editor?, tick: Int, onColor: () -> Unit, enabled: Boolean) {
+private fun Toolbar(editor: Editor?, tick: Int, onColor: () -> Unit, onFind: () -> Unit, enabled: Boolean) {
     @Suppress("UNUSED_EXPRESSION") tick
     val ed = editor
     val text = ed?.text
@@ -348,6 +390,7 @@ private fun Toolbar(editor: Editor?, tick: Int, onColor: () -> Unit, enabled: Bo
     ) {
         ToolButton("↶", false, enabled) { ed?.undoEdit() }
         ToolButton("↷", false, enabled) { ed?.redoEdit() }
+        ToolButton("Find", false, enabled) { onFind() }
         ToolButton("B", active(CharStyle.BOLD), enabled, FontWeight.Bold) { format(CharStyle.BOLD) }
         ToolButton("I", active(CharStyle.ITALIC), enabled, italic = true) { format(CharStyle.ITALIC) }
         ToolButton("U", active(CharStyle.UNDERLINE), enabled, underline = true) { format(CharStyle.UNDERLINE) }

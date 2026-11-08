@@ -84,6 +84,12 @@ class SheetsSession private constructor(
         return ok
     }
 
+    fun edit(sheet: Int, op: Int, index: Int, count: Int = 1): Boolean {
+        val ok = NativeSheets.nativeEdit(handle, sheet, op, index, count)
+        if (ok) dimension.remove(sheet)
+        return ok
+    }
+
     fun lastError(): String = NativeSheets.nativeLastError()
 
     fun toXlsx(): ByteArray? = NativeSheets.nativeSave(handle)

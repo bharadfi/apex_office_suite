@@ -324,3 +324,37 @@ pub extern "system" fn Java_com_apexoffice_android_sheets_NativeSheets_nativeSav
         None => std::ptr::null_mut(),
     }
 }
+
+/// Structural edits: 0 insert rows, 1 delete rows, 2 insert columns, 3 delete columns.
+#[no_mangle]
+pub extern "system" fn Java_com_apexoffice_android_sheets_NativeSheets_nativeEdit(
+    _env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+    sheet: jint,
+    op: jint,
+    index: jint,
+    count: jint,
+) -> jboolean {
+    let result = with_model(handle, |m| {
+        let r = match op {
+            0 => m.insert_rows(sheet as u32, index, count),
+            1 => m.delete_rows(sheet as u32, index, count),
+            2 => m.insert_columns(sheet as u32, index, count),
+            3 => m.delete_columns(sheet as u32, index, count),
+            _ => Err("unknown edit".to_string()),
+        };
+        if r.is_ok() {
+            m.evaluate();
+        }
+        r
+    });
+    match result {
+        Some(Ok(())) => JNI_TRUE,
+        Some(Err(e)) => {
+            set_error(e);
+            JNI_FALSE
+        }
+        None => JNI_FALSE,
+    }
+}

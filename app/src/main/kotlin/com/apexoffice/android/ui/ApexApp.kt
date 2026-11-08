@@ -84,6 +84,7 @@ fun ApexApp(
     recents: List<RecentFile>,
     openDocument: RecentFile?,
     onPickFile: () -> Unit,
+    onNew: (AppKind) -> Unit,
     onOpenRecent: (RecentFile) -> Unit,
     onRemoveRecent: (RecentFile) -> Unit,
     onCloseDocument: () -> Unit,
@@ -116,7 +117,7 @@ fun ApexApp(
                 Destination.Home ->
                     if (widthClass == WindowWidthSizeClass.Expanded) {
                         Row(Modifier.fillMaxSize()) {
-                            HomePane(Modifier.weight(1.3f), columns = 3, onPickFile = onPickFile)
+                            HomePane(Modifier.weight(1.3f), columns = 3, onPickFile = onPickFile, onNew = onNew)
                             HorizontalDividerVertical()
                             RecentPane(Modifier.weight(1f), recents, onOpenRecent, onRemoveRecent)
                         }
@@ -125,6 +126,7 @@ fun ApexApp(
                             Modifier.fillMaxSize(),
                             columns = if (widthClass == WindowWidthSizeClass.Medium) 3 else 2,
                             onPickFile = onPickFile,
+                            onNew = onNew,
                         )
                     }
                 Destination.Recent -> RecentPane(Modifier.fillMaxSize(), recents, onOpenRecent, onRemoveRecent)
@@ -182,7 +184,17 @@ private fun Header(title: String, subtitle: String? = null) {
 }
 
 @Composable
-private fun HomePane(modifier: Modifier, columns: Int, onPickFile: () -> Unit) {
+private fun HomePane(modifier: Modifier, columns: Int, onPickFile: () -> Unit, onNew: (AppKind) -> Unit) {
+    var choice by remember { mutableStateOf<AppKind?>(null) }
+    choice?.let { kind ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { choice = null },
+            title = { Text(kind.title) },
+            text = { Text("Start a new ${kind.title.lowercase()} file or open an existing one.") },
+            confirmButton = { TextButton(onClick = { choice = null; onNew(kind) }) { Text("New") } },
+            dismissButton = { TextButton(onClick = { choice = null; onPickFile() }) { Text("Open a file") } },
+        )
+    }
     Column(modifier.statusBarsPaddingIfCompact()) {
         Header("Apex Office", "Docs, sheets, slides and PDF, on this device")
         LazyVerticalGrid(
@@ -192,7 +204,9 @@ private fun HomePane(modifier: Modifier, columns: Int, onPickFile: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.weight(1f),
         ) {
-            items(AppKind.entries) { kind -> KindCard(kind, onPickFile) }
+            items(AppKind.entries) { kind ->
+                KindCard(kind) { if (com.apexoffice.android.NewDocs.specs.containsKey(kind)) choice = kind else onPickFile() }
+            }
         }
         Button(
             onClick = onPickFile,
@@ -283,7 +297,7 @@ private fun AboutPane(modifier: Modifier) {
         ) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Apex Office for Android", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                Text("Version 0.5.0 (stage 5: Slides, Markdown, HTML)", style = MaterialTheme.typography.bodyMedium)
+                Text("Version 0.6.0 (polish)", style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(8.dp))
                 Text("App developed by Mr. Falguni Bharadwaj", style = MaterialTheme.typography.bodyLarge)
                 Spacer(Modifier.height(8.dp))

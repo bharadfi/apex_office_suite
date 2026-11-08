@@ -14,6 +14,8 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.draggable2D
 import androidx.compose.foundation.gestures.rememberDraggable2DState
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -199,7 +201,7 @@ private fun SheetBody(session: SheetsSession, onEdited: () -> Unit) {
     var version by remember(session) { mutableIntStateOf(0) }
     val focus = androidx.compose.ui.platform.LocalFocusManager.current
 
-    LaunchedEffect(session, sheet, selRow, selCol) {
+    LaunchedEffect(session, sheet, selRow, selCol, version) {
         if (!editing) formula = withContext(Dispatchers.Default) { session.input(sheet, selRow, selCol) }
     }
 
@@ -239,6 +241,22 @@ private fun SheetBody(session: SheetsSession, onEdited: () -> Unit) {
                     .padding(horizontal = 10.dp, vertical = 9.dp),
             )
             TextButton(onClick = { commit() }, enabled = editing) { Text("✓") }
+        }
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            fun act(op: Int, index: Int) {
+                commit()
+                if (session.edit(sheet, op, index)) { version++; onEdited() }
+            }
+            androidx.compose.material3.OutlinedButton(onClick = { act(0, selRow) }) { Text("+ Row") }
+            androidx.compose.material3.OutlinedButton(onClick = { act(1, selRow) }) { Text("− Row") }
+            androidx.compose.material3.OutlinedButton(onClick = { act(2, selCol) }) { Text("+ Col") }
+            androidx.compose.material3.OutlinedButton(onClick = { act(3, selCol) }) { Text("− Col") }
+            androidx.compose.material3.OutlinedButton(onClick = {
+                if (session.setInput(sheet, selRow, selCol, "")) { version++; onEdited(); formula = "" }
+            }) { Text("Clear cell") }
         }
         Grid(
             session = session,
@@ -297,11 +315,11 @@ private fun Grid(
     val onSurface = MaterialTheme.colorScheme.onSurface
     val surface = MaterialTheme.colorScheme.surface
 
-    val used = remember(session, sheet, cache.size.coerceAtMost(0)) { session.used(sheet) }
+    val used = remember(session, sheet, version) { session.used(sheet) }
     val rowCount = maxOf(used.first + 50, 120)
     val colCount = maxOf(used.second + 20, 30)
     val rowHeightPx = with(density) { session.rowHeightDp(sheet, 1).dp.toPx() }
-    val colWidthsPx = remember(session, sheet, colCount) {
+    val colWidthsPx = remember(session, sheet, colCount, version) {
         FloatArray(colCount) { with(density) { session.columnWidthDp(sheet, it + 1).dp.toPx() } }
     }
     val colStartPx = remember(colWidthsPx) {

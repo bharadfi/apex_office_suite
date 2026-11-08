@@ -33,12 +33,18 @@ class MainActivity : ComponentActivity() {
             val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
                 if (uri != null) openUri(uri)
             }
+            val creators = NewDocs.specs.mapValues { (kind, spec) ->
+                rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(spec.mime)) { uri ->
+                    if (uri != null) createBlank(kind, uri)
+                }
+            }
             ApexTheme {
                 ApexApp(
                     widthClass = calculateWindowSizeClass(this).widthSizeClass,
                     recents = recents,
                     openDocument = open,
                     onPickFile = { picker.launch(Formats.pickerMimeTypes) },
+                    onNew = { kind -> creators[kind]?.launch(NewDocs.specs.getValue(kind).fileName) },
                     onOpenRecent = { open = it },
                     onRemoveRecent = { store.remove(it.uri); recents = store.all() },
                     onCloseDocument = { open = null },
@@ -54,6 +60,14 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == Intent.ACTION_VIEW) intent.data?.let(::openUri)
+    }
+
+    private fun createBlank(kind: AppKind, uri: Uri) {
+        val bytes = NewDocs.bytes(kind)
+        val ok = bytes != null && runCatching {
+            contentResolver.openOutputStream(uri, "wt")?.use { it.write(bytes) } != null
+        }.getOrDefault(false)
+        if (ok) openUri(uri) else android.widget.Toast.makeText(this, "Could not create the file", android.widget.Toast.LENGTH_SHORT).show()
     }
 
     private fun openUri(uri: Uri) {

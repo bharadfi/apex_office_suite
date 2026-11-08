@@ -19,4 +19,6 @@ object NativeSheets {
     external fun nativeColumnWidth(handle: Long, sheet: Int, col: Int): Double
     external fun nativeRowHeight(handle: Long, sheet: Int, row: Int): Double
     external fun nativeSave(handle: Long): ByteArray?
+    /** op: 0 insert rows, 1 delete rows, 2 insert columns, 3 delete columns */
+    external fun nativeEdit(handle: Long, sheet: Int, op: Int, index: Int, count: Int): Boolean
 }

@@ -60,6 +60,7 @@ class Deck private constructor(
     private val bodySizePt: Float,
 ) {
     val modified = linkedSetOf<String>()
+    var bodyBullets = false
     private val bitmaps = HashMap<String, Bitmap?>()
 
     fun picture(path: String): Bitmap? = bitmaps.getOrPut(path) {
@@ -218,7 +219,9 @@ class Deck private constructor(
         for (p in children(body, "a:p")) {
             val start = sb.length
             val pPr = children(p, "a:pPr").firstOrNull()
-            if (pPr != null && childrenAny(pPr).any { it.tagName == "a:buChar" || it.tagName == "a:buAutoNum" }) sb.append("• ")
+            val inheritsBullet = bodyBullets && shape.placeholder != null && !isTitle && shape.placeholder != "subTitle" &&
+                (pPr == null || childrenAny(pPr).none { it.tagName == "a:buNone" })
+            if (inheritsBullet || (pPr != null && childrenAny(pPr).any { it.tagName == "a:buChar" || it.tagName == "a:buAutoNum" })) sb.append("• ")
             val rs = runs(p)
             for (run in rs) {
                 val s = sb.length
@@ -338,7 +341,11 @@ class Deck private constructor(
                 val bg = backgroundOf(sd, theme) ?: layoutDoc?.let { backgroundOf(it, theme) } ?: layoutMasterPath?.let { doc(it) }?.let { backgroundOf(it, theme) }
                 slides.add(Slide(path, shapes, bg))
             }
-            return Deck(width, height, slides, bytes, docs, parts.filterKeys { it.startsWith("ppt/media/") }, theme, titlePt, bodyPt)
+            val built = Deck(width, height, slides, bytes, docs, parts.filterKeys { it.startsWith("ppt/media/") }, theme, titlePt, bodyPt)
+            built.bodyBullets = master?.documentElement?.let { m ->
+                first(m, "p:txStyles", "p:bodyStyle", "a:lvl1pPr")?.let { l -> childrenAny(l).any { it.tagName == "a:buChar" || it.tagName == "a:buAutoNum" } }
+            } == true
+            return built
         }
 
         private fun normalize(path: String): String {
