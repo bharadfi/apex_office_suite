@@ -89,11 +89,17 @@ fun ApexApp(
     onCloseDocument: () -> Unit,
 ) {
     var destination by remember { mutableStateOf(Destination.Home) }
-    BackHandler(enabled = openDocument != null && openDocument.kind != AppKind.SHEETS && openDocument.kind != AppKind.PDF && openDocument.kind != AppKind.DOCS) { onCloseDocument() }
+    BackHandler(enabled = openDocument != null && openDocument.kind == null) { onCloseDocument() }
 
     if (openDocument != null) {
         if (openDocument.kind == AppKind.SHEETS) {
             SheetsScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
+        } else if (openDocument.kind == AppKind.SLIDES) {
+            SlidesScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
+        } else if (openDocument.kind == AppKind.MARKDOWN) {
+            MarkdownScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
+        } else if (openDocument.kind == AppKind.HTML) {
+            HtmlScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
         } else if (openDocument.kind == AppKind.DOCS) {
             DocsScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
         } else if (openDocument.kind == AppKind.PDF) {
@@ -277,7 +283,7 @@ private fun AboutPane(modifier: Modifier) {
         ) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Apex Office for Android", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                Text("Version 0.4.0 (stage 4: Docs)", style = MaterialTheme.typography.bodyMedium)
+                Text("Version 0.5.0 (stage 5: Slides, Markdown, HTML)", style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(8.dp))
                 Text("App developed by Mr. Falguni Bharadwaj", style = MaterialTheme.typography.bodyLarge)
                 Spacer(Modifier.height(8.dp))
