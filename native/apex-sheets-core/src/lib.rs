@@ -22,13 +22,15 @@ const LANGUAGE: &str = "en";
 struct Table {
     next: i64,
     models: HashMap<i64, Model<'static>>,
+    /// per workbook: (undo snapshots, redo snapshots)
+    history: HashMap<i64, (Vec<Vec<u8>>, Vec<Vec<u8>>)>,
     last_error: String,
 }
 
 fn table() -> &'static Mutex<Table> {
     static TABLE: OnceLock<Mutex<Table>> = OnceLock::new();
     TABLE.get_or_init(|| {
-        Mutex::new(Table { next: 1, models: HashMap::new(), last_error: String::new() })
+        Mutex::new(Table { next: 1, models: HashMap::new(), history: HashMap::new(), last_error: String::new() })
     })
 }
 
@@ -139,7 +141,9 @@ pub extern "system" fn Java_com_apexoffice_android_sheets_NativeSheets_nativeClo
     _class: JClass,
     handle: jlong,
 ) {
-    table().lock().unwrap().models.remove(&handle);
+    let mut t = table().lock().unwrap();
+    t.models.remove(&handle);
+    t.history.remove(&handle);
 }
 
 #[no_mangle]
@@ -350,6 +354,133 @@ pub extern "system" fn Java_com_apexoffice_android_sheets_NativeSheets_nativeEdi
         r
     });
     match result {
+        Some(Ok(())) => JNI_TRUE,
+        Some(Err(e)) => {
+            set_error(e);
+            JNI_FALSE
+        }
+        None => JNI_FALSE,
+    }
+}
+
+const HISTORY_LIMIT: usize = 30;
+
+/// Remember the workbook as it is now, so the next edit can be undone.
+#[no_mangle]
+pub extern "system" fn Java_com_apexoffice_android_sheets_NativeSheets_nativeSnapshot(
+    _env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+) {
+    let mut t = table().lock().unwrap();
+    let bytes = match t.models.get(&handle) {
+        Some(m) => m.to_bytes(),
+        None => return,
+    };
+    let (undo, redo) = t.history.entry(handle).or_default();
+    undo.push(bytes);
+    if undo.len() > HISTORY_LIMIT {
+        undo.remove(0);
+    }
+    redo.clear();
+}
+
+fn step_history(handle: i64, undo: bool) -> bool {
+    let mut t = table().lock().unwrap();
+    let current = match t.models.get(&handle) {
+        Some(m) => m.to_bytes(),
+        None => return false,
+    };
+    let target = {
+        let (u, r) = t.history.entry(handle).or_default();
+        let (from, to) = if undo { (u, r) } else { (r, u) };
+        match from.pop() {
+            Some(bytes) => {
+                to.push(current);
+                bytes
+            }
+            None => return false,
+        }
+    };
+    match Model::from_bytes(&target, LANGUAGE) {
+        Ok(mut m) => {
+            m.evaluate();
+            t.models.insert(handle, m);
+            true
+        }
+        Err(e) => {
+            t.last_error = e;
+            false
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_apexoffice_android_sheets_NativeSheets_nativeUndo(_env: JNIEnv, _class: JClass, handle: jlong) -> jboolean {
+    if step_history(handle, true) { JNI_TRUE } else { JNI_FALSE }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_apexoffice_android_sheets_NativeSheets_nativeRedo(_env: JNIEnv, _class: JClass, handle: jlong) -> jboolean {
+    if step_history(handle, false) { JNI_TRUE } else { JNI_FALSE }
+}
+
+/// prop: 0 toggle bold, 1 toggle italic, 2 fill colour (0xRRGGBB, -1 none),
+/// 3 font colour (0xRRGGBB, -1 default), 4 alignment (0 general, 1 left, 2 centre, 3 right)
+#[no_mangle]
+pub extern "system" fn Java_com_apexoffice_android_sheets_NativeSheets_nativeStyle(
+    _env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+    sheet: jint,
+    row: jint,
+    col: jint,
+    prop: jint,
+    value: jint,
+) -> jboolean {
+    use ironcalc::base::types::{Alignment, Color as C, HorizontalAlignment as H};
+    let result = with_model(handle, |m| {
+        let mut style = m.get_style_for_cell(sheet as u32, row, col)?;
+        let color = |v: i32| if v < 0 { C::None } else { C::Rgb(format!("#{:06X}", v & 0xFFFFFF)) };
+        match prop {
+            0 => style.font.b = !style.font.b,
+            1 => style.font.i = !style.font.i,
+            2 => style.fill.color = color(value),
+            3 => style.font.color = color(value),
+            4 => {
+                let h = match value { 1 => H::Left, 2 => H::Center, 3 => H::Right, _ => H::General };
+                let mut a = style.alignment.clone().unwrap_or_else(|| Alignment {
+                    horizontal: H::General,
+                    vertical: Default::default(),
+                    wrap_text: false,
+                });
+                a.horizontal = h;
+                style.alignment = Some(a);
+            }
+            _ => return Err("unknown style property".to_string()),
+        }
+        m.set_cell_style(sheet as u32, row, col, &style)
+    });
+    match result {
+        Some(Ok(())) => JNI_TRUE,
+        Some(Err(e)) => {
+            set_error(e);
+            JNI_FALSE
+        }
+        None => JNI_FALSE,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_apexoffice_android_sheets_NativeSheets_nativeSetColumnWidth(
+    _env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+    sheet: jint,
+    col: jint,
+    width: jdouble,
+) -> jboolean {
+    match with_model(handle, |m| m.set_column_width(sheet as u32, col, width)) {
         Some(Ok(())) => JNI_TRUE,
         Some(Err(e)) => {
             set_error(e);

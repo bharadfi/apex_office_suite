@@ -79,15 +79,35 @@ class SheetsSession private constructor(
     fun input(sheet: Int, row: Int, col: Int): String = NativeSheets.nativeInput(handle, sheet, row, col)
 
     fun setInput(sheet: Int, row: Int, col: Int, text: String): Boolean {
+        snapshot()
         val ok = NativeSheets.nativeSetInput(handle, sheet, row, col, text)
         if (ok) dimension.remove(sheet)
         return ok
     }
 
     fun edit(sheet: Int, op: Int, index: Int, count: Int = 1): Boolean {
+        snapshot()
         val ok = NativeSheets.nativeEdit(handle, sheet, op, index, count)
         if (ok) dimension.remove(sheet)
         return ok
+    }
+
+    /** Call before a change so it can be undone. */
+    fun snapshot() = NativeSheets.nativeSnapshot(handle)
+
+    fun undo(): Boolean = NativeSheets.nativeUndo(handle).also { if (it) dimension.clear() }
+    fun redo(): Boolean = NativeSheets.nativeRedo(handle).also { if (it) dimension.clear() }
+
+    fun style(sheet: Int, row: Int, col: Int, prop: Int, value: Int = 0): Boolean {
+        snapshot()
+        return NativeSheets.nativeStyle(handle, sheet, row, col, prop, value)
+    }
+
+    /** Current width in the engine's units, then set to [width]. */
+    fun resizeColumn(sheet: Int, col: Int, factor: Double): Boolean {
+        val current = NativeSheets.nativeColumnWidth(handle, sheet, col)
+        snapshot()
+        return NativeSheets.nativeSetColumnWidth(handle, sheet, col, (current * factor).coerceIn(30.0, 600.0))
     }
 
     fun lastError(): String = NativeSheets.nativeLastError()

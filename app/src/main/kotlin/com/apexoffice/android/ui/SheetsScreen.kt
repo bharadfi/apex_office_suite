@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -198,6 +199,7 @@ private fun SheetBody(session: SheetsSession, onEdited: () -> Unit) {
     val cache: SnapshotStateMap<Long, Cell> = remember(session, sheet) { mutableStateMapOf() }
     var formula by remember { mutableStateOf("") }
     var editing by remember { mutableStateOf(false) }
+    var colorTarget by remember { mutableIntStateOf(0) }
     var version by remember(session) { mutableIntStateOf(0) }
     val focus = androidx.compose.ui.platform.LocalFocusManager.current
 
@@ -257,6 +259,45 @@ private fun SheetBody(session: SheetsSession, onEdited: () -> Unit) {
             androidx.compose.material3.OutlinedButton(onClick = {
                 if (session.setInput(sheet, selRow, selCol, "")) { version++; onEdited(); formula = "" }
             }) { Text("Clear cell") }
+        }
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            fun changed() { version++; onEdited() }
+            androidx.compose.material3.OutlinedButton(onClick = { commit(); if (session.undo()) changed() }) { Text("Undo") }
+            androidx.compose.material3.OutlinedButton(onClick = { commit(); if (session.redo()) changed() }) { Text("Redo") }
+            androidx.compose.material3.OutlinedButton(onClick = { if (session.style(sheet, selRow, selCol, 0)) changed() }) { Text("B", fontWeight = FontWeight.Bold) }
+            androidx.compose.material3.OutlinedButton(onClick = { if (session.style(sheet, selRow, selCol, 1)) changed() }) { Text("I", fontStyle = androidx.compose.ui.text.font.FontStyle.Italic) }
+            androidx.compose.material3.OutlinedButton(onClick = { colorTarget = 2 }) { Text("Fill") }
+            androidx.compose.material3.OutlinedButton(onClick = { colorTarget = 3 }) { Text("Text colour") }
+            androidx.compose.material3.OutlinedButton(onClick = { if (session.style(sheet, selRow, selCol, 4, 1)) changed() }) { Text("Left") }
+            androidx.compose.material3.OutlinedButton(onClick = { if (session.style(sheet, selRow, selCol, 4, 2)) changed() }) { Text("Centre") }
+            androidx.compose.material3.OutlinedButton(onClick = { if (session.style(sheet, selRow, selCol, 4, 3)) changed() }) { Text("Right") }
+            androidx.compose.material3.OutlinedButton(onClick = { if (session.resizeColumn(sheet, selCol, 1.25)) changed() }) { Text("Wider") }
+            androidx.compose.material3.OutlinedButton(onClick = { if (session.resizeColumn(sheet, selCol, 0.8)) changed() }) { Text("Narrower") }
+        }
+        if (colorTarget != 0) {
+            val palette = listOf(-1, 0xFFE699, 0xC6EFCE, 0xBDD7EE, 0xF8CBAD, 0xD9D2E9, 0xFFFF00, 0xC53030, 0x1E8E5A, 0x2B6CB0, 0x000000)
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { colorTarget = 0 },
+                title = { Text(if (colorTarget == 2) "Fill colour" else "Text colour") },
+                text = {
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        for (c in palette) Box(
+                            Modifier.size(40.dp)
+                                .background(if (c < 0) Color.White else Color(0xFF000000.toInt() or c), RoundedCornerShape(20.dp))
+                                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
+                                .clickable {
+                                    if (session.style(sheet, selRow, selCol, colorTarget, c)) { version++; onEdited() }
+                                    colorTarget = 0
+                                },
+                            contentAlignment = Alignment.Center,
+                        ) { if (c < 0) Text("✕") }
+                    }
+                },
+                confirmButton = { TextButton(onClick = { colorTarget = 0 }) { Text("Close") } },
+            )
         }
         Grid(
             session = session,

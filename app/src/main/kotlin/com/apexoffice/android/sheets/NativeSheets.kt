@@ -19,6 +19,12 @@ object NativeSheets {
     external fun nativeColumnWidth(handle: Long, sheet: Int, col: Int): Double
     external fun nativeRowHeight(handle: Long, sheet: Int, row: Int): Double
     external fun nativeSave(handle: Long): ByteArray?
+    external fun nativeSnapshot(handle: Long)
+    external fun nativeUndo(handle: Long): Boolean
+    external fun nativeRedo(handle: Long): Boolean
+    /** prop: 0 bold, 1 italic (toggle), 2 fill, 3 font colour (0xRRGGBB or -1), 4 align (0 general, 1 left, 2 centre, 3 right) */
+    external fun nativeStyle(handle: Long, sheet: Int, row: Int, col: Int, prop: Int, value: Int): Boolean
+    external fun nativeSetColumnWidth(handle: Long, sheet: Int, col: Int, width: Double): Boolean
     /** op: 0 insert rows, 1 delete rows, 2 insert columns, 3 delete columns */
     external fun nativeEdit(handle: Long, sheet: Int, op: Int, index: Int, count: Int): Boolean
 }
