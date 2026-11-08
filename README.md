@@ -2,17 +2,20 @@
   <img src="docs/assets/readme/apex-office-logo.jpg" alt="Apex Office: the all-in-one productivity suite" width="520">
 </p>
 
-<p align="center"><b>Documents, spreadsheets, presentations, PDF, Markdown and HTML in one desktop app.</b><br>
-Real Word, Excel and PowerPoint files, opened and saved on your own computer. No account, no cloud, no AI.</p>
+<p align="center"><b>Documents, spreadsheets, presentations, PDF, Markdown and HTML on Windows, Linux and Android.</b><br>
+Real Word, Excel and PowerPoint files, opened and saved on your own device. No account, no cloud, no AI.</p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License: Apache-2.0"></a>
-  <img src="https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078d4" alt="Windows 10 and 11, x64">
+  <img src="https://img.shields.io/badge/Windows-10%2F11%20x64-0078d4" alt="Windows 10 and 11, x64">
+  <img src="https://img.shields.io/badge/Linux-Ubuntu%2024.04%20%2F%20Zorin%2018-e95420" alt="Linux, deb and AppImage, x64">
+  <img src="https://img.shields.io/badge/Android-12%2B%20phone%20and%20tablet-3ddc84" alt="Android 12 and newer">
 </p>
 
 <p align="center">
   <a href="#install"><b>Install</b></a> ·
   <a href="#the-apps"><b>The apps</b></a> ·
+  <a href="#android"><b>Android</b></a> ·
   <a href="#pdf"><b>PDF</b></a> ·
   <a href="#explorer-thumbnails"><b>Thumbnails</b></a> ·
   <a href="#command-line"><b>Command line</b></a> ·
@@ -20,10 +23,14 @@ Real Word, Excel and PowerPoint files, opened and saved on your own computer. No
   <a href="PRIVACY.md"><b>Privacy</b></a>
 </p>
 
-Apex Office is a free, open-source office suite for Windows. It opens and saves
-native `.docx`, `.xlsx` and `.pptx` files, edits PDF, Markdown and HTML, and keeps
-everything on your machine: documents never leave it, there is no sign-in, and
-nothing in the program talks to an AI service.
+Apex Office is a free, open-source office suite for Windows, Linux and Android. It
+opens and saves native `.docx`, `.xlsx` and `.pptx` files, edits PDF, Markdown and
+HTML, and keeps everything on your device: documents never leave it, there is no
+sign-in, and nothing in the program talks to an AI service.
+
+The Windows and Linux desktop apps share one codebase (Electron). The Android app is
+a separate, fully native app (Kotlin and Jetpack Compose) in the [`android/`](android)
+folder. All three are released together under the same version number.
 
 - **Real formats, byte-preserving.** Only what you edit is rewritten. Everything
   else in the file survives byte-for-byte, so documents keep working in Word,
@@ -34,9 +41,9 @@ nothing in the program talks to an AI service.
 - **Find files by what they say.** The home screen searches the names, folders and
   full text of your documents, spreadsheets, presentations, PDFs, Markdown and
   HTML files from a local index, CJK included.
-- **Looks right in Explorer.** Documents, workbooks, slide decks, PDFs, Markdown
-  and HTML files show their first page as the thumbnail, with a small Apex Office
-  badge in the corner. See [Explorer thumbnails](#explorer-thumbnails).
+- **Looks right in Explorer (Windows).** Documents, workbooks, slide decks, PDFs,
+  Markdown and HTML files show their first page as the thumbnail, with a small Apex
+  Office badge in the corner. See [Explorer thumbnails](#explorer-thumbnails).
 - **Scriptable.** A command line, `apexoffice`, converts, renders and edits the same
   files without opening a window.
 
@@ -47,17 +54,44 @@ source format.
 
 ## Install
 
-1. Download `ApexOffice-Setup-<version>.exe` from the
-   [Releases](https://github.com/bharadfi/apex_office_suite/releases) page.
+Every build is on the [Releases](https://github.com/bharadfi/apex_office_suite/releases)
+page, under the same version number.
+
+### Windows 10 / 11 (x64)
+
+1. Download `ApexOffice-Setup-<version>.exe`.
 2. Run it and choose where to install (the default is your user profile; no
    administrator rights are needed).
 3. Start **Apex Office** from the Start menu, or just double-click a document.
 
-Requirements: Windows 10 or 11, 64-bit.
-
 Uninstall from **Settings → Apps**, or with any uninstaller such as Revo: the
 uninstaller removes the program, its file associations, its Explorer thumbnail
 registration and its entry on your `PATH`.
+
+### Linux (x64)
+
+Built and tested for Ubuntu 24.04 based systems such as Zorin OS 18.
+
+- **`.deb`** (recommended): download `apexoffice_<version>_amd64.deb`, then
+
+  ```bash
+  sudo apt install ./apexoffice_<version>_amd64.deb
+  ```
+
+  It installs to `/opt/Apex Office`, adds the `apexoffice` command and registers the
+  file types.
+- **AppImage**: download `ApexOffice-<version>.AppImage`, make it executable
+  (`chmod +x`) and run it. On Ubuntu 24.04 based systems an AppImage may need
+  `--no-sandbox`; the `.deb` sets this up for you.
+
+### Android 12 or newer (phone and tablet)
+
+1. Download `ApexOffice-Android-<version>.apk` to your device.
+2. Open it and allow installs from that app when Android asks. The APK is signed with
+   the project's key but is not on the Play Store.
+3. Open **Apex Office**.
+
+Requirements: Android 12 or newer, 64-bit ARM.
 
 ## The apps
 
@@ -73,6 +107,31 @@ registration and its entry on your `PATH`.
 All six live in one window with tabs, a home screen with recent and starred files,
 folders, and a full-text file search.
 
+## Android
+
+The Android app is written natively for phones and tablets. It is not a port of the
+desktop app: it has its own interface (a bottom bar on phones, a side rail and two
+panes on tablets) and reuses the same Rust spreadsheet engine.
+
+| App | Opens and saves | What you can do |
+| --- | --- | --- |
+| **Docs** | `.docx`, `.docm`, `.dotx`, `.dotm` | Rich text, headings, bold, italic, underline, colours, size, alignment, bullet and numbered lists, find and replace, undo |
+| **Sheets** | `.xlsx`, `.xlsm`, `.csv`, `.tsv`, `.vcf` | Formulas, sheet tabs, range select, copy, cut, paste, number formats, fill and text colours, row, column and width edits, undo and redo |
+| **Slides** | `.pptx`, `.pptm`, `.ppsx`, `.potx` | Slide viewer with thumbnails, text editing, duplicate and delete slides, full-screen present mode |
+| **PDF** | `.pdf` | Viewer, go to page, digital-signature verdicts with your own trusted-signer list, on-device OCR, print |
+| **Markdown** | `.md`, `.txt`, `.json` | Source editor and rendered preview |
+| **HTML** | `.html` | Sandboxed preview (no scripts, no network) and source editor |
+
+You can create new documents, workbooks, Markdown and HTML files from the home screen.
+Everything stays on the device.
+
+Known limits: pictures, tables and headers in Docs files are shown as text or
+placeholders, so saving over such a file warns you first (save a copy to keep the
+original). Not yet available on Android: `.rtf`, `.odt`, `.xls`, `.ods`, `.xlsb` and
+`.ppt`, charts, merged cells, and moving or resizing shapes in Slides. Showing a
+password-protected PDF needs Android 15 or newer (its signatures can still be
+checked on any version).
+
 ## PDF
 
 The PDF app is the most extended part of the suite.
@@ -86,11 +145,12 @@ The PDF app is the most extended part of the suite.
   in print. A trusted-certificate list of your own decides what counts as trusted,
   and a certified document says who certified it.
 - **Compare** two documents with a chosen page range for each.
-- **Read Out Loud** with the voice built into Windows: a page, or from here to the end,
-  with pause and resume.
+- **Read Out Loud** with the voice built into Windows (Windows only): a page, or from
+  here to the end, with pause and resume.
 - **Page labels** (`i, ii, iii`, `A-1`, `A-2`), applied after deleting and reordering.
 - **Scan to PDF** from a scanner, one page after another into a new file.
-- **Print and Save as PDF.** Printing sends the real file, so text stays text. *Save
+- **Print and Save as PDF.** On Windows, printing sends the real file, so text stays
+  text (on Linux and Android the system print dialog is used). *Save
   as PDF (built in)* writes a new PDF with its text kept as whole lines; a PDF printer
   driver redraws every line letter by letter.
 - **Remove hidden information**: document information, attached files, JavaScript,
@@ -104,7 +164,7 @@ The PDF app is the most extended part of the suite.
 
 ## Explorer thumbnails
 
-The installer registers a small Windows shell extension (`apex_thumbs.dll`). When
+Windows only. The installer registers a small Windows shell extension (`apex_thumbs.dll`). When
 Explorer asks for a thumbnail it hands the extension the file; the extension asks the
 program's own command line to draw page 1 and shrinks the picture to fit, with the
 Apex Office badge in the bottom right corner (the way other programs mark their
@@ -138,17 +198,34 @@ Every command accepts `--json`. `apexoffice --help` lists them all.
 
 ## Build from source
 
-Requirements: Node.js 22.12 or newer, Rust (for the `.xlsx` engine and the thumbnail
-extension), and on Windows the Windows SDK.
+Requirements: Node.js 22.12 or newer and Rust (for the `.xlsx` engine); on Windows also
+the Windows SDK.
 
 ```bash
 npm ci
 npm run build:all                      # every app, the command line and the shell
-npm run dist:win -w @genoffice/shell   # the installer, in apps/shell/release
+npm run dist:win -w @genoffice/shell   # Windows installer, in apps/shell/release
+npm run dist:linux -w @genoffice/shell # Linux AppImage and .deb (build on Linux or WSL)
 ```
 
-The thumbnail extension (`apps/shell/native/apex-thumbs`) is built with `cargo
+Run `build:all` before packaging so the installers contain the latest app code. The
+Windows thumbnail extension (`apps/shell/native/apex-thumbs`) is built with `cargo
 build --release` by the packaging step when it is missing.
+
+### Android
+
+Requirements: Android SDK (platform 36), NDK 28, JDK 17 or newer and Rust with the
+`aarch64-linux-android` and `x86_64-linux-android` targets.
+
+```bash
+cd android
+scripts/build-native.ps1               # builds the Rust spreadsheet engine for Android
+./gradlew assembleRelease              # signed APK in app/build/outputs/apk/release
+```
+
+Signing values are read from `android/keystore.properties` (not in git): `storeFile`,
+`storePassword`, `keyAlias`, `keyPassword`. Create a keystore with `keytool` and keep
+a backup, because updates must be signed with the same key.
 
 ## Where it comes from
 
@@ -156,7 +233,8 @@ Apex Office is inspired by and forked from the open-source project GenOffice, an
 shares its engines for Word, Excel, PowerPoint, PDF, Markdown and HTML files. It
 differs in these ways:
 
-- It is a Windows application. The macOS and Linux packaging was dropped.
+- It targets Windows and Linux on the desktop, and adds a native Android app. The
+  macOS packaging was dropped.
 - There is no AI assistant, no cloud account, no project sync and no external-agent
   integration. The AI panels, the "Ask" screen, the model settings, the MCP server
   and the agent skills are gone, and the command line has no agent commands.
@@ -165,8 +243,9 @@ differs in these ways:
   editing of scanned text, signature verdict badges, Read Out Loud, Scan to PDF,
   page labels, hidden-information removal, an accessibility check and security
   properties.
-- The installer registers Explorer thumbnails with the Apex Office badge and puts
-  the `apexoffice` command on your `PATH`.
+- The Windows installer registers Explorer thumbnails with the Apex Office badge and
+  puts the `apexoffice` command on your `PATH`; the Linux package adds the same command.
+- The Android app is new, written natively, and is not part of the original project.
 
 ## License
 
