@@ -7,7 +7,7 @@
   "private": true,
   "description": "Apex Office: the all-in-one productivity suite for documents, spreadsheets, presentations, PDF, Markdown and HTML",
   "main": "out/main/index.js",
-  "desktopName": "genoffice.desktop",
+  "desktopName": "apexoffice.desktop",
   "scripts": {
     "dev": "electron-vite dev --watch",
     "build": "electron-vite build",

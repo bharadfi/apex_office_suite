@@ -765,6 +765,38 @@ const config = {
   // arm64 host or an explicit cross build (see linuxSidecarCandidates and the
   // ELF check). That flag is config support only: no second Linux pass runs
   // anywhere yet, so the arm64 artifacts are not produced by this repo.
+  linux: {
+    // AppImage (self-contained, any distro) + deb (apt install; Zorin OS,
+    // Ubuntu, Debian and Mint). No rpm: nothing in Apex Office targets Fedora.
+    target: [
+      { target: 'AppImage', arch: [linuxArm64 ? 'arm64' : 'x64'] },
+      { target: 'deb', arch: [linuxArm64 ? 'arm64' : 'x64'] },
+    ],
+    maintainer: 'bharadfi <bharadfi@users.noreply.github.com>',
+    vendor: 'bharadfi',
+    category: 'Office',
+    // Icon SET directory: a lone png is not resized, so launchers would only
+    // find a 1024px icon that the hicolor theme does not index.
+    icon: 'build/icons',
+    // linux derives the binary name from package.json "name"
+    // ("@genoffice/shell" is invalid), so name it explicitly; it also has to
+    // match the WM_CLASS Electron reports so the window links to its launcher.
+    executableName: 'apexoffice',
+    syncDesktopName: true,
+    artifactName: 'ApexOffice-${version}.${ext}',
+    extraResources: [
+      {
+        from: LINUX_SIDECAR,
+        to: 'native/xlsx-sidecar',
+      },
+      // blank templates for the deb post-install step (/usr/share/templates)
+      {
+        from: 'build/shell-new',
+        to: 'shell-new',
+        filter: ['*.docx', '*.xlsx', '*.pptx'],
+      },
+    ],
+  },
   // Same "@genoffice/shell" problem as executableName above: the default deb
   // artifact name derives from package.json "name", and the scope's "/" makes
   // fpm treat "@genoffice" as a directory. Spell the published name out
@@ -774,8 +806,8 @@ const config = {
   // install, breaking upgrades. Without it, fpm receives productName
   // "Apex Office" and only happens to downcase it to the right value.
   deb: {
-    artifactName: 'genoffice_${version}_${arch}.deb',
-    packageName: 'genoffice',
+    artifactName: 'apexoffice_${version}_${arch}.deb',
+    packageName: 'apexoffice',
     // expose the apexoffice command line shipped inside the app
     afterInstall: 'build/linux-after-install.sh',
     afterRemove: 'build/linux-after-remove.sh',
