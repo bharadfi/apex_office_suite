@@ -72,6 +72,68 @@ class Deck private constructor(
         }
     }
 
+    // ---- slide structure: each returns the new package bytes; read them back with Deck.read ----
+
+    /** The package with slide [index] copied right after itself. */
+    fun withDuplicate(index: Int): ByteArray = editPackage(write()) { files ->
+        val src = slides[index].path
+        val srcName = src.substringAfterLast('/')
+        var n = 1
+        while (files.containsKey("ppt/slides/slide$n.xml")) n++
+        val newPath = "ppt/slides/slide$n.xml"
+        files[newPath] = files.getValue(src)
+        files["ppt/slides/_rels/slide$n.xml.rels"] = (files["ppt/slides/_rels/$srcName.rels"] ?: ByteArray(0)).let { stripNotes(it) }
+        editXml(files, "[Content_Types].xml") { doc ->
+            val o = doc.createElement("Override")
+            o.setAttribute("PartName", "/$newPath")
+            o.setAttribute("ContentType", "application/vnd.openxmlformats-officedocument.presentationml.slide+xml")
+            doc.documentElement.appendChild(o)
+        }
+        var srcRid = ""
+        val newRid = "rIdApex$n"
+        editXml(files, "ppt/_rels/presentation.xml.rels") { doc ->
+            for (r in childrenAny(doc.documentElement)) if (r.getAttribute("Target").endsWith("slides/$srcName")) srcRid = r.getAttribute("Id")
+            val rel = doc.createElement("Relationship")
+            rel.setAttribute("Id", newRid)
+            rel.setAttribute("Type", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide")
+            rel.setAttribute("Target", "slides/slide$n.xml")
+            doc.documentElement.appendChild(rel)
+        }
+        editXml(files, "ppt/presentation.xml") { doc ->
+            val list = first(doc.documentElement, "p:sldIdLst") ?: return@editXml
+            val entries = children(list, "p:sldId")
+            val nextId = (entries.maxOfOrNull { it.getAttribute("id").toLongOrNull() ?: 255L } ?: 255L) + 1
+            val e = doc.createElement("p:sldId")
+            e.setAttribute("id", nextId.toString())
+            e.setAttribute("r:id", newRid)
+            val after = entries.firstOrNull { it.getAttribute("r:id") == srcRid }
+            if (after != null) list.insertBefore(e, after.nextSibling) else list.appendChild(e)
+        }
+    }
+
+    /** The package without slide [index]. */
+    fun withoutSlide(index: Int): ByteArray = editPackage(write()) { files ->
+        val src = slides[index].path
+        val srcName = src.substringAfterLast('/')
+        var rid = ""
+        editXml(files, "ppt/_rels/presentation.xml.rels") { doc ->
+            for (r in childrenAny(doc.documentElement)) if (r.getAttribute("Target").endsWith("slides/$srcName")) {
+                rid = r.getAttribute("Id")
+                doc.documentElement.removeChild(r)
+                break
+            }
+        }
+        editXml(files, "ppt/presentation.xml") { doc ->
+            val list = first(doc.documentElement, "p:sldIdLst") ?: return@editXml
+            children(list, "p:sldId").firstOrNull { it.getAttribute("r:id") == rid }?.let { list.removeChild(it) }
+        }
+        editXml(files, "[Content_Types].xml") { doc ->
+            childrenAny(doc.documentElement).firstOrNull { it.getAttribute("PartName") == "/$src" }?.let { doc.documentElement.removeChild(it) }
+        }
+        files.remove(src)
+        files.remove("ppt/slides/_rels/$srcName.rels")
+    }
+
     // ---- text ----
 
     fun paragraphsOf(shape: Shape): List<String> =
@@ -267,6 +329,45 @@ class Deck private constructor(
     }
 
     companion object {
+        private fun stripNotes(rels: ByteArray): ByteArray {
+            if (rels.isEmpty()) return rels
+            val doc = parseXml(rels)
+            for (r in childrenAny(doc.documentElement)) if (r.getAttribute("Type").endsWith("/notesSlide")) doc.documentElement.removeChild(r)
+            return toBytes(doc)
+        }
+
+        private fun parseXml(bytes: ByteArray): Document =
+            DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(ByteArrayInputStream(bytes))
+
+        private fun toBytes(doc: Document): ByteArray {
+            val t = TransformerFactory.newInstance().newTransformer()
+            t.setOutputProperty(OutputKeys.ENCODING, "UTF-8")
+            t.setOutputProperty(OutputKeys.STANDALONE, "yes")
+            val bos = ByteArrayOutputStream()
+            t.transform(DOMSource(doc), StreamResult(bos))
+            return bos.toByteArray()
+        }
+
+        private fun editXml(files: MutableMap<String, ByteArray>, name: String, change: (Document) -> Unit) {
+            val doc = parseXml(files.getValue(name))
+            change(doc)
+            files[name] = toBytes(doc)
+        }
+
+        private fun editPackage(bytes: ByteArray, change: (MutableMap<String, ByteArray>) -> Unit): ByteArray {
+            val files = LinkedHashMap<String, ByteArray>()
+            ZipInputStream(ByteArrayInputStream(bytes)).use { zip ->
+                var entry = zip.nextEntry
+                while (entry != null) { files[entry.name] = zip.readBytes(); entry = zip.nextEntry }
+            }
+            change(files)
+            val out = ByteArrayOutputStream()
+            ZipOutputStream(out).use { zip ->
+                for ((name, data) in files) { zip.putNextEntry(ZipEntry(name)); zip.write(data); zip.closeEntry() }
+            }
+            return out.toByteArray()
+        }
+
         private fun childrenAny(e: Element): List<Element> {
             val out = ArrayList<Element>()
             var n: Node? = e.firstChild

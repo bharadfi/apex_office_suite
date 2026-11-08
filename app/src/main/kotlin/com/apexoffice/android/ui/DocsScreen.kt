@@ -404,6 +404,9 @@ private fun Toolbar(editor: Editor?, tick: Int, onColor: () -> Unit, onFind: () 
         ToolButton("•", text != null && RichText.isBullet(text, s), enabled) {
             ed?.let { x -> x.checkpoint(); RichText.toggleBullet(x.text, minOf(s, e), maxOf(s, e)); x.onChanged?.invoke() }
         }
+        ToolButton("1.", text != null && RichText.isNumbered(text, s), enabled) {
+            ed?.let { x -> x.checkpoint(); RichText.toggleNumbered(x.text, minOf(s, e), maxOf(s, e)); x.onChanged?.invoke() }
+        }
         val al = if (text != null) RichText.alignmentAt(text, s) else Layout.Alignment.ALIGN_NORMAL
         ToolButton("≡←", al == Layout.Alignment.ALIGN_NORMAL, enabled) { align(ed, Layout.Alignment.ALIGN_NORMAL) }
         ToolButton("≡", al == Layout.Alignment.ALIGN_CENTER, enabled) { align(ed, Layout.Alignment.ALIGN_CENTER) }

@@ -1,5 +1,7 @@
 package com.apexoffice.android.docs
 
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.Typeface
 import android.text.Editable
 import android.text.Layout
@@ -25,6 +27,29 @@ class HeadingSpan(val level: Int) : MetricAffectingSpan() {
     private fun apply(tp: TextPaint) {
         tp.textSize = tp.textSize * scale
         tp.typeface = Typeface.create(tp.typeface, Typeface.BOLD)
+    }
+}
+
+/** A numbered-list paragraph: draws its position in the run of numbered paragraphs (1., 2., ...). */
+class NumberSpan : android.text.style.LeadingMarginSpan {
+    override fun getLeadingMargin(first: Boolean) = 72
+    override fun drawLeadingMargin(
+        c: Canvas, p: Paint, x: Int, dir: Int, top: Int, baseline: Int, bottom: Int,
+        text: CharSequence, start: Int, end: Int, first: Boolean, layout: Layout?,
+    ) {
+        if (!first) return
+        val spanned = text as? Spanned ?: return
+        var n = 1
+        var s = start
+        while (s > 0) {
+            val newline = s - 1
+            var ps = newline
+            while (ps > 0 && text[ps - 1] != '\n') ps--
+            if (spanned.getSpans(ps, maxOf(newline, ps), NumberSpan::class.java).isEmpty()) break
+            n++
+            s = ps
+        }
+        c.drawText("$n.", x + dir * 6f, baseline.toFloat(), p)
     }
 }
 
@@ -145,6 +170,26 @@ object RichText {
         return text.getSpans(ps, maxOf(pe, ps), BulletSpan::class.java).isNotEmpty()
     }
 
+    fun isNumbered(text: Spanned, pos: Int): Boolean {
+        val (ps, pe) = paragraphRange(text, pos, pos)
+        return text.getSpans(ps, maxOf(pe, ps), NumberSpan::class.java).isNotEmpty()
+    }
+
+    fun toggleNumbered(text: Editable, start: Int, end: Int) {
+        val (ps, pe) = paragraphRange(text, start, end)
+        val on = text.getSpans(ps, pe, NumberSpan::class.java).isEmpty()
+        var cursor = ps
+        while (cursor <= pe) {
+            val (qs, qe) = paragraphRange(text, cursor, cursor)
+            val whole = if (qe < text.length) qe + 1 else qe
+            for (span in text.getSpans(qs, maxOf(qe, qs), NumberSpan::class.java)) text.removeSpan(span)
+            for (span in text.getSpans(qs, maxOf(qe, qs), BulletSpan::class.java)) text.removeSpan(span)
+            if (on) text.setSpan(NumberSpan(), qs, whole, Spanned.SPAN_PARAGRAPH)
+            if (qe >= pe) break
+            cursor = qe + 1
+        }
+    }
+
     fun toggleBullet(text: Editable, start: Int, end: Int) {
         val (ps, pe) = paragraphRange(text, start, end)
         val existing = text.getSpans(ps, pe, BulletSpan::class.java)
@@ -154,6 +199,7 @@ object RichText {
         while (cursor <= pe) {
             val (qs, qe) = paragraphRange(text, cursor, cursor)
             for (span in text.getSpans(qs, maxOf(qe, qs), BulletSpan::class.java)) text.removeSpan(span)
+            for (span in text.getSpans(qs, maxOf(qe, qs), NumberSpan::class.java)) text.removeSpan(span)
             if (on) text.setSpan(BulletSpan(28), qs, if (qe < text.length) qe + 1 else qe, Spanned.SPAN_PARAGRAPH)
             if (qe >= pe) break
             cursor = qe + 1

@@ -426,7 +426,8 @@ pub extern "system" fn Java_com_apexoffice_android_sheets_NativeSheets_nativeRed
 }
 
 /// prop: 0 toggle bold, 1 toggle italic, 2 fill colour (0xRRGGBB, -1 none),
-/// 3 font colour (0xRRGGBB, -1 default), 4 alignment (0 general, 1 left, 2 centre, 3 right)
+/// 3 font colour (0xRRGGBB, -1 default), 4 alignment (0 general, 1 left, 2 centre, 3 right),
+/// 5 number format (0 general, 1 number, 2 percent, 3 currency, 4 date, 5 two decimals)
 #[no_mangle]
 pub extern "system" fn Java_com_apexoffice_android_sheets_NativeSheets_nativeStyle(
     _env: JNIEnv,
@@ -456,6 +457,10 @@ pub extern "system" fn Java_com_apexoffice_android_sheets_NativeSheets_nativeSty
                 });
                 a.horizontal = h;
                 style.alignment = Some(a);
+            }
+            5 => {
+                const FORMATS: [&str; 6] = ["general", "#,##0.00", "0%", "$#,##0.00", "yyyy-mm-dd", "0.00"];
+                style.num_fmt = FORMATS.get(value as usize).copied().unwrap_or("general").to_string();
             }
             _ => return Err("unknown style property".to_string()),
         }

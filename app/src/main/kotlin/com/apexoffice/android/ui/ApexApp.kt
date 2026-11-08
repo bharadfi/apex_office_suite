@@ -297,7 +297,7 @@ private fun AboutPane(modifier: Modifier) {
         ) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Apex Office for Android", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                Text("Version 0.7.0 (polish)", style = MaterialTheme.typography.bodyMedium)
+                Text("Version 0.8.0", style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(8.dp))
                 Text("App developed by Mr. Falguni Bharadwaj", style = MaterialTheme.typography.bodyLarge)
                 Spacer(Modifier.height(8.dp))

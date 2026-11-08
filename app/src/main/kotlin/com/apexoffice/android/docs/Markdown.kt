@@ -53,6 +53,15 @@ object Markdown {
                     out.setSpan(ForegroundColorSpan(Color.parseColor("#5B6B63")), start, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                     out.setSpan(StyleSpan(Typeface.ITALIC), start, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                 }
+                line.trimStart().startsWith("|") -> {
+                    // a table row: shown as aligned monospace text, the separator row is dropped
+                    if (!Regex("^\\s*\\|?[\\s:|-]+\\|?\\s*$").matches(line) || !line.contains('-')) {
+                        val cells = line.trim().trim('|').split('|').joinToString("   ") { it.trim() }
+                        out.append(cells)
+                        out.setSpan(TypefaceSpan("monospace"), start, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        out.setSpan(BackgroundColorSpan(Color.parseColor("#F3F5F4")), start, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    } else if (i < lines.size - 1) continue
+                }
                 bulleted.matches(line) -> {
                     val m = bulleted.matchEntire(line)!!
                     inline(out, m.groupValues[2], linkColor)

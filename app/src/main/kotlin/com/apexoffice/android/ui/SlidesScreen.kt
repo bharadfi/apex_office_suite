@@ -75,6 +75,9 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
     var askSave by remember { mutableStateOf(false) }
     var askLeave by remember { mutableStateOf(false) }
     var present by remember { mutableStateOf(false) }
+    var page by remember { mutableIntStateOf(0) }
+    var startPage by remember { mutableIntStateOf(0) }
+    var confirmDelete by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<Pair<Slide, Shape>?>(null) }
     val stem = name.substringBeforeLast('.')
 
@@ -118,7 +121,23 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
             error != null -> ErrorBox(error!!, onClose)
             d == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Opening…") }
             d.slides.isEmpty() -> ErrorBox("This presentation has no slides.", onClose)
-            else -> SlideViewer(d, version, present, onPresent = { present = true }, onExit = { present = false }, onEdit = { slide, shape -> editing = slide to shape })
+            else -> androidx.compose.runtime.key(d) {
+                SlideViewer(
+                    d, version, present, startPage,
+                    onPage = { page = it },
+                    onPresent = { present = true },
+                    onExit = { present = false },
+                    onDuplicate = {
+                        scope.launch {
+                            val next = withContext(Dispatchers.Default) { runCatching { Deck.read(d.withDuplicate(page)) }.getOrNull() }
+                            if (next != null) { startPage = page + 1; deck = next; version++; dirty = true }
+                            else Toast.makeText(context, "Could not duplicate this slide", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    onDelete = { confirmDelete = true },
+                    onEdit = { slide, shape -> editing = slide to shape },
+                )
+            }
         }
     }
 
@@ -163,12 +182,36 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
         )
     }
     LeaveDialog(askLeave, { askLeave = false }, onSave = { askLeave = false; askSave = true }, onDiscard = { askLeave = false; onClose() })
-    @Suppress("UNUSED_EXPRESSION") scope
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text("Delete this slide?") },
+            text = { Text("Slide ${page + 1} is removed from the presentation. Save a copy if you want to keep the original.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDelete = false
+                    val d = deck ?: return@TextButton
+                    if (d.slides.size <= 1) { Toast.makeText(context, "A presentation needs at least one slide", Toast.LENGTH_SHORT).show(); return@TextButton }
+                    scope.launch {
+                        val next = withContext(Dispatchers.Default) { runCatching { Deck.read(d.withoutSlide(page)) }.getOrNull() }
+                        if (next != null) { startPage = (page - 1).coerceAtLeast(0); deck = next; version++; dirty = true }
+                        else Toast.makeText(context, "Could not delete this slide", Toast.LENGTH_SHORT).show()
+                    }
+                }) { Text("Delete") }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
+        )
+    }
 }
 
 @Composable
-private fun SlideViewer(deck: Deck, version: Int, present: Boolean, onPresent: () -> Unit, onExit: () -> Unit, onEdit: (Slide, Shape) -> Unit) {
-    val pager = rememberPagerState { deck.slides.size }
+private fun SlideViewer(
+    deck: Deck, version: Int, present: Boolean, startPage: Int,
+    onPage: (Int) -> Unit, onPresent: () -> Unit, onExit: () -> Unit,
+    onDuplicate: () -> Unit, onDelete: () -> Unit, onEdit: (Slide, Shape) -> Unit,
+) {
+    val pager = rememberPagerState(initialPage = startPage.coerceIn(0, deck.slides.size - 1)) { deck.slides.size }
+    LaunchedEffect(pager.currentPage) { onPage(pager.currentPage) }
     val scope = rememberCoroutineScope()
     val thumbs = rememberLazyListState()
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -221,7 +264,11 @@ private fun SlideViewer(deck: Deck, version: Int, present: Boolean, onPresent: (
                     OutlinedButton(onClick = { scope.launch { pager.animateScrollToPage((pager.currentPage - 1).coerceAtLeast(0)) } }, enabled = pager.currentPage > 0) { Text("←") }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Slide ${pager.currentPage + 1} of ${deck.slides.size}", style = MaterialTheme.typography.bodyMedium)
-                        androidx.compose.material3.TextButton(onClick = onPresent) { Text("Present") }
+                        Row {
+                            androidx.compose.material3.TextButton(onClick = onPresent) { Text("Present") }
+                            androidx.compose.material3.TextButton(onClick = onDuplicate) { Text("Duplicate") }
+                            androidx.compose.material3.TextButton(onClick = onDelete) { Text("Delete") }
+                        }
                     }
                     OutlinedButton(onClick = { scope.launch { pager.animateScrollToPage((pager.currentPage + 1).coerceAtMost(deck.slides.size - 1)) } }, enabled = pager.currentPage < deck.slides.size - 1) { Text("→") }
                 }

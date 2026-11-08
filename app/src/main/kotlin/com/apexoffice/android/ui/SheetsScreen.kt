@@ -200,6 +200,11 @@ private fun SheetBody(session: SheetsSession, onEdited: () -> Unit) {
     var formula by remember { mutableStateOf("") }
     var editing by remember { mutableStateOf(false) }
     var colorTarget by remember { mutableIntStateOf(0) }
+    var endRow by remember { mutableIntStateOf(1) }
+    var endCol by remember { mutableIntStateOf(1) }
+    var rangeMode by remember { mutableStateOf(false) }
+    var askFormat by remember { mutableStateOf(false) }
+    val clipboard = androidx.compose.ui.platform.LocalContext.current.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
     var version by remember(session) { mutableIntStateOf(0) }
     val focus = androidx.compose.ui.platform.LocalFocusManager.current
 
@@ -215,6 +220,46 @@ private fun SheetBody(session: SheetsSession, onEdited: () -> Unit) {
             onEdited()
         }
         focus.clearFocus()
+    }
+
+    val r0 = minOf(selRow, endRow)
+    val r1 = maxOf(selRow, endRow)
+    val c0 = minOf(selCol, endCol)
+    val c1 = maxOf(selCol, endCol)
+    fun changed() { version++; onEdited() }
+    fun act(op: Int, index: Int) {
+        commit()
+        if (session.edit(sheet, op, index)) changed()
+    }
+    fun forRange(f: (Int, Int) -> Unit) { for (r in r0..r1) for (c in c0..c1) f(r, c) }
+    fun styleRange(prop: Int, value: Int = 0) {
+        commit()
+        session.snapshot()
+        var any = false
+        forRange { r, c -> if (session.style(sheet, r, c, prop, value, snapshot = false)) any = true }
+        if (any) changed()
+    }
+    fun clearRange() {
+        commit()
+        session.snapshot()
+        forRange { r, c -> session.setInput(sheet, r, c, "", snapshot = false) }
+        formula = ""
+        changed()
+    }
+    fun copy(cut: Boolean) {
+        commit()
+        val text = (r0..r1).joinToString("\n") { r -> (c0..c1).joinToString("\t") { c -> session.input(sheet, r, c) } }
+        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("cells", text))
+        if (cut) clearRange()
+    }
+    fun paste() {
+        commit()
+        val text = clipboard.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.text?.toString() ?: return
+        session.snapshot()
+        text.replace("\r\n", "\n").trimEnd('\n').split('\n').forEachIndexed { ri, line ->
+            line.split('\t').forEachIndexed { ci, v -> session.setInput(sheet, r0 + ri, c0 + ci, v, snapshot = false) }
+        }
+        changed()
     }
 
     Column(Modifier.fillMaxSize()) {
@@ -248,34 +293,32 @@ private fun SheetBody(session: SheetsSession, onEdited: () -> Unit) {
             Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            fun act(op: Int, index: Int) {
-                commit()
-                if (session.edit(sheet, op, index)) { version++; onEdited() }
-            }
-            androidx.compose.material3.OutlinedButton(onClick = { act(0, selRow) }) { Text("+ Row") }
-            androidx.compose.material3.OutlinedButton(onClick = { act(1, selRow) }) { Text("− Row") }
-            androidx.compose.material3.OutlinedButton(onClick = { act(2, selCol) }) { Text("+ Col") }
-            androidx.compose.material3.OutlinedButton(onClick = { act(3, selCol) }) { Text("− Col") }
-            androidx.compose.material3.OutlinedButton(onClick = {
-                if (session.setInput(sheet, selRow, selCol, "")) { version++; onEdited(); formula = "" }
-            }) { Text("Clear cell") }
+            Chip("Undo") { commit(); if (session.undo()) changed() }
+            Chip("Redo") { commit(); if (session.redo()) changed() }
+            Chip("Select range", selected = rangeMode) { rangeMode = !rangeMode; if (!rangeMode) { endRow = selRow; endCol = selCol } }
+            Chip("Copy") { copy(false) }
+            Chip("Cut") { copy(true) }
+            Chip("Paste") { paste() }
+            Chip("Clear") { clearRange() }
+            Chip("Number format") { askFormat = true }
+            Chip("+ Row") { act(0, selRow) }
+            Chip("− Row") { act(1, selRow) }
+            Chip("+ Col") { act(2, selCol) }
+            Chip("− Col") { act(3, selCol) }
+            Chip("Wider") { if (session.resizeColumn(sheet, selCol, 1.25)) changed() }
+            Chip("Narrower") { if (session.resizeColumn(sheet, selCol, 0.8)) changed() }
         }
         Row(
             Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            fun changed() { version++; onEdited() }
-            androidx.compose.material3.OutlinedButton(onClick = { commit(); if (session.undo()) changed() }) { Text("Undo") }
-            androidx.compose.material3.OutlinedButton(onClick = { commit(); if (session.redo()) changed() }) { Text("Redo") }
-            androidx.compose.material3.OutlinedButton(onClick = { if (session.style(sheet, selRow, selCol, 0)) changed() }) { Text("B", fontWeight = FontWeight.Bold) }
-            androidx.compose.material3.OutlinedButton(onClick = { if (session.style(sheet, selRow, selCol, 1)) changed() }) { Text("I", fontStyle = androidx.compose.ui.text.font.FontStyle.Italic) }
-            androidx.compose.material3.OutlinedButton(onClick = { colorTarget = 2 }) { Text("Fill") }
-            androidx.compose.material3.OutlinedButton(onClick = { colorTarget = 3 }) { Text("Text colour") }
-            androidx.compose.material3.OutlinedButton(onClick = { if (session.style(sheet, selRow, selCol, 4, 1)) changed() }) { Text("Left") }
-            androidx.compose.material3.OutlinedButton(onClick = { if (session.style(sheet, selRow, selCol, 4, 2)) changed() }) { Text("Centre") }
-            androidx.compose.material3.OutlinedButton(onClick = { if (session.style(sheet, selRow, selCol, 4, 3)) changed() }) { Text("Right") }
-            androidx.compose.material3.OutlinedButton(onClick = { if (session.resizeColumn(sheet, selCol, 1.25)) changed() }) { Text("Wider") }
-            androidx.compose.material3.OutlinedButton(onClick = { if (session.resizeColumn(sheet, selCol, 0.8)) changed() }) { Text("Narrower") }
+            Chip("B", bold = true) { styleRange(0) }
+            Chip("I", italic = true) { styleRange(1) }
+            Chip("Fill") { colorTarget = 2 }
+            Chip("Text colour") { colorTarget = 3 }
+            Chip("Left") { styleRange(4, 1) }
+            Chip("Centre") { styleRange(4, 2) }
+            Chip("Right") { styleRange(4, 3) }
         }
         if (colorTarget != 0) {
             val palette = listOf(-1, 0xFFE699, 0xC6EFCE, 0xBDD7EE, 0xF8CBAD, 0xD9D2E9, 0xFFFF00, 0xC53030, 0x1E8E5A, 0x2B6CB0, 0x000000)
@@ -288,15 +331,27 @@ private fun SheetBody(session: SheetsSession, onEdited: () -> Unit) {
                             Modifier.size(40.dp)
                                 .background(if (c < 0) Color.White else Color(0xFF000000.toInt() or c), RoundedCornerShape(20.dp))
                                 .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
-                                .clickable {
-                                    if (session.style(sheet, selRow, selCol, colorTarget, c)) { version++; onEdited() }
-                                    colorTarget = 0
-                                },
+                                .clickable { styleRange(colorTarget, c); colorTarget = 0 },
                             contentAlignment = Alignment.Center,
                         ) { if (c < 0) Text("✕") }
                     }
                 },
                 confirmButton = { TextButton(onClick = { colorTarget = 0 }) { Text("Close") } },
+            )
+        }
+        if (askFormat) {
+            val formats = listOf("General", "Number  1,234.50", "Percent  12%", "Currency  \$1,234.50", "Date  2026-11-08", "Two decimals  1.50")
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { askFormat = false },
+                title = { Text("Number format") },
+                text = {
+                    Column {
+                        formats.forEachIndexed { index, label ->
+                            Text(label, Modifier.fillMaxWidth().clickable { styleRange(5, index); askFormat = false }.padding(vertical = 12.dp))
+                        }
+                    }
+                },
+                confirmButton = { TextButton(onClick = { askFormat = false }) { Text("Close") } },
             )
         }
         Grid(
@@ -306,7 +361,12 @@ private fun SheetBody(session: SheetsSession, onEdited: () -> Unit) {
             version = version,
             selRow = selRow,
             selCol = selCol,
-            onSelect = { r, c -> commit(); selRow = r; selCol = c },
+            endRow = endRow,
+            endCol = endCol,
+            onSelect = { r, c ->
+                commit()
+                if (rangeMode) { endRow = r; endCol = c } else { selRow = r; selCol = c; endRow = r; endCol = c }
+            },
             modifier = Modifier.weight(1f),
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
@@ -324,7 +384,7 @@ private fun SheetBody(session: SheetsSession, onEdited: () -> Unit) {
                             if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
                             RoundedCornerShape(10.dp),
                         )
-                        .clickable { commit(); sheet = index; selRow = 1; selCol = 1 }
+                        .clickable { commit(); sheet = index; selRow = 1; selCol = 1; endRow = 1; endCol = 1; rangeMode = false }
                         .padding(horizontal = 14.dp, vertical = 8.dp),
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                 )
@@ -344,6 +404,8 @@ private fun Grid(
     version: Int,
     selRow: Int,
     selCol: Int,
+    endRow: Int,
+    endCol: Int,
     onSelect: (Int, Int) -> Unit,
     modifier: Modifier,
 ) {
@@ -479,9 +541,16 @@ private fun Grid(
                             drawRect(outline, Offset(gridLeft, y + rowHeightPx - 1f), Size(size.width, 1f))
                         }
                         // selection
-                        val sx = gridLeft + colStartPx[(sc - 1).coerceIn(0, colCount - 1)] - offX
-                        val sy = gridTop + (sr - 1) * rowHeightPx - offY
-                        drawRect(primary, Offset(sx, sy), Size(colWidthsPx[(sc - 1).coerceIn(0, colCount - 1)], rowHeightPx), style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3f))
+                        val rc0 = (minOf(sc, endCol) - 1).coerceIn(0, colCount - 1)
+                        val rc1 = (maxOf(sc, endCol) - 1).coerceIn(0, colCount - 1)
+                        val rr0 = minOf(sr, endRow) - 1
+                        val rr1 = maxOf(sr, endRow) - 1
+                        val sx = gridLeft + colStartPx[rc0] - offX
+                        val sy = gridTop + rr0 * rowHeightPx - offY
+                        val sw = colStartPx[rc1 + 1] - colStartPx[rc0]
+                        val sh = (rr1 - rr0 + 1) * rowHeightPx
+                        if (rc1 > rc0 || rr1 > rr0) drawRect(primary.copy(alpha = 0.14f), Offset(sx, sy), Size(sw, sh))
+                        drawRect(primary, Offset(sx, sy), Size(sw, sh), style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3f))
                     }
                     // column headers
                     clipRect(gridLeft, 0f, size.width, gridTop) {
@@ -510,6 +579,32 @@ private fun Grid(
                     drawRect(outline, Offset(gridLeft - 1f, 0f), Size(1f, size.height))
                     drawRect(outline, Offset(0f, gridTop - 1f), Size(size.width, 1f))
                 },
+        )
+    }
+}
+
+@Composable
+private fun Chip(
+    label: String,
+    selected: Boolean = false,
+    bold: Boolean = false,
+    italic: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Box(
+        Modifier
+            .height(36.dp)
+            .background(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, RoundedCornerShape(18.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f), RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = if (bold) FontWeight.Bold else FontWeight.Medium,
+            fontStyle = if (italic) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal,
         )
     }
 }

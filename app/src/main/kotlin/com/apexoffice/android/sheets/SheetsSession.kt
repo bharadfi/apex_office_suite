@@ -78,8 +78,8 @@ class SheetsSession private constructor(
 
     fun input(sheet: Int, row: Int, col: Int): String = NativeSheets.nativeInput(handle, sheet, row, col)
 
-    fun setInput(sheet: Int, row: Int, col: Int, text: String): Boolean {
-        snapshot()
+    fun setInput(sheet: Int, row: Int, col: Int, text: String, snapshot: Boolean = true): Boolean {
+        if (snapshot) snapshot()
         val ok = NativeSheets.nativeSetInput(handle, sheet, row, col, text)
         if (ok) dimension.remove(sheet)
         return ok
@@ -98,8 +98,8 @@ class SheetsSession private constructor(
     fun undo(): Boolean = NativeSheets.nativeUndo(handle).also { if (it) dimension.clear() }
     fun redo(): Boolean = NativeSheets.nativeRedo(handle).also { if (it) dimension.clear() }
 
-    fun style(sheet: Int, row: Int, col: Int, prop: Int, value: Int = 0): Boolean {
-        snapshot()
+    fun style(sheet: Int, row: Int, col: Int, prop: Int, value: Int = 0, snapshot: Boolean = true): Boolean {
+        if (snapshot) snapshot()
         return NativeSheets.nativeStyle(handle, sheet, row, col, prop, value)
     }
 

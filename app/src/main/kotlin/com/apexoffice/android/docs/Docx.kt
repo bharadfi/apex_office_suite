@@ -33,6 +33,7 @@ object Docx {
 
     fun read(bytes: ByteArray): DocxResult {
         var documentXml: ByteArray? = null
+        var numberingXml: ByteArray? = null
         val notes = linkedSetOf<String>()
         ZipInputStream(ByteArrayInputStream(bytes)).use { zip ->
             var entry: ZipEntry? = zip.nextEntry
@@ -40,6 +41,7 @@ object Docx {
                 val name = entry.name
                 when {
                     name == "word/document.xml" -> documentXml = zip.readBytes()
+                    name == "word/numbering.xml" -> numberingXml = zip.readBytes()
                     name.startsWith("word/header") || name.startsWith("word/footer") -> notes.add("headers and footers")
                     name.startsWith("word/comments") -> notes.add("comments")
                     name.startsWith("word/footnotes") || name.startsWith("word/endnotes") -> notes.add("footnotes")
@@ -49,6 +51,7 @@ object Docx {
             }
         }
         val xml = documentXml ?: throw IllegalArgumentException("This is not a Word document.")
+        val decimalLists = decimalNumIds(numberingXml)
         val sb = StringBuilder()
         val ops = ArrayList<Op>()
         val parser = Xml.newPullParser()
@@ -61,6 +64,7 @@ object Docx {
         var align = ""
         var heading = 0
         var bullet = false
+        var numbered = false
         var rStart = 0
         var inRun = false
         var bold = false
@@ -83,7 +87,7 @@ object Docx {
         while (event != XmlPullParser.END_DOCUMENT) {
             when (event) {
                 XmlPullParser.START_TAG -> when (parser.name) {
-                    "w:p" -> { pStart = sb.length; align = ""; heading = 0; bullet = false }
+                    "w:p" -> { pStart = sb.length; align = ""; heading = 0; bullet = false; numbered = false }
                     "w:pPr" -> inPPr = true
                     "w:rPr" -> if (inRun) inRPr = true
                     "w:r" -> { inRun = true; rStart = sb.length; bold = false; italic = false; underline = false; strike = false; color = null; size = 0; highlight = null }
@@ -94,9 +98,11 @@ object Docx {
                     "w:drawing", "w:pict" -> { sb.append("[picture]"); notes.add("pictures") }
                     "w:jc" -> if (inPPr) align = parser.getAttributeValue(null, "w:val") ?: ""
                     "w:numPr" -> if (inPPr) bullet = true
+                    "w:numId" -> if (inPPr) { if (parser.getAttributeValue(null, "w:val") in decimalLists) numbered = true }
                     "w:pStyle" -> if (inPPr) {
                         val id = (parser.getAttributeValue(null, "w:val") ?: "").lowercase().replace(" ", "")
-                        if (id.startsWith("listbullet") || id.startsWith("listnumber") || id == "listparagraph") bullet = true
+                        if (id.startsWith("listnumber")) numbered = true
+                        else if (id.startsWith("listbullet") || id == "listparagraph") bullet = true
                         heading = when {
                             id.startsWith("heading") -> id.removePrefix("heading").toIntOrNull()?.coerceIn(1, 3) ?: 0
                             id == "title" -> 1
@@ -138,7 +144,7 @@ object Docx {
                         val end = sb.length
                         if (tableDepth == 0) {
                             if (heading > 0) ops.add(Op("H", pStart, end, heading.toString()))
-                            if (bullet) ops.add(Op("L", pStart, end))
+                            if (numbered) ops.add(Op("N", pStart, end)) else if (bullet) ops.add(Op("L", pStart, end))
                             if (align.isNotEmpty()) ops.add(Op("a", pStart, end, align))
                             sb.append('\n')
                         }
@@ -154,9 +160,9 @@ object Docx {
         for (op in ops) {
             val s = op.start.coerceIn(0, out.length)
             var e = op.end.coerceIn(0, out.length)
-            if (e < s || (e == s && op.kind != "H" && op.kind != "L" && op.kind != "a")) continue
+            if (e < s || (e == s && op.kind != "H" && op.kind != "L" && op.kind != "N" && op.kind != "a")) continue
             // a paragraph span has to include the line break that ends the paragraph
-            if ((op.kind == "L" || op.kind == "a") && e < out.length && out[e] == '\n') e++
+            if ((op.kind == "L" || op.kind == "N" || op.kind == "a") && e < out.length && out[e] == '\n') e++
             when (op.kind) {
                 "b" -> out.setSpan(StyleSpan(Typeface.BOLD), s, e, incl)
                 "i" -> out.setSpan(StyleSpan(Typeface.ITALIC), s, e, incl)
@@ -167,6 +173,7 @@ object Docx {
                 "h" -> highlightColor(op.value)?.let { out.setSpan(BackgroundColorSpan(it), s, e, incl) }
                 "H" -> out.setSpan(HeadingSpan(op.value.toInt()), s, e, incl)
                 "L" -> out.setSpan(BulletSpan(28), s, e, Spanned.SPAN_PARAGRAPH)
+                "N" -> out.setSpan(NumberSpan(), s, e, Spanned.SPAN_PARAGRAPH)
                 "a" -> {
                     val a = when (op.value) {
                         "center" -> Layout.Alignment.ALIGN_CENTER
@@ -178,6 +185,31 @@ object Docx {
             }
         }
         return DocxResult(out, notes.toList())
+    }
+
+    /** numId values whose first level is numbered (not a bullet). */
+    private fun decimalNumIds(xml: ByteArray?): Set<String> {
+        if (xml == null) return emptySet()
+        val formats = HashMap<String, String>()
+        val nums = HashMap<String, String>()
+        val parser = Xml.newPullParser()
+        parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
+        parser.setInput(ByteArrayInputStream(xml), "UTF-8")
+        var abstractId = ""
+        var numId = ""
+        var inFirstLevel = false
+        var event = parser.eventType
+        while (event != XmlPullParser.END_DOCUMENT) {
+            if (event == XmlPullParser.START_TAG) when (parser.name) {
+                "w:abstractNum" -> { abstractId = parser.getAttributeValue(null, "w:abstractNumId") ?: ""; inFirstLevel = false }
+                "w:lvl" -> inFirstLevel = parser.getAttributeValue(null, "w:ilvl") == "0"
+                "w:numFmt" -> if (inFirstLevel && abstractId.isNotEmpty() && abstractId !in formats) formats[abstractId] = parser.getAttributeValue(null, "w:val") ?: ""
+                "w:num" -> numId = parser.getAttributeValue(null, "w:numId") ?: ""
+                "w:abstractNumId" -> if (numId.isNotEmpty()) nums[numId] = parser.getAttributeValue(null, "w:val") ?: ""
+            }
+            event = parser.next()
+        }
+        return nums.filter { (_, abs) -> formats[abs]?.let { it != "bullet" && it != "none" } == true }.keys
     }
 
     private fun highlightColor(name: String): Int? = when (name) {
@@ -226,7 +258,9 @@ object Docx {
         val heading = text.getSpans(ps, maxOf(pe, ps), HeadingSpan::class.java).firstOrNull { text.getSpanStart(it) <= ps || pe == ps }?.level
             ?: text.getSpans(ps, maxOf(pe, ps), HeadingSpan::class.java).firstOrNull()?.level ?: 0
         if (heading in 1..3) props.append("<w:pStyle w:val=\"Heading$heading\"/>")
-        if (text.getSpans(ps, maxOf(pe, ps), BulletSpan::class.java).isNotEmpty()) {
+        if (text.getSpans(ps, maxOf(pe, ps), NumberSpan::class.java).isNotEmpty()) {
+            props.append("<w:pStyle w:val=\"ListParagraph\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr>")
+        } else if (text.getSpans(ps, maxOf(pe, ps), BulletSpan::class.java).isNotEmpty()) {
             props.append("<w:pStyle w:val=\"ListParagraph\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr>")
         }
         text.getSpans(ps, maxOf(pe, ps), AlignmentSpan::class.java).firstOrNull()?.let {
@@ -324,5 +358,8 @@ object Docx {
     private const val NUMBERING = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
         "<w:numbering xmlns:w=\"$W\"><w:abstractNum w:abstractNumId=\"0\"><w:multiLevelType w:val=\"hybridMultilevel\"/>" +
         "<w:lvl w:ilvl=\"0\"><w:start w:val=\"1\"/><w:numFmt w:val=\"bullet\"/><w:lvlText w:val=\"•\"/><w:lvlJc w:val=\"left\"/><w:pPr><w:ind w:left=\"720\" w:hanging=\"360\"/></w:pPr></w:lvl>" +
-        "</w:abstractNum><w:num w:numId=\"1\"><w:abstractNumId w:val=\"0\"/></w:num></w:numbering>"
+        "</w:abstractNum>" +
+        "<w:abstractNum w:abstractNumId=\"1\"><w:multiLevelType w:val=\"hybridMultilevel\"/>" +
+        "<w:lvl w:ilvl=\"0\"><w:start w:val=\"1\"/><w:numFmt w:val=\"decimal\"/><w:lvlText w:val=\"%1.\"/><w:lvlJc w:val=\"left\"/><w:pPr><w:ind w:left=\"720\" w:hanging=\"360\"/></w:pPr></w:lvl>" +
+        "</w:abstractNum><w:num w:numId=\"1\"><w:abstractNumId w:val=\"0\"/></w:num><w:num w:numId=\"2\"><w:abstractNumId w:val=\"1\"/></w:num></w:numbering>"
 }
