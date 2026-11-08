@@ -19,8 +19,8 @@ android {
         applicationId = "com.apexoffice.android"
         minSdk = 31 // Android 12
         targetSdk = 36 // Android 16
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.0"
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
     }
 
@@ -61,4 +61,10 @@ dependencies {
     implementation("androidx.compose.material3:material3-window-size-class")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.core:core-ktx:1.17.0")
+    // PDF signatures: CMS/PKCS#7 verification and certificate parsing
+    implementation("org.bouncycastle:bcprov-jdk18on:1.80")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.80")
+    // on-device OCR (bundled Latin model, no network)
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 }

@@ -1,1 +1,8 @@
-# Stage 1 keeps the default optimiser rules; engine bindings will add keep rules here.
+-keep class org.bouncycastle.** { *; }
+-dontwarn org.bouncycastle.**
+-dontwarn javax.naming.**
+-dontwarn java.beans.**
+-keep class com.google.mlkit.** { *; }
+-keep class com.google.android.gms.internal.mlkit_** { *; }
+-keep class com.google.android.odml.** { *; }
+-dontwarn com.google.mlkit.**
