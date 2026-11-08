@@ -84,6 +84,12 @@ Built and tested for Ubuntu 24.04 based systems such as Zorin OS 18.
   (`chmod +x`) and run it. On Ubuntu 24.04 based systems an AppImage may need
   `--no-sandbox`; the `.deb` sets this up for you.
 
+File-manager previews on Linux: whenever you open or save a document, Apex Office draws
+its first page into the standard thumbnail cache, so GNOME Files (Zorin OS) shows it.
+Files you have not opened in Apex Office keep the generic icon. The `.deb` also installs
+a standard thumbnailer (`apexoffice-thumbnailer`) for file managers that run thumbnailers
+outside a sandbox, such as KDE and XFCE.
+
 ### Android 12 or newer (phone and tablet)
 
 1. Download `ApexOffice-Android-<version>.apk` to your device.
@@ -123,6 +129,7 @@ panes on tablets) and reuses the same Rust spreadsheet engine.
 | **HTML** | `.html` | Sandboxed preview (no scripts, no network) and source editor |
 
 You can create new documents, workbooks, Markdown and HTML files from the home screen.
+The recent-files list shows a small page-1 preview for each file, drawn on the device.
 Everything stays on the device.
 
 Known limits: pictures, tables and headers in Docs files are shown as text or
