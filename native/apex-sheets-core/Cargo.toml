@@ -1,0 +1,20 @@
+[package]
+name = "apex_sheets_core"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+ironcalc = "0.9.1"
+jni = "0.21"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "unwind"
+strip = true

@@ -7,3 +7,5 @@ keystore.properties
 .idea/
 *.iml
 captures/
+native/*/target/
+app/src/main/jniLibs/

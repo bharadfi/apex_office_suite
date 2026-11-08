@@ -89,10 +89,14 @@ fun ApexApp(
     onCloseDocument: () -> Unit,
 ) {
     var destination by remember { mutableStateOf(Destination.Home) }
-    BackHandler(enabled = openDocument != null) { onCloseDocument() }
+    BackHandler(enabled = openDocument != null && openDocument.kind != AppKind.SHEETS) { onCloseDocument() }
 
     if (openDocument != null) {
-        DocumentPlaceholder(openDocument, onCloseDocument)
+        if (openDocument.kind == AppKind.SHEETS) {
+            SheetsScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
+        } else {
+            DocumentPlaceholder(openDocument, onCloseDocument)
+        }
         return
     }
 
@@ -269,7 +273,7 @@ private fun AboutPane(modifier: Modifier) {
         ) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Apex Office for Android", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                Text("Version 0.1.0 (stage 1: app shell)", style = MaterialTheme.typography.bodyMedium)
+                Text("Version 0.2.0 (stage 2: Sheets)", style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(8.dp))
                 Text("App developed by Mr. Falguni Bharadwaj", style = MaterialTheme.typography.bodyLarge)
                 Spacer(Modifier.height(8.dp))
