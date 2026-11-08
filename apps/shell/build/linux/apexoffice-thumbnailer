@@ -1,0 +1,17 @@
+#!/bin/sh
+# freedesktop thumbnailer for Apex Office files.
+# Usage: apexoffice-thumbnailer <input file> <output.png> [size]
+# Draws page 1 with the program's own command line, then hands the PNG to the file manager.
+in="$1"
+out="$2"
+size="${3:-256}"
+[ -n "$in" ] && [ -n "$out" ] || exit 1
+command -v apexoffice >/dev/null 2>&1 || exit 1
+tmp="$(mktemp -d)" || exit 1
+trap 'rm -rf "$tmp"' EXIT
+# pages come out a little larger than the thumbnail (same rule as the Windows handler)
+scale="$(awk -v s="$size" 'BEGIN { v = s / 600; if (v < 0.3) v = 0.3; if (v > 1.5) v = 1.5; printf "%.2f", v }')"
+timeout 40 apexoffice render "$in" --page 1 --out "$tmp" --scale "$scale" >/dev/null 2>&1 || exit 1
+png="$(ls "$tmp"/*.png 2>/dev/null | head -n 1)"
+[ -n "$png" ] || exit 1
+cp "$png" "$out"

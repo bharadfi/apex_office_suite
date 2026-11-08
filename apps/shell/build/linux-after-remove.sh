@@ -17,6 +17,8 @@ if [ -f "$profile" ]; then
   fi
   rm -f "$profile"
 fi
+# the file-manager thumbnailer the post-install step installed
+rm -f /usr/bin/apexoffice-thumbnailer /usr/share/thumbnailers/apexoffice.thumbnailer
 link="/usr/bin/apexoffice"
 # same ownership rule as the post-install: only a link into our install dir is ours
 if [ -L "$link" ]; then

@@ -48,6 +48,15 @@ if [ -d "$shell_new" ]; then
       cp -f "$shell_new/blank.$ext" "$templates_dir/$name" || true
   done
 fi
+# Page-1 thumbnails in the file manager: a freedesktop thumbnailer that calls the apexoffice command.
+thumb_src="$app/resources/thumbnailer"
+if [ -d "$thumb_src" ]; then
+  install -m 0755 "$thumb_src/apexoffice-thumbnailer" /usr/bin/apexoffice-thumbnailer 2>/dev/null ||
+    { cp -f "$thumb_src/apexoffice-thumbnailer" /usr/bin/apexoffice-thumbnailer && chmod 0755 /usr/bin/apexoffice-thumbnailer; } || true
+  mkdir -p /usr/share/thumbnailers
+  install -m 0644 "$thumb_src/apexoffice.thumbnailer" /usr/share/thumbnailers/apexoffice.thumbnailer 2>/dev/null ||
+    cp -f "$thumb_src/apexoffice.thumbnailer" /usr/share/thumbnailers/apexoffice.thumbnailer || true
+fi
 # Expose the apexoffice command line shipped inside the app. Only an absent
 # name, a dead link or a link into our own install dir is taken over; anything
 # else at /usr/bin/apexoffice belongs to another program (genoffice#893).

@@ -789,6 +789,9 @@ const config = {
         from: LINUX_SIDECAR,
         to: 'native/xlsx-sidecar',
       },
+      // page-1 thumbnails in the file manager (freedesktop thumbnailer, installed by the deb post-install step)
+      { from: 'build/linux/apexoffice-thumbnailer', to: 'thumbnailer/apexoffice-thumbnailer' },
+      { from: 'build/linux/apexoffice.thumbnailer', to: 'thumbnailer/apexoffice.thumbnailer' },
       // blank templates for the deb post-install step (/usr/share/templates)
       {
         from: 'build/shell-new',
