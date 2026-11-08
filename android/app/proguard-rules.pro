@@ -1,0 +1,8 @@
+-keep class org.bouncycastle.** { *; }
+-dontwarn org.bouncycastle.**
+-dontwarn javax.naming.**
+-dontwarn java.beans.**
+-keep class com.google.mlkit.** { *; }
+-keep class com.google.android.gms.internal.mlkit_** { *; }
+-keep class com.google.android.odml.** { *; }
+-dontwarn com.google.mlkit.**
