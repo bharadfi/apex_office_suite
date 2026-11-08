@@ -1,4 +1,5 @@
 import { execSync, spawn } from 'node:child_process'
+import { primeLinuxThumbnail } from './linux-thumbnails'
 import {
   cpSync,
   existsSync,
@@ -151,7 +152,7 @@ import {
   readStarredFiles,
   readStarredGroupMap,
   readStarredGroups,
-  recordRecentFile,
+  recordRecentFile as recordRecentFileBase,
   removeRecentFiles,
   removeStarredFiles,
   replaceRecentFile,
@@ -4413,6 +4414,12 @@ const OPEN_DIALOG_EXTENSIONS = [
   'html',
   'htm',
 ]
+
+/** Records a file as recent and, on Linux, caches a page-1 preview for the file manager. */
+function recordRecentFile(filePath: string): void {
+  recordRecentFileBase(filePath)
+  primeLinuxThumbnail(filePath)
+}
 
 function notifyUnsupportedFile(filePath: string): void {
   const ext = extname(filePath).slice(1).toLowerCase() || basename(filePath)
