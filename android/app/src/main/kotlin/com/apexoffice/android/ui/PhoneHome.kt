@@ -242,7 +242,7 @@ fun SettingsPane(modifier: Modifier = Modifier) {
         HorizontalDivider()
         Text("About", style = MaterialTheme.typography.titleMedium)
         Text("Apex Office for Android", fontWeight = FontWeight.SemiBold)
-        Text("Version 1.0.4")
+        Text("Version " + (runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: ""))
         Text("App developed by Mr. Falguni Bharadwaj")
         Text("Everything stays on this device.", color = MaterialTheme.colorScheme.secondary)
     }

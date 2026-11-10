@@ -282,7 +282,8 @@ private fun AboutPane(modifier: Modifier) {
         ) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Apex Office for Android", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                Text("Version 1.0.4", style = MaterialTheme.typography.bodyMedium)
+                val versionContext = androidx.compose.ui.platform.LocalContext.current
+                Text("Version " + (runCatching { val c = versionContext; c.packageManager.getPackageInfo(c.packageName, 0).versionName }.getOrNull() ?: ""), style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(8.dp))
                 Text("App developed by Mr. Falguni Bharadwaj", style = MaterialTheme.typography.bodyLarge)
                 Spacer(Modifier.height(8.dp))
