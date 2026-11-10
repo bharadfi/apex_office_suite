@@ -196,9 +196,9 @@ object SignatureFields {
      */
     private fun glyph(verdict: MarkVerdict): String = when (verdict) {
         MarkVerdict.VALID ->
-            "q 0.86 0 0 0.86 3.7 10.8 cm " + bars("8 46.4 m 42 12 l 94.4 93.6 l", "0 0.70 0.25") + " Q"
+            "q 0.88 0 0 0.88 1.9 10.6 cm " + solid(TICK, "0 0.70 0.25") + " Q"
         MarkVerdict.INVALID ->
-            "q 0.95 0 0 0.95 2 6 cm " + bars("22 22 m 78 78 l 22 78 m 78 22 l", "0.88 0.07 0.07") + " Q"
+            "q 1.15 0 0 1.15 -10.6 -4.3 cm " + solid(CROSS, "0.88 0.07 0.07") + " Q"
         MarkVerdict.UNKNOWN -> {
             val hook = "32 70 m 32 90 68 90 68 70 c 68 55 50 52 50 38 c"
             val dotOuter = "61 14 m 61 20.07 55.07 25 50 25 c 44.93 25 39 20.07 39 14 c 39 7.93 44.93 3 50 3 c 55.07 3 61 7.93 61 14 c f"
@@ -210,7 +210,13 @@ object SignatureFields {
         }
     }
 
-    /** Bold bars with square ends: shadow, black outline, then the colour on top. */
-    private fun bars(path: String, rgb: String): String =
-        "0 J 0 j q 1 0 0 1 6 -6 cm 0 G 25 w $path S Q 0 G 25 w $path S $rgb RG 20 w $path S"
+    /** The tick as one outline: two bold arms with square ends, so the border runs all the way round. */
+    private const val TICK = "0.89 39.37 m 43.67 -3.9 l 102.81 88.2 l 85.99 99 l 40.34 27.91 l 15.11 53.43 l h"
+
+    /** The cross as one outline: two crossing bars, 12 corners. */
+    private const val CROSS = "14.93 70.93 m 29.07 85.07 l 50 64.14 l 70.93 85.07 l 85.07 70.93 l 64.14 50 l 85.07 29.07 l 70.93 14.93 l 50 35.86 l 29.07 14.93 l 14.93 29.07 l 35.86 50 l h"
+
+    /** A filled shape with a black border on every edge and a black shadow to its lower right. */
+    private fun solid(path: String, rgb: String): String =
+        "0 J 0 j q 1 0 0 1 5.6 -5.6 cm 0 g 0 G 4.5 w $path B Q $rgb rg 0 G 4.5 w $path B"
 }
