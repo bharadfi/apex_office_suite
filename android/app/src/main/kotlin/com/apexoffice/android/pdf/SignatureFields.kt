@@ -25,7 +25,12 @@ class FieldMark(
     val page: Int,
     val x0: Float, val y0: Float, val x1: Float, val y1: Float,
     val hasLayers: Boolean,
+    /** a certifying signature (DocMDP): it may say who certified the document once it verifies */
+    val certified: Boolean,
 )
+
+/** What a signature's box shows: its verdict, and the caption that replaces "Signature Not Verified" when it earns one. */
+class SigMark(val verdict: MarkVerdict, val caption: String?)
 
 /**
  * Reads the signature fields from the PDF structure so each can be marked on its page, and builds
@@ -33,12 +38,12 @@ class FieldMark(
  * the desktop app does. The signed file is never changed; verification always reads its own bytes.
  */
 object SignatureFields {
-    private enum class Layer { UNKNOWN, VALID, INVALID }
+    private enum class Layer { UNKNOWN, VALID, INVALID, CAPTION }
     private class Found(val stream: COSStream, val kind: Layer)
 
-    fun locate(context: Context, bytes: ByteArray): List<FieldMark> = try {
+    fun locate(context: Context, bytes: ByteArray, password: String? = null): List<FieldMark> = try {
         PDFBoxResourceLoader.init(context.applicationContext)
-        PDDocument.load(bytes).use { doc -> read(doc) }
+        PDDocument.load(bytes, password ?: "").use { doc -> read(doc) }
     } catch (e: Throwable) {
         emptyList() // encrypted or unusual files: the banner and the Tools sheet still report the signatures
     }
@@ -47,21 +52,28 @@ object SignatureFields {
      * A copy of the file with each verdict layer redrawn to [verdicts] (keyed by the signature's
      * byte range), or null when no signature box has such a layer.
      */
-    fun display(context: Context, bytes: ByteArray, verdicts: Map<List<Long>, MarkVerdict>, out: File): File? = try {
+    fun display(context: Context, bytes: ByteArray, marks: Map<List<Long>, SigMark>, out: File, password: String? = null): File? = try {
         PDFBoxResourceLoader.init(context.applicationContext)
-        PDDocument.load(bytes).use { doc ->
+        PDDocument.load(bytes, password ?: "").use { doc ->
+            // a protected file is unlocked in this copy, which is only ever shown or printed, never written back
+            if (doc.isEncrypted) doc.isAllSecurityToBeRemoved = true
             var changed = false
             eachSignature(doc) { sig, widget, index ->
-                val verdict = verdicts[sig.byteRange.map { it.toLong() }] ?: return@eachSignature
+                val mark = marks[sig.byteRange.map { it.toLong() }] ?: return@eachSignature
+                val verdict = mark.verdict
                 val layers = layersOf(widget)
                 if (layers.isNotEmpty()) {
-                    // the signer's own "?" is the standard unknown mark: leave it exactly as signed
-                    if (verdict == MarkVerdict.UNKNOWN) return@eachSignature
                     val done = HashSet<COSStream>()
                     for (layer in layers) {
                         if (!done.add(layer.stream)) continue
-                        redraw(layer.stream, verdict)
-                        changed = true
+                        if (layer.kind == Layer.CAPTION) {
+                            // the caption names the certifier only once the signature verifies; until then the signer's own words stand
+                            if (mark.caption != null && rewriteCaption(layer.stream, mark.caption)) changed = true
+                        } else if (verdict != MarkVerdict.UNKNOWN) {
+                            // the signer's own "?" is the standard unknown mark: leave it exactly as signed
+                            redraw(layer.stream, verdict)
+                            changed = true
+                        }
                     }
                 } else {
                     val rect = widget.rectangle ?: return@eachSignature
@@ -97,7 +109,7 @@ object SignatureFields {
                 270 -> listOf(fy0, 1 - fx1, fy1, 1 - fx0)
                 else -> listOf(fx0, fy0, fx1, fy1)
             }
-            out.add(FieldMark(br, index, a, b, c, d, hasLayers = layersOf(widget).isNotEmpty()))
+            out.add(FieldMark(br, index, a, b, c, d, hasLayers = layersOf(widget).isNotEmpty(), certified = isCertifying(sig)))
         }
         return out
     }
@@ -142,7 +154,7 @@ object SignatureFields {
         } catch (e: Exception) {
             return null
         }
-        if (head.contains("(Signature Not Verified)")) return null // the caption layer is left as the signer wrote it
+        if (head.contains("(Signature Not Verified)")) return Layer.CAPTION
         return when (Regex("^\\s*% DS([A-Za-z]+)").find(head)?.groupValues?.get(1)) {
             "Unknown" -> Layer.UNKNOWN
             "Valid" -> Layer.VALID
@@ -218,5 +230,57 @@ object SignatureFields {
 
     /** A filled shape with a black border on every edge and a black shadow to its lower right. */
     private fun solid(path: String, rgb: String): String =
-        "0 J 0 j q 1 0 0 1 5.6 -5.6 cm 0 g 0 G 4.5 w $path B Q $rgb rg 0 G 4.5 w $path B"
+        "0 J 0 j q 1 0 0 1 5.25 -5.25 cm 0 g $path f Q $rgb rg 0 G 4.5 w $path B"
+    /** A certifying signature carries a DocMDP reference. */
+    private fun isCertifying(sig: PDSignature): Boolean {
+        val refs = sig.cosObject.getDictionaryObject(COSName.getPDFName("Reference")) as? COSArray ?: return false
+        for (i in 0 until refs.size()) {
+            val ref = refs.getObject(i) as? COSDictionary ?: continue
+            if (ref.getNameAsString(COSName.getPDFName("TransformMethod")) == "DocMDP") return true
+        }
+        return false
+    }
+
+    /** The caption layer with the signer's "(Signature Not Verified)" replaced by [text], on two lines when it holds an address. */
+    private fun rewriteCaption(stream: COSStream, text: String): Boolean {
+        val content = stream.createInputStream().use { it.readBytes() }.toString(Charsets.ISO_8859_1)
+        val bbox = (stream.getDictionaryObject(COSName.BBOX) as? COSArray)?.toFloatArray()
+        val replaced = captionContent(content, text, bbox) ?: return false
+        stream.createOutputStream(COSName.FLATE_DECODE).use { it.write(replaced.toByteArray(Charsets.ISO_8859_1)) }
+        return true
+    }
+
+    private fun captionContent(content: String, text: String, bbox: FloatArray?): String? {
+        if (!content.contains("(Signature Not Verified)") || bbox == null || bbox.size != 4) return null
+        val tf = content.indexOf(" Tf")
+        if (tf < 0) return null
+        val before = content.substring(0, tf).trimEnd().split(Regex("\\s+"))
+        val size = before.lastOrNull()?.toFloatOrNull() ?: return null
+        val font = before.getOrNull(before.size - 2) ?: return null
+        if (!font.startsWith("/")) return null
+        val x0 = minOf(bbox[0], bbox[2])
+        val x1 = maxOf(bbox[0], bbox[2])
+        val y0 = minOf(bbox[1], bbox[3])
+        val y1 = maxOf(bbox[1], bbox[3])
+        val split = text.indexOf(" <")
+        val lines = if (split >= 0) listOf(text.substring(0, split), text.substring(split + 1)) else listOf(text)
+        val longest = maxOf(1, lines.maxOf { it.codePointCount(0, it.length) })
+        // Helvetica averages about 0.6 em per character, capitals and lower case mixed
+        val fitted = maxOf(3f, minOf((x1 - x0 - 4f) / (longest * 0.6f), size))
+        fun escape(line: String) = line.map { ch ->
+            when {
+                ch == '(' || ch == ')' || ch == '\\' -> "\\$ch"
+                ch in ' '..'~' -> ch.toString()
+                else -> "?"
+            }
+        }.joinToString("")
+        val out = StringBuilder("BT\n")
+        lines.forEachIndexed { i, line ->
+            val y = maxOf(y1 - fitted * (i + 1), y0)
+            out.append(font).append(' ').append(String.format(java.util.Locale.US, "%.2f", fitted))
+                .append(" Tf 1 0 0 1 2 ").append(String.format(java.util.Locale.US, "%.2f", y))
+                .append(" Tm (").append(escape(line)).append(") Tj\n")
+        }
+        return out.append("ET\n").toString()
+    }
 }

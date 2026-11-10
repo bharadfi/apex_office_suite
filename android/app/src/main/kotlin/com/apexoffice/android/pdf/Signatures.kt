@@ -33,6 +33,9 @@ class SignatureInfo(
     val coversWholeFile: Boolean,
     val detail: String?,
 ) {
+    /** the signer's e-mail address from the certificate, when it has one */
+    var email: String? = null
+
     /** the four numbers of the signature's /ByteRange; identifies its form field */
     var byteRange: List<Long> = emptyList()
 
@@ -117,6 +120,7 @@ object SignatureVerifier {
                 else -> Verdict.VALID_TRUSTED
             }
             SignatureInfo(i, commonName(holder.subject), commonName(holder.issuer), time, fingerprint, verdict, whole, if (verdict == Verdict.INVALID) (why ?: "The signature does not match the signed bytes") else null)
+                .also { it.email = emailOf(holder) }
         } catch (e: Exception) {
             unreadable(i, e.message ?: "Signature format not supported")
         }
@@ -153,6 +157,17 @@ object SignatureVerifier {
         }
     } catch (e: Exception) {
         false
+    }
+
+    /** The e-mail address in the certificate: the subject alternative name, else the subject's E field. */
+    private fun emailOf(holder: X509CertificateHolder): String? = try {
+        val alt = holder.extensions?.getExtensionParsedValue(org.bouncycastle.asn1.x509.Extension.subjectAlternativeName)
+        val fromAlt = alt?.let { org.bouncycastle.asn1.x509.GeneralNames.getInstance(it).names }
+            ?.firstOrNull { it.tagNo == org.bouncycastle.asn1.x509.GeneralName.rfc822Name }
+            ?.name?.toString()
+        fromAlt ?: holder.subject.getRDNs(BCStyle.E).firstOrNull()?.first?.value?.toString()
+    } catch (e: Exception) {
+        null
     }
 
     private val WHITESPACE = setOf(0x0A.toByte(), 0x0D.toByte(), 0x20.toByte(), 0x00.toByte())

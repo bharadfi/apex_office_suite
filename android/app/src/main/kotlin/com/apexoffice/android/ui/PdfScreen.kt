@@ -149,11 +149,11 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
 
     // where each signature sits on its page; read once per file, coloured by the current verdicts
     var fieldMarks by remember { mutableStateOf<List<com.apexoffice.android.pdf.FieldMark>>(emptyList()) }
-    LaunchedEffect(uri) {
+    LaunchedEffect(uri, password) {
         fieldMarks = withContext(Dispatchers.Default) {
             runCatching {
                 val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: ByteArray(0)
-                com.apexoffice.android.pdf.SignatureFields.locate(context, bytes)
+                com.apexoffice.android.pdf.SignatureFields.locate(context, bytes, password)
             }.getOrDefault(emptyList())
         }
     }
@@ -165,24 +165,34 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
     }
 
     // signed boxes carry the signer's own "unknown" mark; show the real verdict in its place, in the page itself
-    val layerVerdicts = remember(signatures) {
-        signatures.associate { it.byteRange to when (it.verdict) {
-            Verdict.VALID_TRUSTED -> com.apexoffice.android.pdf.MarkVerdict.VALID
-            Verdict.INVALID -> com.apexoffice.android.pdf.MarkVerdict.INVALID
-            else -> com.apexoffice.android.pdf.MarkVerdict.UNKNOWN
-        } }
+    val sigMarks = remember(signatures, fieldMarks) {
+        signatures.associate { sig ->
+            val verdict = when (sig.verdict) {
+                Verdict.VALID_TRUSTED -> com.apexoffice.android.pdf.MarkVerdict.VALID
+                Verdict.INVALID -> com.apexoffice.android.pdf.MarkVerdict.INVALID
+                else -> com.apexoffice.android.pdf.MarkVerdict.UNKNOWN
+            }
+            // "Document certified by ..." replaces "Signature Not Verified" only once the signature is valid and trusted
+            val certified = fieldMarks.any { it.byteRange == sig.byteRange && it.certified }
+            val named = sig.signer.isNotBlank() && sig.signer != "Unknown signer"
+            val caption = if (verdict == com.apexoffice.android.pdf.MarkVerdict.VALID && certified && named) {
+                "Document certified by ${sig.signer}" + (sig.email?.let { " <$it>." } ?: ".")
+            } else null
+            sig.byteRange to com.apexoffice.android.pdf.SigMark(verdict, caption)
+        }
     }
+
     var displayFile by remember { mutableStateOf<File?>(null) }
-    LaunchedEffect(uri, password, fieldMarks, layerVerdicts) {
-        if (fieldMarks.isEmpty() || layerVerdicts.isEmpty()) return@LaunchedEffect
+    LaunchedEffect(uri, password, fieldMarks, sigMarks) {
+        if (fieldMarks.isEmpty() || sigMarks.isEmpty()) return@LaunchedEffect
         val result = withContext(Dispatchers.IO) {
             runCatching {
                 val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@runCatching null
-                val copy = com.apexoffice.android.pdf.SignatureFields.display(context, bytes, layerVerdicts, File(context.cacheDir, "display-${System.nanoTime()}.pdf"))
+                val copy = com.apexoffice.android.pdf.SignatureFields.display(context, bytes, sigMarks, File(context.cacheDir, "display-${System.nanoTime()}.pdf"), password)
                 if (copy == null) {
                     // nothing to redraw (for example the signer's own "?" stands): show the file exactly as it is
                     if (displayFile == null) null else (PdfDoc.open(context.contentResolver, uri, context.cacheDir, password) as? OpenResult.Ok)?.doc to null as File?
-                } else (PdfDoc.openFile(copy, password) as? OpenResult.Ok)?.doc to copy
+                } else (PdfDoc.openFile(copy, null) as? OpenResult.Ok)?.doc to copy
             }.getOrNull()
         }
         if (result?.first != null) {
