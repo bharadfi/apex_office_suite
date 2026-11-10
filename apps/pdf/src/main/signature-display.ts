@@ -18,13 +18,14 @@ export function verdictOf(info: Pick<PdfSignatureInfo, 'status'>): Verdict {
 }
 
 /**
- * The line a certifying signature that verifies writes in place of the signer's "Signature Not
- * Verified" caption, or undefined when the signature has no such claim to make.
+ * The line a certifying signature that is valid and trusted writes in place of the signer's
+ * "Signature Not Verified" caption, or undefined when the signature has no such claim to make.
  */
 export function certifiedCaption(
   info: Pick<PdfSignatureInfo, 'status' | 'certifiedLevel' | 'signer' | 'signerName'>,
 ): string | undefined {
-  const verifies = info.status === 'valid' || info.status === 'untrusted'
+  // only a signature that verifies AND whose signer is trusted may speak for the document; until then the signer's own "Signature Not Verified" stands
+  const verifies = info.status === 'valid'
   const name = info.signer?.commonName ?? info.signerName
   if (!info.certifiedLevel || !verifies || !name) return undefined
   return info.signer?.email

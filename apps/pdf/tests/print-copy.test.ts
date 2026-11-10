@@ -100,9 +100,11 @@ describe('verdictOf and certifiedCaption', () => {
     expect(
       certifiedCaption({ ...base, status: 'valid', signer: signer({ email: 'a@b.org' }) }),
     ).toBe('Document certified by Alice <a@b.org>.')
-    expect(certifiedCaption({ ...base, status: 'untrusted', signer: signer() })).toBe(
+    expect(certifiedCaption({ ...base, status: 'valid', signer: signer() })).toBe(
       'Document certified by Alice.',
     )
+    // until the signer is trusted the signer's own "Signature Not Verified" stands
+    expect(certifiedCaption({ ...base, status: 'untrusted', signer: signer() })).toBeUndefined()
   })
 
   it('names no one for an ordinary signature, a broken one, or one with no name', () => {

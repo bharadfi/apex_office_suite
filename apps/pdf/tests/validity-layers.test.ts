@@ -144,7 +144,7 @@ describe('markContent', () => {
     expect(tick).toContain('0.89 39.37 m 43.67 -3.9 l 102.81 88.2 l')
     expect(tick).toContain('0 0.70 0.25 rg') // green fill
     expect(tick).toContain('0 G 4.5 w') // black border all round
-    expect(tick).toContain('1 0 0 1 5.6 -5.6 cm') // shadow to the lower right
+    expect(tick).toContain('1 0 0 1 5.25 -5.25 cm') // shadow to the lower right
     const cross = markContent('invalid', [0, 0, 100, 100])
     expect(cross).toContain('14.93 70.93 m 29.07 85.07 l 50 64.14 l')
     expect(cross).toContain('0.88 0.07 0.07 rg') // red fill

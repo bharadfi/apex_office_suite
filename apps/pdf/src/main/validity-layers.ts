@@ -144,7 +144,7 @@ const DOT_INNER =
 
 /** A filled shape with a black border on every edge and a black shadow to its lower right */
 const solid = (path: string, rgb: string): string =>
-  `0 J 0 j q 1 0 0 1 5.6 -5.6 cm 0 g 0 G 4.5 w ${path} B Q ${rgb} rg 0 G 4.5 w ${path} B`
+  `0 J 0 j q 1 0 0 1 5.25 -5.25 cm 0 g ${path} f Q ${rgb} rg 0 G 4.5 w ${path} B`
 
 /**
  * The three standard marks on a 100 x 100 square, in the style every reader uses: a bold colour

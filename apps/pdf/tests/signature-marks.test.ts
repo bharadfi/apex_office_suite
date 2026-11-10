@@ -56,15 +56,13 @@ describe('marksForPage', () => {
     expect(marksForPage([certified({ pageIndex: -1 })], 0)).toEqual([])
   })
 
-  it('names the certifier of a certified signature that verifies', () => {
+  it('names the certifier of a certified signature that is valid and trusted', () => {
     expect(marksForPage([certified()], 0)[0]!.certifiedBy).toEqual({
       name: 'Alice',
       email: 'alice@example.org',
     })
-    // intact but not trusted yet still says who certified it
-    expect(
-      marksForPage([certified({ status: 'untrusted', trusted: false })], 0)[0]!.certifiedBy,
-    ).toEqual({ name: 'Alice', email: 'alice@example.org' })
+    // intact but not trusted yet: the signer's own "Signature Not Verified" stands, nothing is certified
+    expect(marksForPage([certified({ status: 'untrusted', trusted: false })], 0)).toEqual([])
   })
 
   it('leaves the email out when the certificate has none', () => {

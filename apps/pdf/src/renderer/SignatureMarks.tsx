@@ -17,8 +17,7 @@ const CAPTION_ROOM = 22
 /**
  * The captions for one page. The verdict mark itself (tick, cross or question mark) is drawn in
  * the displayed and printed copy of the file, beneath the signer's text, so it is not drawn here.
- * A certifying signature whose content still verifies (valid, or intact but not yet trusted)
- * also says who certified the document; a box with its own validity layers gets that line in the
+ * A certifying signature that is valid and trusted also says who certified the document; a box with its own validity layers gets that line in the
  * same copy instead.
  */
 export function marksForPage(
@@ -29,7 +28,7 @@ export function marksForPage(
   for (const sig of signatures) {
     if (sig.kind !== 'signature' || sig.pageIndex !== pageIndex || !sig.rect) continue
     if (sig.validityLayer) continue
-    const verifies = sig.status === 'valid' || sig.status === 'untrusted'
+    const verifies = sig.status === 'valid'
     const name = sig.signer?.commonName ?? sig.signerName
     if (!sig.certifiedLevel || !verifies || !name) continue
     marks.push({
