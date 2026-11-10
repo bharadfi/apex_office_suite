@@ -1,4 +1,5 @@
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
+import { readFileBytes, type PdfFileChunkApi } from './file-bytes'
 import { DOC_OPTS } from './view-config'
 
 export function loadPdfForView(bytes: Uint8Array, password?: string) {
@@ -37,4 +38,21 @@ export async function displayBytesFor(
   } catch {
     return bytes
   }
+}
+
+/**
+ * The bytes to show after the user changed whom they trust: the freshly redrawn copy when there is
+ * one, otherwise the file exactly as it is on disk. "Otherwise" is what a revoked signer leaves
+ * (nothing to redraw: the signer's own mark and words stand again), so an earlier tick or
+ * "Document certified by ..." line must not stay on screen.
+ */
+export async function displayBytesAfterTrustChange(
+  api: PdfFileChunkApi & {
+    signatureDisplayCopy(path: string, password?: string): Promise<ArrayBuffer | null>
+  },
+  path: string,
+  password?: string,
+): Promise<Uint8Array> {
+  const copy = await api.signatureDisplayCopy(path, password).catch(() => null)
+  return copy ? new Uint8Array(copy) : readFileBytes(api, path)
 }

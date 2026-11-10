@@ -142,9 +142,13 @@ const DOT_OUTER =
 const DOT_INNER =
   '57.5 14 m 57.5 18.14 54.14 21.5 50 21.5 c 45.86 21.5 42.5 18.14 42.5 14 c 42.5 9.86 45.86 6.5 50 6.5 c 54.14 6.5 57.5 9.86 57.5 14 c f'
 
-/** A filled shape with a black border on every edge and a black shadow to its lower right */
-const solid = (path: string, rgb: string): string =>
-  `0 J 0 j q 1 0 0 1 5.25 -5.25 cm 0 g ${path} f Q ${rgb} rg 0 G 4.5 w ${path} B`
+/**
+ * A filled shape with a black border on every edge and a black shadow to its lower right. The shadow
+ * offset is given in the shape's own units: each mark is drawn at its own scale, so the offsets are
+ * chosen to leave the same thin shadow on the page for the tick, the cross and the question mark.
+ */
+const solid = (path: string, rgb: string, shadow: number): string =>
+  `0 J 0 j q 1 0 0 1 ${shadow} ${-shadow} cm 0 g ${path} f Q ${rgb} rg 0 G 4.5 w ${path} B`
 
 /**
  * The three standard marks on a 100 x 100 square, in the style every reader uses: a bold colour
@@ -153,13 +157,13 @@ const solid = (path: string, rgb: string): string =>
 function glyph(verdict: Verdict): string {
   switch (verdict) {
     case 'valid':
-      return `q 0.88 0 0 0.88 1.9 10.6 cm ${solid(TICK, '0 0.70 0.25')} Q`
+      return `q 0.88 0 0 0.88 1.9 10.6 cm ${solid(TICK, '0 0.70 0.25', 5.1)} Q`
     case 'invalid':
-      return `q 1.15 0 0 1.15 -10.6 -4.3 cm ${solid(CROSS, '0.88 0.07 0.07')} Q`
+      return `q 1.15 0 0 1.15 -10.6 -4.3 cm ${solid(CROSS, '0.88 0.07 0.07', 4.4)} Q`
     case 'unknown':
       return (
         'q 0.92 0 0 0.92 4 6 cm 1 J 1 j ' +
-        `q 1 0 0 1 5 -5 cm 0 G 0 g 20 w ${HOOK} S ${DOT_OUTER} Q ` +
+        `q 1 0 0 1 2.7 -2.7 cm 0 G 0 g 20 w ${HOOK} S ${DOT_OUTER} Q ` +
         `0.15 0.12 0 RG 20 w ${HOOK} S 1 0.80 0 RG 12 w ${HOOK} S ` +
         `0.15 0.12 0 rg ${DOT_OUTER} 1 0.80 0 rg ${DOT_INNER} Q`
       )

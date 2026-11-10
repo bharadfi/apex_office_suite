@@ -252,7 +252,7 @@ import {
 import type { PageSize, FitMode } from './view-config'
 import { useVisibleSet, PdfPage, MarkupOverlay } from './PdfPage'
 import { probePageGeometry } from './page-probe'
-import { displayBytesFor, loadPdfForView } from './open-document'
+import { displayBytesAfterTrustChange, displayBytesFor, loadPdfForView } from './open-document'
 import { PdfThumb, ThumbPendingOverlay } from './PdfThumb'
 import type { ThumbMenu } from './PdfThumb'
 import { SignDropOverlay, signPlaceK, imagePlaceK, staticFormFillPlaceK } from './SignDropOverlay'
@@ -7492,19 +7492,34 @@ export default function App() {
         .listDigitalSignatures(filePath, diskPasswordRef.current ?? undefined)
         .catch(() => []),
     )
-    await refreshDisplayCopy()
+    await refreshDisplayCopy(true)
   }
   /**
    * Swap in a freshly redrawn display copy (same pages, new verdict marks) without touching the
-   * unsaved edits: only the picture of the signature boxes changes.
+   * unsaved edits: only the picture of the signature boxes changes. When a trust has just been
+   * changed and nothing is left to redraw (a revoked signer: the signer's own marks and words stand
+   * again), the file is shown exactly as signed, so no earlier tick or certified line stays behind.
    */
-  const refreshDisplayCopy = async (): Promise<void> => {
+  const refreshDisplayCopy = async (restoreWhenNone = false): Promise<void> => {
     if (!doc || !filePath) return
-    const copy = await window.pdfApi
-      .signatureDisplayCopy(filePath, diskPasswordRef.current ?? undefined)
-      .catch(() => null)
-    if (!copy) return
-    const task = loadPdfForView(new Uint8Array(copy), passwordRef.current)
+    let shown: Uint8Array
+    if (restoreWhenNone) {
+      try {
+        shown = await displayBytesAfterTrustChange(
+          window.pdfApi,
+          filePath,
+          diskPasswordRef.current ?? undefined,
+        )
+      } catch {
+        return
+      }
+    } else {
+      const copy = await window.pdfApi
+        .signatureDisplayCopy(filePath, diskPasswordRef.current ?? undefined)
+        .catch(() => null)
+      if (!copy) return
+      shown = new Uint8Array(copy)
+    }    const task = loadPdfForView(shown, passwordRef.current)
     let next: PDFDocumentProxy
     try {
       next = await task.promise

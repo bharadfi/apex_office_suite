@@ -7,7 +7,7 @@ import { decryptDocument } from '../src/main/pdf-crypt'
 
 const { getDocument } = vi.hoisted(() => ({ getDocument: vi.fn() }))
 vi.mock('pdfjs-dist/legacy/build/pdf.mjs', () => ({ getDocument }))
-import { loadPdfForView } from '../src/renderer/open-document'
+import { displayBytesAfterTrustChange, loadPdfForView } from '../src/renderer/open-document'
 
 // A real transferable boundary, like PDF.js handing document data to its worker.
 // The reader itself is not needed to exercise the caller's retained bytes.
@@ -70,5 +70,36 @@ describe('document loading retains source bytes for the open pipeline', () => {
     await expect(opened.promise).rejects.toBe(error)
     expect(getDocument.mock.calls[0][0].password).toBe('incorrect')
     getDocument.mockReset()
+  })
+})
+
+describe('what is shown after the user changes whom they trust', () => {
+  const original = new Uint8Array([1, 2, 3, 4, 5])
+  const api = (copy: ArrayBuffer | null | Error) => ({
+    signatureDisplayCopy: vi.fn(async () => {
+      if (copy instanceof Error) throw copy
+      return copy
+    }),
+    readFileChunk: vi.fn(async (_path: string, start: number, end: number) => ({
+      data: original.slice(start, end),
+      fileSize: original.length,
+    })),
+  })
+
+  it('shows the redrawn copy when a signer was just trusted', async () => {
+    const copy = new Uint8Array([9, 9, 9]).buffer
+    expect(await displayBytesAfterTrustChange(api(copy), '/a.pdf', 'pw')).toEqual(
+      new Uint8Array([9, 9, 9]),
+    )
+  })
+
+  it('shows the file exactly as signed when trust was revoked and nothing is left to redraw', async () => {
+    const fake = api(null)
+    expect(await displayBytesAfterTrustChange(fake, '/a.pdf', 'pw')).toEqual(original)
+    expect(fake.signatureDisplayCopy).toHaveBeenCalledWith('/a.pdf', 'pw')
+  })
+
+  it('also falls back to the file as it is when the copy cannot be built', async () => {
+    expect(await displayBytesAfterTrustChange(api(new Error('boom')), '/a.pdf')).toEqual(original)
   })
 })
