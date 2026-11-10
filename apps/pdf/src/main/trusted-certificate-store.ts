@@ -1,4 +1,5 @@
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
+import { atomicWriteFile } from '@genoffice/electron-utils/atomic-write'
+import { mkdir, readFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import type { TrustedCertificate } from '../shared/ipc'
 
@@ -70,10 +71,12 @@ export async function loadTrusted(filePath: string): Promise<TrustedCertificate[
   }
 }
 
-/** Atomic write (tmp + rename) so a crash mid-write can't corrupt the list */
+/**
+ * Atomic write so a crash mid-write can't corrupt the list. The shared writer also retries the
+ * transient Windows rename locks and falls back to writing in place where a folder refuses a
+ * rename over an existing file (an encrypted profile folder reports EXDEV), so a trust is never lost.
+ */
 export async function saveTrusted(filePath: string, list: TrustedCertificate[]): Promise<void> {
   await mkdir(dirname(filePath), { recursive: true })
-  const tmp = `${filePath}.${process.pid}.tmp`
-  await writeFile(tmp, JSON.stringify(list))
-  await rename(tmp, filePath)
+  await atomicWriteFile(filePath, Buffer.from(JSON.stringify(list)))
 }

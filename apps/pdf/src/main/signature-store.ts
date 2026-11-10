@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
+import { atomicWriteFile } from '@genoffice/electron-utils/atomic-write'
+import { mkdir, readFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import type { SavedSignature, SignatureData } from '../shared/ipc'
 
@@ -88,10 +89,8 @@ export async function loadSignatures(filePath: string): Promise<SavedSignature[]
   }
 }
 
-/** Atomic write (tmp + rename) so a crash mid-write can't corrupt the saved list */
+/** Atomic write (shared writer: retries rename locks, falls back to an in-place write) so a crash mid-write can't corrupt the saved list */
 export async function saveSignatures(filePath: string, list: SavedSignature[]): Promise<void> {
   await mkdir(dirname(filePath), { recursive: true })
-  const tmp = `${filePath}.${process.pid}.tmp`
-  await writeFile(tmp, JSON.stringify(list))
-  await rename(tmp, filePath)
+  await atomicWriteFile(filePath, Buffer.from(JSON.stringify(list)))
 }
