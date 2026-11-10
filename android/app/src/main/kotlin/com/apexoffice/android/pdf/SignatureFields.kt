@@ -51,12 +51,24 @@ object SignatureFields {
         PDFBoxResourceLoader.init(context.applicationContext)
         PDDocument.load(bytes).use { doc ->
             var changed = false
-            eachSignature(doc) { sig, widget, _ ->
+            eachSignature(doc) { sig, widget, index ->
                 val verdict = verdicts[sig.byteRange.map { it.toLong() }] ?: return@eachSignature
-                val done = HashSet<COSStream>()
-                for (layer in layersOf(widget)) {
-                    if (!done.add(layer.stream)) continue
-                    redraw(layer.stream, verdict)
+                val layers = layersOf(widget)
+                if (layers.isNotEmpty()) {
+                    // the signer's own "?" is the standard unknown mark: leave it exactly as signed
+                    if (verdict == MarkVerdict.UNKNOWN) return@eachSignature
+                    val done = HashSet<COSStream>()
+                    for (layer in layers) {
+                        if (!done.add(layer.stream)) continue
+                        redraw(layer.stream, verdict)
+                        changed = true
+                    }
+                } else {
+                    val rect = widget.rectangle ?: return@eachSignature
+                    if (rect.width < 4f || rect.height < 4f) return@eachSignature
+                    val own = widget.appearance?.normalAppearance?.takeIf { it.isStream }?.appearanceStream?.cosObject
+                    if (own != null) drawOnAppearance(own, verdict)
+                    else drawOnPage(doc, index, rect.lowerLeftX, rect.lowerLeftY, rect.width, rect.height, verdict)
                     changed = true
                 }
             }
@@ -142,47 +154,53 @@ object SignatureFields {
     private fun redraw(stream: COSStream, verdict: MarkVerdict) {
         val bbox = (stream.getDictionaryObject(COSName.BBOX) as? COSArray)?.toFloatArray()
         val box = if (bbox != null && bbox.size == 4) bbox else floatArrayOf(0f, 0f, 100f, 100f)
-        stream.createOutputStream(COSName.FLATE_DECODE).use { it.write(content(verdict, box).toByteArray(Charsets.ISO_8859_1)) }
-        val state = { alpha: Float ->
-            COSDictionary().apply {
-                setItem(COSName.TYPE, COSName.getPDFName("ExtGState"))
-                setFloat(COSName.getPDFName("ca"), alpha)
-                setFloat(COSName.getPDFName("CA"), alpha)
-            }
+        val x = minOf(box[0], box[2])
+        val y = minOf(box[1], box[3])
+        stream.createOutputStream(COSName.FLATE_DECODE).use {
+            it.write(placed(verdict, x, y, Math.abs(box[2] - box[0]), Math.abs(box[3] - box[1])).toByteArray(Charsets.ISO_8859_1))
         }
-        val resources = COSDictionary().apply {
-            setItem(COSName.getPDFName("ExtGState"), COSDictionary().apply {
-                setItem(COSName.getPDFName("DSA"), state(0.28f))
-                setItem(COSName.getPDFName("DSB"), state(1f))
-            })
-            if (verdict == MarkVerdict.UNKNOWN) {
-                setItem(COSName.FONT, COSDictionary().apply {
-                    setItem(COSName.getPDFName("DSF"), COSDictionary().apply {
-                        setItem(COSName.TYPE, COSName.FONT)
-                        setItem(COSName.SUBTYPE, COSName.getPDFName("Type1"))
-                        setItem(COSName.BASE_FONT, COSName.getPDFName("Helvetica-Bold"))
-                    })
-                })
-            }
-        }
-        stream.setItem(COSName.RESOURCES, resources)
+        stream.setItem(COSName.RESOURCES, COSDictionary())
     }
 
-    /** Adobe lays a verdict layer out on a 100 x 100 square: a translucent round badge holding the glyph. */
-    private fun content(verdict: MarkVerdict, bbox: FloatArray): String {
-        val (marker, rgb, glyph) = when (verdict) {
-            MarkVerdict.VALID -> Triple("% DSValid", "0.0 0.5 0.18", "9 w 30 50 m 45 34 l 72 68 l S")
-            MarkVerdict.INVALID -> Triple("% DSInvalid", "0.75 0.1 0.1", "9 w 33 33 m 67 67 l S 33 67 m 67 33 l S")
-            MarkVerdict.UNKNOWN -> Triple("% DSUnknown", "0.75 0.38 0.0", "BT /DSF 62 Tf 31 30 Td (?) Tj ET")
+    /** A box with an appearance but no verdict layer: the mark is added on top of that appearance. */
+    private fun drawOnAppearance(stream: COSStream, verdict: MarkVerdict) {
+        val bbox = (stream.getDictionaryObject(COSName.BBOX) as? COSArray)?.toFloatArray()
+        val box = if (bbox != null && bbox.size == 4) bbox else floatArrayOf(0f, 0f, 100f, 100f)
+        val existing = stream.createInputStream().use { it.readBytes() }
+        val mark = placed(verdict, minOf(box[0], box[2]), minOf(box[1], box[3]), Math.abs(box[2] - box[0]), Math.abs(box[3] - box[1]))
+        stream.createOutputStream(COSName.FLATE_DECODE).use {
+            it.write(existing)
+            it.write("\n".toByteArray())
+            it.write(mark.toByteArray(Charsets.ISO_8859_1))
         }
-        val sx = Math.abs(bbox[2] - bbox[0]) / 100f
-        val sy = Math.abs(bbox[3] - bbox[1]) / 100f
-        return listOf(
-            marker,
-            "q $sx 0 0 $sy ${minOf(bbox[0], bbox[2])} ${minOf(bbox[1], bbox[3])} cm 1 J 1 j",
-            "/DSA gs $rgb rg 94 50 m 94 74.3 74.3 94 50 94 c 25.7 94 6 74.3 6 50 c 6 25.7 25.7 6 50 6 c 74.3 6 94 25.7 94 50 c f",
-            "/DSB gs $rgb RG $rgb rg $glyph",
-            "Q",
-        ).joinToString("") { "$it\n" }
+    }
+
+    /** A box with no appearance at all: the mark is written into the page instead. */
+    private fun drawOnPage(doc: PDDocument, index: Int, x: Float, y: Float, w: Float, h: Float, verdict: MarkVerdict) {
+        val page = doc.getPage(index)
+        com.tom_roush.pdfbox.pdmodel.PDPageContentStream(
+            doc, page, com.tom_roush.pdfbox.pdmodel.PDPageContentStream.AppendMode.APPEND, true, true,
+        ).use { it.appendRawCommands(placed(verdict, x, y, w, h)) }
+    }
+
+    /** The mark drawn at its natural proportions, centred in the box. */
+    private fun placed(verdict: MarkVerdict, x: Float, y: Float, w: Float, h: Float): String {
+        val s = minOf(w, h) / 100f
+        return "q $s 0 0 $s ${x + (w - 100f * s) / 2f} ${y + (h - 100f * s) / 2f} cm 1 J 1 j\n${glyph(verdict)}\nQ\n"
+    }
+
+    /**
+     * The three Adobe-style marks, plain (no badge) on a 100 x 100 square: a green tick, a red cross
+     * and, where a box has no layer of its own, the yellow question mark with a dark outline.
+     */
+    private fun glyph(verdict: MarkVerdict): String = when (verdict) {
+        MarkVerdict.VALID ->
+            "0.0 0.40 0.12 RG 17 w 18 52 m 40 28 l 84 80 l S 0.10 0.70 0.25 RG 10 w 18 52 m 40 28 l 84 80 l S"
+        MarkVerdict.INVALID ->
+            "0.50 0.04 0.04 RG 17 w 20 20 m 80 80 l S 20 80 m 80 20 l S 0.88 0.10 0.10 RG 10 w 20 20 m 80 80 l S 20 80 m 80 20 l S"
+        MarkVerdict.UNKNOWN ->
+            "0.15 0.12 0 RG 20 w 32 70 m 32 90 68 90 68 70 c 68 55 50 52 50 38 c S 1 0.80 0 RG 12 w 32 70 m 32 90 68 90 68 70 c 68 55 50 52 50 38 c S " +
+                "0.15 0.12 0 rg 61 14 m 61 20.07 55.07 25 50 25 c 44.93 25 39 20.07 39 14 c 39 7.93 44.93 3 50 3 c 55.07 3 61 7.93 61 14 c f " +
+                "1 0.80 0 rg 57.5 14 m 57.5 18.14 54.14 21.5 50 21.5 c 45.86 21.5 42.5 18.14 42.5 14 c 42.5 9.86 45.86 6.5 50 6.5 c 54.14 6.5 57.5 9.86 57.5 14 c f"
     }
 }

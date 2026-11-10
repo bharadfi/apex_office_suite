@@ -172,17 +172,25 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
             else -> com.apexoffice.android.pdf.MarkVerdict.UNKNOWN
         } }
     }
+    var displayFile by remember { mutableStateOf<File?>(null) }
     LaunchedEffect(uri, password, fieldMarks, layerVerdicts) {
-        if (fieldMarks.none { it.hasLayers } || layerVerdicts.isEmpty()) return@LaunchedEffect
-        val reopened = withContext(Dispatchers.IO) {
+        if (fieldMarks.isEmpty() || layerVerdicts.isEmpty()) return@LaunchedEffect
+        val result = withContext(Dispatchers.IO) {
             runCatching {
                 val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@runCatching null
                 val copy = com.apexoffice.android.pdf.SignatureFields.display(context, bytes, layerVerdicts, File(context.cacheDir, "display-${System.nanoTime()}.pdf"))
-                    ?: return@runCatching null
-                (PdfDoc.openFile(copy, password) as? OpenResult.Ok)?.doc.also { copy.delete() }
+                if (copy == null) {
+                    // nothing to redraw (for example the signer's own "?" stands): show the file exactly as it is
+                    if (displayFile == null) null else (PdfDoc.open(context.contentResolver, uri, context.cacheDir, password) as? OpenResult.Ok)?.doc to null as File?
+                } else (PdfDoc.openFile(copy, password) as? OpenResult.Ok)?.doc to copy
             }.getOrNull()
         }
-        if (reopened != null) doc = reopened else Unit
+        if (result?.first != null) {
+            val old = displayFile
+            doc = result.first
+            displayFile = result.second
+            old?.delete()
+        }
     }
 
     val listState = rememberLazyListState()
@@ -228,7 +236,7 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
                                     ocrBusy = false
                                 }
                             }
-                            ToolButton("⎙", "Print", enabled = doc != null) { showTools = false; print(context, uri, name) }
+                            ToolButton("⎙", "Print", enabled = doc != null) { showTools = false; print(context, uri, name, displayFile) }
                             ToolButton("⇪", "Share") {
                                 showTools = false
                                 val send = Intent(Intent.ACTION_SEND).apply {
@@ -308,7 +316,7 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
                 subtitle = doc?.let { "Page ${currentPage + 1} of ${it.pageCount}" },
                 onBack = onClose,
                 actions = {
-                    BarAction("⎙", "Print", { print(context, uri, name) }, enabled = doc != null)
+                    BarAction("⎙", "Print", { print(context, uri, name, displayFile) }, enabled = doc != null)
                     BarAction("⋮", "Tools", { toolsTab = "Tools"; showTools = true })
                 },
             )
@@ -497,22 +505,13 @@ private fun PageView(doc: PdfDoc, index: Int, renderWidth: Int, displayWidth: an
         for (m in marks) {
             val w = displayWidth * (m.x1 - m.x0)
             val h = height * (m.y1 - m.y0)
-            val (tone, glyph) = markStyle(m.verdict)
             Box(
                 Modifier
                     .offset(x = displayWidth * m.x0, y = height * m.y0)
                     .size(w, h)
                     .clickable(onClick = onMark),
                 contentAlignment = Alignment.Center,
-            ) {
-                val badge = minOf(w, h, 56.dp)
-                // a box whose own verdict layer is redrawn in the page needs no second mark: tap area only
-                if (!m.hasLayers) Box(
-                    Modifier.size(badge).background(tone, androidx.compose.foundation.shape.CircleShape)
-                        .border(2.dp, Color.White, androidx.compose.foundation.shape.CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) { Text(glyph, color = Color.White, fontWeight = FontWeight.Bold, fontSize = (badge.value * 0.55f).sp) }
-            }
+            ) {}
         }
     }
 }
@@ -552,7 +551,7 @@ private fun SignatureCard(sig: SignatureInfo, trusted: Boolean, onTrust: () -> U
     }
 }
 
-private fun print(context: Context, uri: Uri, name: String) {
+private fun print(context: Context, uri: Uri, name: String, shown: File?) {
     val manager = context.getSystemService(Context.PRINT_SERVICE) as PrintManager
     manager.print(name, object : PrintDocumentAdapter() {
         override fun onLayout(old: PrintAttributes?, new: PrintAttributes?, cancel: CancellationSignal?, callback: LayoutResultCallback, extras: Bundle?) {
@@ -562,7 +561,7 @@ private fun print(context: Context, uri: Uri, name: String) {
 
         override fun onWrite(pages: Array<out PageRange>?, destination: ParcelFileDescriptor, cancel: CancellationSignal?, callback: WriteResultCallback) {
             try {
-                context.contentResolver.openInputStream(uri)?.use { input ->
+                (if (shown != null && shown.exists()) shown.inputStream() else context.contentResolver.openInputStream(uri))?.use { input ->
                     FileOutputStream(destination.fileDescriptor).use { input.copyTo(it) }
                 }
                 callback.onWriteFinished(arrayOf(PageRange.ALL_PAGES))
