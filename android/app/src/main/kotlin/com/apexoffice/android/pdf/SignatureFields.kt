@@ -162,16 +162,16 @@ object SignatureFields {
         stream.setItem(COSName.RESOURCES, COSDictionary())
     }
 
-    /** A box with an appearance but no verdict layer: the mark is added on top of that appearance. */
+    /** A box with an appearance but no verdict layer: the mark goes underneath it, so the signer's text stays on top. */
     private fun drawOnAppearance(stream: COSStream, verdict: MarkVerdict) {
         val bbox = (stream.getDictionaryObject(COSName.BBOX) as? COSArray)?.toFloatArray()
         val box = if (bbox != null && bbox.size == 4) bbox else floatArrayOf(0f, 0f, 100f, 100f)
         val existing = stream.createInputStream().use { it.readBytes() }
         val mark = placed(verdict, minOf(box[0], box[2]), minOf(box[1], box[3]), Math.abs(box[2] - box[0]), Math.abs(box[3] - box[1]))
         stream.createOutputStream(COSName.FLATE_DECODE).use {
-            it.write(existing)
-            it.write("\n".toByteArray())
             it.write(mark.toByteArray(Charsets.ISO_8859_1))
+            it.write("\n".toByteArray())
+            it.write(existing)
         }
     }
 
@@ -186,21 +186,31 @@ object SignatureFields {
     /** The mark drawn at its natural proportions, centred in the box. */
     private fun placed(verdict: MarkVerdict, x: Float, y: Float, w: Float, h: Float): String {
         val s = minOf(w, h) / 100f
-        return "q $s 0 0 $s ${x + (w - 100f * s) / 2f} ${y + (h - 100f * s) / 2f} cm 1 J 1 j\n${glyph(verdict)}\nQ\n"
+        return "q $s 0 0 $s ${x + (w - 100f * s) / 2f} ${y + (h - 100f * s) / 2f} cm\n${glyph(verdict)}\nQ\n"
     }
 
     /**
-     * The three Adobe-style marks, plain (no badge) on a 100 x 100 square: a green tick, a red cross
-     * and, where a box has no layer of its own, the yellow question mark with a dark outline.
+     * The standard marks on a 100 x 100 square, in the style every reader uses: a bold fill colour
+     * with a black outline and a black shadow to the lower right. The tick is green, the cross red,
+     * and (where a box has no layer of its own) the question mark yellow.
      */
     private fun glyph(verdict: MarkVerdict): String = when (verdict) {
         MarkVerdict.VALID ->
-            "0.0 0.40 0.12 RG 17 w 18 52 m 40 28 l 84 80 l S 0.10 0.70 0.25 RG 10 w 18 52 m 40 28 l 84 80 l S"
+            "q 0.86 0 0 0.86 3.7 10.8 cm " + bars("8 46.4 m 42 12 l 94.4 93.6 l", "0 0.70 0.25") + " Q"
         MarkVerdict.INVALID ->
-            "0.50 0.04 0.04 RG 17 w 20 20 m 80 80 l S 20 80 m 80 20 l S 0.88 0.10 0.10 RG 10 w 20 20 m 80 80 l S 20 80 m 80 20 l S"
-        MarkVerdict.UNKNOWN ->
-            "0.15 0.12 0 RG 20 w 32 70 m 32 90 68 90 68 70 c 68 55 50 52 50 38 c S 1 0.80 0 RG 12 w 32 70 m 32 90 68 90 68 70 c 68 55 50 52 50 38 c S " +
-                "0.15 0.12 0 rg 61 14 m 61 20.07 55.07 25 50 25 c 44.93 25 39 20.07 39 14 c 39 7.93 44.93 3 50 3 c 55.07 3 61 7.93 61 14 c f " +
-                "1 0.80 0 rg 57.5 14 m 57.5 18.14 54.14 21.5 50 21.5 c 45.86 21.5 42.5 18.14 42.5 14 c 42.5 9.86 45.86 6.5 50 6.5 c 54.14 6.5 57.5 9.86 57.5 14 c f"
+            "q 0.95 0 0 0.95 2 6 cm " + bars("22 22 m 78 78 l 22 78 m 78 22 l", "0.88 0.07 0.07") + " Q"
+        MarkVerdict.UNKNOWN -> {
+            val hook = "32 70 m 32 90 68 90 68 70 c 68 55 50 52 50 38 c"
+            val dotOuter = "61 14 m 61 20.07 55.07 25 50 25 c 44.93 25 39 20.07 39 14 c 39 7.93 44.93 3 50 3 c 55.07 3 61 7.93 61 14 c f"
+            val dotInner = "57.5 14 m 57.5 18.14 54.14 21.5 50 21.5 c 45.86 21.5 42.5 18.14 42.5 14 c 42.5 9.86 45.86 6.5 50 6.5 c 54.14 6.5 57.5 9.86 57.5 14 c f"
+            "q 0.92 0 0 0.92 4 6 cm 1 J 1 j " +
+                "q 1 0 0 1 5 -5 cm 0 G 0 g 20 w $hook S $dotOuter Q " +
+                "0.15 0.12 0 RG 20 w $hook S 1 0.80 0 RG 12 w $hook S " +
+                "0.15 0.12 0 rg $dotOuter 1 0.80 0 rg $dotInner Q"
+        }
     }
+
+    /** Bold bars with square ends: shadow, black outline, then the colour on top. */
+    private fun bars(path: String, rgb: String): String =
+        "0 J 0 j q 1 0 0 1 6 -6 cm 0 G 25 w $path S Q 0 G 25 w $path S $rgb RG 20 w $path S"
 }
