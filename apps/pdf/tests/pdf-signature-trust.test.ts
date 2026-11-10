@@ -1,6 +1,6 @@
 // @vitest-environment node
 import forge from 'node-forge'
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument, PDFRef } from 'pdf-lib'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { signPdf } from '../src/main/pdf-sign'
 import { certificateEmail, readPdfSignatures } from '../src/main/pdf-signatures'
@@ -90,13 +90,42 @@ describe('trusting a signer', () => {
     expect(sig!.problems).toContain('digest-mismatch')
   })
 
-  it('keeps a change made after signing a warning even for a trusted signer', async () => {
+  it('keeps a trusted earlier signature valid when only a later signature was added', async () => {
     const first = await signPdf(await samplePdf(), { p12: alice.p12, password: PASSWORD })
     const second = await signPdf(first, { p12: bob.p12, password: PASSWORD })
     const sigs = await readPdfSignatures(second, new Set([alice.fingerprint, bob.fingerprint]))
-    expect(sigs[0]!.status).toBe('warning')
-    expect(sigs[0]!.problems).toContain('document-changed-after-signing')
+    expect(sigs[0]!.status).toBe('valid')
+    expect(sigs[0]!.problems).not.toContain('document-changed-after-signing')
     expect(sigs[1]!.status).toBe('valid')
+  })
+
+  it('keeps a change made after signing a warning even for a trusted signer', async () => {
+    const signed = Buffer.from(
+      await signPdf(await samplePdf({ objectStreams: false }), { p12: alice.p12, password: PASSWORD }),
+    )
+    const doc = await PDFDocument.load(signed)
+    // a new revision that rewrites the catalog with an unrelated entry is a change to the document
+    const ref: PDFRef = doc.context.trailerInfo.Root
+    const prev = Number(/startxref\s+(\d+)\s+%%EOF\s*$/.exec(signed.toString('latin1'))![1])
+    const body = `\n${ref.objectNumber} 0 obj\n${doc.catalog.toString().replace(/>>\s*$/, " /Lang (xx) >>")}\nendobj\n`
+    const objAt = signed.length + 1
+    const xrefAt = signed.length + body.length
+    const xrefNumber = doc.context.largestObjectNumber + 1
+    const entry = (offset: number) => Buffer.from([1, (offset >> 24) & 255, (offset >> 16) & 255, (offset >> 8) & 255, offset & 255, 0, 0])
+    const rows = Buffer.concat([entry(objAt), entry(xrefAt + 1)])
+    const xref = Buffer.concat([
+      Buffer.from(
+        `\n${xrefNumber} 0 obj\n<< /Type /XRef /Size ${xrefNumber + 1} /W [1 4 2] /Index [${ref.objectNumber} 1 ${xrefNumber} 1] ` +
+          `/Root ${ref.toString()} /Prev ${prev} /Length ${rows.length} >>\nstream\n`,
+        'latin1',
+      ),
+      rows,
+      Buffer.from(`\nendstream\nendobj\nstartxref\n${xrefAt + 1}\n%%EOF\n`, 'latin1'),
+    ])
+    const edited = Buffer.concat([signed, Buffer.from(body, 'latin1'), xref])
+    const [sig] = await readPdfSignatures(edited, new Set([alice.fingerprint]))
+    expect(sig!.status).toBe('warning')
+    expect(sig!.problems).toContain('document-changed-after-signing')
   })
 })
 

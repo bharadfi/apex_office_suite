@@ -161,9 +161,10 @@ describe('signing and reading back', () => {
     const second = await signPdf(first, { p12: otherP12, password: PASSWORD })
     const sigs = await readPdfSignatures(second)
     expect(sigs.map((s) => s.fieldName)).toEqual(['Signature1', 'Signature2'])
-    expect(sigs[0]!.problems).toContain('document-changed-after-signing')
+    // a later signature is not a change to what the earlier one signed
+    expect(sigs[0]!.problems).not.toContain('document-changed-after-signing')
     expect(sigs[0]!.problems).not.toContain('digest-mismatch')
-    expect(sigs[0]!.status).toBe('warning')
+    expect(sigs[0]!.status).toBe('untrusted')
     expect(sigs[1]!.status).toBe('untrusted')
     expect(sigs[1]!.coversWholeDocument).toBe(true)
     expect(sigs[1]!.signer?.commonName).toBe('Bob')

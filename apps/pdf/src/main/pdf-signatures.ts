@@ -15,6 +15,7 @@ import {
 import type { PDFObject } from 'pdf-lib'
 import type { CertificateInfo, PdfSignatureInfo, PdfSignatureProblem } from '../shared/ipc'
 import { decryptDocument } from './pdf-crypt'
+import { onlyPermittedChangesAfter } from './signature-revisions'
 import { findValidityLayers } from './validity-layers'
 
 const A = forge.asn1
@@ -513,12 +514,13 @@ function widgetRect(widget: PDFDict): PdfSignatureInfo['rect'] {
   return rect[2] - rect[0] > 0 && rect[3] - rect[1] > 0 ? rect : undefined
 }
 
-function verifyOne(
+async function verifyOne(
   bytes: Buffer,
   field: FieldWithValue,
   pageIndex: number,
   userTrusted: ReadonlySet<string>,
-): PdfSignatureInfo {
+  pdf: PDFDocument,
+): Promise<PdfSignatureInfo> {
   const { value } = field
   const subFilterName = value.lookup(PDFName.of('SubFilter'))
   const subFilter = subFilterName instanceof PDFName ? subFilterName.decodeText() : ''
@@ -642,7 +644,14 @@ function verifyOne(
   }
 
   if (problems.length === 0) {
-    if (!info.coversWholeDocument) problems.push('document-changed-after-signing')
+    // Bytes after the signed range are only a problem when they change something the signature covers:
+    // a file signed again, or given validation data, is not changed in that sense.
+    if (
+      !info.coversWholeDocument &&
+      !(await onlyPermittedChangesAfter(bytes, end2, pdf, info.certifiedLevel))
+    ) {
+      problems.push('document-changed-after-signing')
+    }
     // The certificate must have been valid when the document was signed. A signed time is best; a
     // signature without one (the legacy format has none) is judged at the time it claims, as other
     // readers do ("validated as of the signing time"), and only without any claim at the time now.
@@ -710,7 +719,9 @@ export async function readPdfSignatures(
       return []
     }
   }
-  return collectSignatureFields(pdf).map((field) =>
-    verifyOne(bytes, field, pageIndexOf(pdf, field), userTrusted),
-  )
+  const results: PdfSignatureInfo[] = []
+  for (const field of collectSignatureFields(pdf)) {
+    results.push(await verifyOne(bytes, field, pageIndexOf(pdf, field), userTrusted, pdf))
+  }
+  return results
 }
