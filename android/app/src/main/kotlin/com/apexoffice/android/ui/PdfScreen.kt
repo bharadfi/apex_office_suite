@@ -1,6 +1,11 @@
 package com.apexoffice.android.ui
 
 import android.content.ClipData
+import android.content.Intent
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.size
 import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Bitmap
@@ -144,48 +149,49 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
 
     BackHandler { onClose() }
 
-    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            TextButton(onClick = onClose) { Text("←") }
-            Column(Modifier.weight(1f)) {
-                Text(name, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleMedium)
-                doc?.let { Text("Page ${currentPage + 1} of ${it.pageCount}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary) }
-            }
-            if (signatures.isNotEmpty()) {
-                FilledTonalButton(onClick = { showSignatures = true }) {
-                    Text("Signatures (${signatures.size})")
+    var chrome by remember { mutableStateOf(true) }
+    var showTools by remember { mutableStateOf(false) }
+    var toolsTab by remember { mutableStateOf("Tools") }
+    var night by remember { mutableStateOf(false) }
+    var pageTint by remember { mutableStateOf(Color.White) }
+    val pageFilter = remember(night, pageTint) {
+        when {
+            night -> androidx.compose.ui.graphics.ColorFilter.colorMatrix(androidx.compose.ui.graphics.ColorMatrix(floatArrayOf(
+                -1f, 0f, 0f, 0f, 255f,
+                0f, -1f, 0f, 0f, 255f,
+                0f, 0f, -1f, 0f, 255f,
+                0f, 0f, 0f, 1f, 0f,
+            )))
+            pageTint != Color.White -> androidx.compose.ui.graphics.ColorFilter.tint(pageTint, androidx.compose.ui.graphics.BlendMode.Multiply)
+            else -> null
+        }
+    }
+    val worst = signatures.minByOrNull { sigRank(it.verdict) }
+
+    Column(Modifier.fillMaxSize().background(Color(0xFF202124)).statusBarsPadding().navigationBarsPadding()) {
+        if (chrome) {
+            ReaderTopBar(
+                title = name,
+                subtitle = doc?.let { "Page ${currentPage + 1} of ${it.pageCount}" },
+                onBack = onClose,
+                actions = {
+                    BarAction("⎙", "Print", { print(context, uri, name) }, enabled = doc != null)
+                    BarAction("⋮", "Tools", { toolsTab = "Tools"; showTools = true })
+                },
+            )
+            if (worst != null) {
+                val (tone, text) = sigBanner(worst.verdict, signatures.size)
+                Row(
+                    Modifier.fillMaxWidth().background(tone).clickable { toolsTab = "Fill & Sign"; showTools = true }.padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(text, color = Color.White, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    Text("Details ›", color = Color.White, style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            OutlinedButton(
-                enabled = doc != null && !ocrBusy,
-                onClick = {
-                    val d = doc ?: return@OutlinedButton
-                    ocrBusy = true
-                    scope.launch {
-                        val text = withContext(Dispatchers.Default) {
-                            runCatching { Ocr.recognize(d.render(currentPage.coerceIn(0, d.pageCount - 1), 1800)) }
-                                .getOrElse { "Text recognition failed: ${it.message}" }
-                        }
-                        ocrText = text.ifBlank { "No text was found on this page." }
-                        ocrBusy = false
-                    }
-                },
-            ) { Text(if (ocrBusy) "Reading…" else "Read text (OCR)") }
-            OutlinedButton(enabled = doc != null, onClick = { print(context, uri, name) }) { Text("Print") }
-            OutlinedButton(enabled = doc != null, onClick = { scale = 1f }) { Text("Fit width") }
-            OutlinedButton(enabled = doc != null, onClick = { askPage = true }) { Text("Go to page") }
-        }
-        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
+        Box(Modifier.weight(1f)) {
         when {
             loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Opening…") }
             doc == null -> Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
@@ -202,7 +208,8 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
                 BoxWithConstraints(
                     Modifier
                         .fillMaxSize()
-                        .background(Color(0xFFE4E7E5))
+                        .background(if (night) Color(0xFF111111) else Color(0xFFE4E7E5))
+                        .pointerInput(Unit) { detectTapGestures(onTap = { chrome = !chrome }) }
                         .pointerInput(Unit) {
                             awaitEachGesture {
                                 awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
@@ -233,9 +240,118 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 10.dp),
                         ) {
                             itemsIndexed(List(d.pageCount) { it }) { index, _ ->
-                                PageView(d, index, renderWidth, displayWidth, d.ratios[index])
+                                PageView(d, index, renderWidth, displayWidth, d.ratios[index], pageFilter)
                             }
                         }
+                    }
+                }
+            }
+        }
+        }
+        if (chrome) {
+            ReaderBottomBar(
+                listOf(
+                    BottomItem("▤", "Reading Mode", enabled = doc != null) { chrome = false },
+                    BottomItem("⌕", "Go to page", enabled = doc != null) { askPage = true },
+                    BottomItem("🔏", "Signatures", selected = signatures.isNotEmpty()) { toolsTab = "Fill & Sign"; showTools = true },
+                    BottomItem("⊞", "Tools") { toolsTab = "Tools"; showTools = true },
+                ),
+            )
+        }
+    }
+
+    if (showTools) {
+        ToolsSheet(
+            tabs = listOf("Tools", "Fill & Sign", "View"),
+            selected = toolsTab,
+            onSelect = { toolsTab = it },
+            onDismiss = { showTools = false },
+        ) { tab ->
+            when (tab) {
+                "Tools" -> {
+                    ToolGroup("Extract PDF content") {
+                        ToolRow {
+                            ToolButton("A", if (ocrBusy) "Reading…" else "Extract Text", enabled = doc != null && !ocrBusy) {
+                                val d = doc ?: return@ToolButton
+                                showTools = false
+                                ocrBusy = true
+                                scope.launch {
+                                    val text = withContext(Dispatchers.Default) {
+                                        runCatching { Ocr.recognize(d.render(currentPage.coerceIn(0, d.pageCount - 1), 1800)) }
+                                            .getOrElse { "Text recognition failed: ${it.message}" }
+                                    }
+                                    ocrText = text.ifBlank { "No text was found on this page." }
+                                    ocrBusy = false
+                                }
+                            }
+                            ToolButton("⎙", "Print", enabled = doc != null) { showTools = false; print(context, uri, name) }
+                            ToolButton("⇪", "Share") {
+                                showTools = false
+                                val send = Intent(Intent.ACTION_SEND).apply {
+                                    type = "application/pdf"; putExtra(Intent.EXTRA_STREAM, uri); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                runCatching { context.startActivity(Intent.createChooser(send, name)) }
+                            }
+                        }
+                    }
+                }
+                "Fill & Sign" -> {
+                    ToolGroup("Digital signatures") {
+                        if (signatures.isEmpty()) {
+                            ToolLine("This PDF carries no digital signatures.")
+                        } else {
+                            Column(Modifier.padding(6.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                for (sig in signatures) SignatureCard(
+                                    sig, trusted = sig.fingerprint in trustedSet,
+                                    onTrust = { trust.trust(sig.fingerprint); trustedSet = trust.all() },
+                                    onUntrust = { trust.untrust(sig.fingerprint); trustedSet = trust.all() },
+                                )
+                                Text(
+                                    "Trust is kept only on this device. A signature is checked against the exact bytes of the file.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                )
+                            }
+                        }
+                    }
+                }
+                else -> {
+                    ToolGroup("Reading progress") {
+                        val total = doc?.pageCount ?: 1
+                        Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            androidx.compose.material3.Slider(
+                                value = currentPage.toFloat(),
+                                onValueChange = { v -> scope.launch { listState.scrollToItem(v.toInt().coerceIn(0, total - 1)) } },
+                                valueRange = 0f..maxOf(1, total - 1).toFloat(),
+                                modifier = Modifier.weight(1f),
+                            )
+                            Text("${currentPage + 1} / $total", modifier = Modifier.padding(start = 12.dp))
+                        }
+                    }
+                    ToolGroup("Background") {
+                        Row(Modifier.fillMaxWidth().padding(10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                            for (c in listOf(Color.White, Color(0xFFD4EFDF), Color(0xFFFAE5C8), Color(0xFFE8DCB0), Color(0xFFC9C9C9))) {
+                                Box(
+                                    Modifier.size(40.dp).background(c, androidx.compose.foundation.shape.CircleShape)
+                                        .border(if (pageTint == c && !night) 3.dp else 1.dp, if (pageTint == c && !night) Color(0xFF8DD4B1) else Color.Gray, androidx.compose.foundation.shape.CircleShape)
+                                        .clickable { night = false; pageTint = c },
+                                )
+                            }
+                        }
+                    }
+                    ToolGroup("Reading settings") {
+                        ToolLine("Night mode") {
+                            androidx.compose.material3.Switch(checked = night, onCheckedChange = { night = it })
+                        }
+                        ToolLine("Rotate screen", onClick = {
+                            val activity = context as? android.app.Activity
+                            activity?.requestedOrientation =
+                                if (activity?.requestedOrientation == android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                                    android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                                else android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                        })
+                        ToolLine("Fit to width", onClick = { scale = 1f; showTools = false })
+                        ToolLine("Hide menus (tap the page to bring them back)", onClick = { showTools = false; chrome = false })
                     }
                 }
             }
@@ -324,7 +440,7 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
 }
 
 @Composable
-private fun PageView(doc: PdfDoc, index: Int, renderWidth: Int, displayWidth: androidx.compose.ui.unit.Dp, ratio: Float) {
+private fun PageView(doc: PdfDoc, index: Int, renderWidth: Int, displayWidth: androidx.compose.ui.unit.Dp, ratio: Float, filter: androidx.compose.ui.graphics.ColorFilter?) {
     val bitmap by produceState<Bitmap?>(null, doc, index, renderWidth) {
         val key = "${System.identityHashCode(doc)}:$index:$renderWidth"
         value = bitmapCache.get(key) ?: withContext(Dispatchers.Default) {
@@ -334,7 +450,7 @@ private fun PageView(doc: PdfDoc, index: Int, renderWidth: Int, displayWidth: an
     val height = displayWidth * ratio
     Box(Modifier.width(displayWidth).height(height).background(Color.White)) {
         bitmap?.let {
-            Image(it.asImageBitmap(), contentDescription = "Page ${index + 1}", contentScale = ContentScale.FillWidth, modifier = Modifier.fillMaxSize())
+            Image(it.asImageBitmap(), contentDescription = "Page ${index + 1}", contentScale = ContentScale.FillWidth, colorFilter = filter, modifier = Modifier.fillMaxSize())
         }
     }
 }
@@ -393,4 +509,23 @@ private fun print(context: Context, uri: Uri, name: String) {
             }
         }
     }, null)
+}
+
+private fun sigRank(v: Verdict) = when (v) {
+    Verdict.INVALID -> 0
+    Verdict.VALID_MODIFIED -> 1
+    Verdict.UNREADABLE -> 2
+    Verdict.VALID_UNTRUSTED -> 3
+    Verdict.VALID_TRUSTED -> 4
+}
+
+private fun sigBanner(v: Verdict, count: Int): Pair<Color, String> {
+    val n = if (count == 1) "This document is digitally signed" else "This document has $count signatures"
+    return when (v) {
+        Verdict.VALID_TRUSTED -> Color(0xFF1E7D4F) to "$n. Signature valid, signer trusted."
+        Verdict.VALID_UNTRUSTED -> Color(0xFF9A6A12) to "$n. Valid, but the signer is not trusted yet."
+        Verdict.VALID_MODIFIED -> Color(0xFF9A6A12) to "$n. Changed after signing."
+        Verdict.INVALID -> Color(0xFFB02A2A) to "$n. A signature is invalid."
+        Verdict.UNREADABLE -> Color(0xFF5E6B78) to "$n. A signature could not be read."
+    }
 }

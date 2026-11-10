@@ -38,5 +38,14 @@
                 <data android:mimeType="application/rtf" />
             </intent-filter>
         </activity>
+
+        <!-- hands the camera app a private file to write a scan into -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>

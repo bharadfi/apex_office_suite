@@ -41,5 +41,10 @@ object KindColors {
 
 @Composable
 fun ApexTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = if (isSystemInDarkTheme()) Dark else Light, content = content)
+    val dark = when (com.apexoffice.android.Prefs.theme) {
+        com.apexoffice.android.ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        com.apexoffice.android.ThemeMode.LIGHT -> false
+        com.apexoffice.android.ThemeMode.DARK -> true
+    }
+    MaterialTheme(colorScheme = if (dark) Dark else Light, content = content)
 }

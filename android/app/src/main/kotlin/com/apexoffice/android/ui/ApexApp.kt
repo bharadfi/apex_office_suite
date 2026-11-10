@@ -62,11 +62,12 @@ import java.util.Date
 
 private enum class Destination(val label: String, val glyph: String) {
     Home("Home", "⌂"),
-    Recent("Recent", "⧖"),
-    About("About", "ⓘ"),
+    Files("Files", "▤"),
+    Scan("Scan", "⌗"),
+    Settings("Settings", "⚙"),
 }
 
-private fun AppKind.color(): Color = when (this) {
+internal fun AppKind.color(): Color = when (this) {
     AppKind.DOCS -> KindColors.docs
     AppKind.SHEETS -> KindColors.sheets
     AppKind.SLIDES -> KindColors.slides
@@ -124,16 +125,14 @@ fun ApexApp(
                             HorizontalDividerVertical()
                             RecentPane(Modifier.weight(1f), recents, onOpenRecent, onRemoveRecent)
                         }
+                    } else if (widthClass == WindowWidthSizeClass.Medium) {
+                        HomePane(Modifier.fillMaxSize(), columns = 3, onPickFile = onPickFile, onNew = onNew)
                     } else {
-                        HomePane(
-                            Modifier.fillMaxSize(),
-                            columns = if (widthClass == WindowWidthSizeClass.Medium) 3 else 2,
-                            onPickFile = onPickFile,
-                            onNew = onNew,
-                        )
+                        PhoneHome(recents, onPickFile, onNew, onOpenRecent, onRemoveRecent, onScan = { destination = Destination.Scan })
                     }
-                Destination.Recent -> RecentPane(Modifier.fillMaxSize(), recents, onOpenRecent, onRemoveRecent)
-                Destination.About -> AboutPane(Modifier.fillMaxSize())
+                Destination.Files -> RecentPane(Modifier.fillMaxSize(), recents, onOpenRecent, onRemoveRecent)
+                Destination.Scan -> ScanPane()
+                Destination.Settings -> SettingsPane()
             }
         }
     }
@@ -266,7 +265,7 @@ private fun RecentPane(
 }
 
 @Composable
-private fun RecentRow(file: RecentFile, onOpen: () -> Unit, onRemove: () -> Unit) {
+internal fun RecentRow(file: RecentFile, onOpen: () -> Unit, onRemove: () -> Unit) {
     val kind = file.kind
     Row(
         Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(horizontal = 20.dp, vertical = 12.dp),
