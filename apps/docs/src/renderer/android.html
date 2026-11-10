@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apex Office Docs</title>
+    <style>
+      /* a WebView does not always resolve height:100% of the root; size the chain from the window */
+      html, body, #root { height: 100vh !important; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./android/entry.ts"></script>
+  </body>
+</html>

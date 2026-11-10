@@ -356,7 +356,7 @@ private fun OpenDocument(openDocument: RecentFile, onCloseDocument: () -> Unit) 
         AppKind.SLIDES -> SlidesScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
         AppKind.MARKDOWN -> MarkdownScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
         AppKind.HTML -> HtmlScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
-        AppKind.DOCS -> DocsScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
+        AppKind.DOCS -> DocsWebScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
         AppKind.PDF -> PdfScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
         null -> DocumentPlaceholder(openDocument, onCloseDocument)
     }
