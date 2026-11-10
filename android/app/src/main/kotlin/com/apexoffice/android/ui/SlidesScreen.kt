@@ -114,7 +114,8 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
     }
     BackHandler { if (present) present = false else if (dirty) askLeave = true else onClose() }
 
-    var canEdit by remember { mutableStateOf(false) }
+    val wide = LocalWide.current
+    var canEdit by remember { mutableStateOf(wide) }
     var showTools by remember { mutableStateOf(false) }
     var toolsTab by remember { mutableStateOf("Home") }
     fun duplicateSlide() {
@@ -126,6 +127,28 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
         }
     }
 
+    val slideTools: @Composable (String) -> Unit = { tab ->
+            if (tab == "Home") {
+                if (!canEdit) {
+                    ToolGroup("Read-only") {
+                        ToolLine("Tap Edit to change this presentation.", onClick = { canEdit = true; showTools = false }) { Text("Edit ›", color = Color(0xFF8DD4B1)) }
+                    }
+                } else {
+                    ToolGroup("Slides") {
+                        ToolRow {
+                            ToolButton("⧉", "Duplicate slide") { showTools = false; duplicateSlide() }
+                            ToolButton("🗑", "Delete slide") { showTools = false; confirmDelete = true }
+                        }
+                    }
+                    ToolGroup("Text") { ToolLine("Tap a text box on the slide to edit its text.") }
+                }
+            } else {
+                ToolGroup("Slide show") {
+                    ToolRow { ToolButton("▶", "Present", enabled = deck != null) { showTools = false; present = true } }
+                }
+            }
+    }
+
     Column(Modifier.fillMaxSize().then(if (present) Modifier.background(Color.Black) else Modifier.background(MaterialTheme.colorScheme.surface).statusBarsPadding().navigationBarsPadding())) {
         if (!present) ReaderTopBar(
             title = name + if (dirty) " •" else "",
@@ -134,6 +157,7 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
             actions = { if (canEdit) BarAction("💾", "Save", { askSave = true }, enabled = deck != null && dirty) },
         )
         val d = deck
+        Row(Modifier.weight(1f)) {
         Box(Modifier.weight(1f)) {
         when {
             error != null -> ErrorBox(error!!, onClose)
@@ -150,6 +174,8 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
                 )
             }
         }
+        }
+        if (wide && !present) ToolsPanel(listOf("Home", "View"), toolsTab, { toolsTab = it }) { slideTools(it) }
         }
         if (!present) ReaderBottomBar(
             if (!canEdit) listOf(
@@ -171,29 +197,6 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
         )
     }
 
-    if (showTools) {
-        ToolsSheet(tabs = listOf("Home", "View"), selected = toolsTab, onSelect = { toolsTab = it }, onDismiss = { showTools = false }) { tab ->
-            if (tab == "Home") {
-                if (!canEdit) {
-                    ToolGroup("Read-only") {
-                        ToolLine("Tap Edit to change this presentation.", onClick = { canEdit = true; showTools = false }) { Text("Edit ›", color = Color(0xFF8DD4B1)) }
-                    }
-                } else {
-                    ToolGroup("Slides") {
-                        ToolRow {
-                            ToolButton("⧉", "Duplicate slide") { showTools = false; duplicateSlide() }
-                            ToolButton("🗑", "Delete slide") { showTools = false; confirmDelete = true }
-                        }
-                    }
-                    ToolGroup("Text") { ToolLine("Tap a text box on the slide to edit its text.") }
-                }
-            } else {
-                ToolGroup("Slide show") {
-                    ToolRow { ToolButton("▶", "Present", enabled = deck != null) { showTools = false; present = true } }
-                }
-            }
-        }
-    }
     editing?.let { (slide, shape) ->
         val d = deck!!
         var text by remember(shape) { mutableStateOf(d.paragraphsOf(shape).joinToString("\n")) }
@@ -235,6 +238,9 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
         )
     }
     LeaveDialog(askLeave, { askLeave = false }, onSave = { askLeave = false; askSave = true }, onDiscard = { askLeave = false; onClose() })
+    if (showTools && !wide) {
+        ToolsSheet(tabs = listOf("Home", "View"), selected = toolsTab, onSelect = { toolsTab = it }, onDismiss = { showTools = false }) { tab -> slideTools(tab) }
+    }
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },

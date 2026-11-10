@@ -97,21 +97,7 @@ fun ApexApp(
     BackHandler(enabled = openDocument != null && openDocument.kind == null) { onCloseDocument() }
 
     if (openDocument != null) {
-        if (openDocument.kind == AppKind.SHEETS) {
-            SheetsScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
-        } else if (openDocument.kind == AppKind.SLIDES) {
-            SlidesScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
-        } else if (openDocument.kind == AppKind.MARKDOWN) {
-            MarkdownScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
-        } else if (openDocument.kind == AppKind.HTML) {
-            HtmlScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
-        } else if (openDocument.kind == AppKind.DOCS) {
-            DocsScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
-        } else if (openDocument.kind == AppKind.PDF) {
-            PdfScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
-        } else {
-            DocumentPlaceholder(openDocument, onCloseDocument)
-        }
+        androidx.compose.runtime.CompositionLocalProvider(LocalWide provides (widthClass != WindowWidthSizeClass.Compact)) { OpenDocument(openDocument, onCloseDocument) }
         return
     }
 
@@ -359,5 +345,18 @@ private fun RecentThumb(file: RecentFile) {
         } else {
             Text((kind?.title ?: "?").first().toString(), color = kind?.color() ?: Color.Gray, fontWeight = FontWeight.Bold)
         }
+    }
+}
+
+@Composable
+private fun OpenDocument(openDocument: RecentFile, onCloseDocument: () -> Unit) {
+    when (openDocument.kind) {
+        AppKind.SHEETS -> SheetsScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
+        AppKind.SLIDES -> SlidesScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
+        AppKind.MARKDOWN -> MarkdownScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
+        AppKind.HTML -> HtmlScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
+        AppKind.DOCS -> DocsScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
+        AppKind.PDF -> PdfScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
+        null -> DocumentPlaceholder(openDocument, onCloseDocument)
     }
 }

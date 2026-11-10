@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -71,6 +73,34 @@ fun ReaderBottomBar(items: List<BottomItem>) {
                 Text(item.label, color = tint, style = MaterialTheme.typography.labelSmall, maxLines = 1, textAlign = TextAlign.Center)
             }
         }
+    }
+}
+
+/** True on tablets and other wide windows, where tools stay open beside the document like the desktop ribbon. */
+val LocalWide = androidx.compose.runtime.compositionLocalOf { false }
+
+@Composable
+private fun TabStrip(tabs: List<String>, selected: String, onSelect: (String) -> Unit) {
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        for (tab in tabs) {
+            val on = tab == selected
+            Column(Modifier.clickable { onSelect(tab) }.padding(vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(tab, color = if (on) Color.White else OnChrome.copy(alpha = 0.7f), fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, style = MaterialTheme.typography.titleMedium)
+                Box(Modifier.height(3.dp).width(28.dp).background(if (on) Color(0xFF8DD4B1) else Color.Transparent))
+            }
+        }
+    }
+}
+
+/** Persistent tools column for wide windows: same tabs and groups as the phone sheet. */
+@Composable
+fun ToolsPanel(tabs: List<String>, selected: String, onSelect: (String) -> Unit, content: @Composable (String) -> Unit) {
+    Column(Modifier.width(360.dp).fillMaxHeight().background(Color(0xFF1B1C1E))) {
+        Box(Modifier.padding(top = 10.dp)) { TabStrip(tabs, selected, onSelect) }
+        Column(
+            Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp).padding(bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) { androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides OnChrome) { content(selected) } }
     }
 }
 

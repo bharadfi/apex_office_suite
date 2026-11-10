@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -146,7 +147,8 @@ fun SheetsScreen(uri: Uri, name: String, onClose: () -> Unit) {
 
     BackHandler { if (dirty) askDiscard = true else onClose() }
 
-    var editingMode by remember { mutableStateOf(false) }
+    val wideScreen = LocalWide.current
+    var editingMode by remember { mutableStateOf(wideScreen) }
     var showTools by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).statusBarsPadding().navigationBarsPadding().imePadding()) {
         ReaderTopBar(
@@ -271,42 +273,9 @@ private fun SheetBody(session: SheetsSession, canEdit: Boolean, showTools: Boole
         changed()
     }
 
-    Column(Modifier.fillMaxSize()) {
-        // formula bar
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Box(
-                Modifier.width(64.dp).height(38.dp).border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center,
-            ) { Text(colLabel(selCol) + selRow, style = MaterialTheme.typography.labelLarge) }
-            Text("fx", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-            BasicTextField(
-                value = formula,
-                onValueChange = { formula = it; editing = true },
-                singleLine = true,
-                enabled = canEdit,
-                textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { commit() }),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(38.dp)
-                    .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 10.dp, vertical = 9.dp),
-            )
-            if (canEdit) TextButton(onClick = { commit() }, enabled = editing) { Text("✓") }
-        }
-        if (showTools) {
-            var toolsTab by remember { mutableStateOf("Home") }
-            ToolsSheet(
-                tabs = listOf("Home", "Cells"),
-                selected = toolsTab,
-                onSelect = { toolsTab = it },
-                onDismiss = onToolsClose,
-            ) { tab ->
+    val wide = LocalWide.current
+    var toolsTab by remember { mutableStateOf("Home") }
+    val sheetTools: @Composable (String) -> Unit = { tab ->
                 if (!canEdit) {
                     ToolGroup("Read-only") {
                         ToolLine("Tap Edit to change this workbook.", onClick = { onStartEdit(); onToolsClose() }) {
@@ -357,7 +326,37 @@ private fun SheetBody(session: SheetsSession, canEdit: Boolean, showTools: Boole
                         }
                     }
                 }
-            }
+    }
+
+    Row(Modifier.fillMaxSize()) {
+    Column(Modifier.weight(1f).fillMaxHeight()) {
+        if (showTools && !wide) ToolsSheet(tabs = listOf("Home", "Cells"), selected = toolsTab, onSelect = { toolsTab = it }, onDismiss = onToolsClose) { tab -> sheetTools(tab) }
+        // formula bar
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(
+                Modifier.width(64.dp).height(38.dp).border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center,
+            ) { Text(colLabel(selCol) + selRow, style = MaterialTheme.typography.labelLarge) }
+            Text("fx", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+            BasicTextField(
+                value = formula,
+                onValueChange = { formula = it; editing = true },
+                singleLine = true,
+                enabled = canEdit,
+                textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { commit() }),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(38.dp)
+                    .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 10.dp, vertical = 9.dp),
+            )
+            if (canEdit) TextButton(onClick = { commit() }, enabled = editing) { Text("✓") }
         }
         if (colorTarget != 0) {
             val palette = listOf(-1, 0xFFE699, 0xC6EFCE, 0xBDD7EE, 0xF8CBAD, 0xD9D2E9, 0xFFFF00, 0xC53030, 0x1E8E5A, 0x2B6CB0, 0x000000)
@@ -432,6 +431,8 @@ private fun SheetBody(session: SheetsSession, canEdit: Boolean, showTools: Boole
                 TextButton(onClick = { if (session.addSheet()) { tabs = session.sheetNames; sheet = tabs.size - 1; onEdited() } }) { Text("+") }
             }
         }
+    }
+    if (wide) ToolsPanel(listOf("Home", "Cells"), toolsTab, { toolsTab = it }) { sheetTools(it) }
     }
 }
 

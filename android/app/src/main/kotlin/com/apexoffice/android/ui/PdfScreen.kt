@@ -104,6 +104,7 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val trust = remember { TrustStore(context) }
+    val wide = LocalWide.current
 
     var password by remember { mutableStateOf<String?>(null) }
     var askPassword by remember { mutableStateOf(false) }
@@ -168,105 +169,7 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
     }
     val worst = signatures.minByOrNull { sigRank(it.verdict) }
 
-    Column(Modifier.fillMaxSize().background(Color(0xFF202124)).statusBarsPadding().navigationBarsPadding()) {
-        if (chrome) {
-            ReaderTopBar(
-                title = name,
-                subtitle = doc?.let { "Page ${currentPage + 1} of ${it.pageCount}" },
-                onBack = onClose,
-                actions = {
-                    BarAction("⎙", "Print", { print(context, uri, name) }, enabled = doc != null)
-                    BarAction("⋮", "Tools", { toolsTab = "Tools"; showTools = true })
-                },
-            )
-            if (worst != null) {
-                val (tone, text) = sigBanner(worst.verdict, signatures.size)
-                Row(
-                    Modifier.fillMaxWidth().background(tone).clickable { toolsTab = "Fill & Sign"; showTools = true }.padding(horizontal = 14.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(text, color = Color.White, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                    Text("Details ›", color = Color.White, style = MaterialTheme.typography.labelLarge)
-                }
-            }
-        }
-
-        Box(Modifier.weight(1f)) {
-        when {
-            loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Opening…") }
-            doc == null -> Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(error ?: "This PDF could not be opened.", color = MaterialTheme.colorScheme.error)
-                    if (signatures.isNotEmpty()) {
-                        FilledTonalButton(onClick = { showSignatures = true }) { Text("Check signatures (${signatures.size})") }
-                    }
-                    Button(onClick = onClose) { Text("Back") }
-                }
-            }
-            else -> {
-                val d = doc!!
-                BoxWithConstraints(
-                    Modifier
-                        .fillMaxSize()
-                        .background(if (night) Color(0xFF111111) else Color(0xFFE4E7E5))
-                        .pointerInput(Unit) { detectTapGestures(onTap = { chrome = !chrome }) }
-                        .pointerInput(Unit) {
-                            awaitEachGesture {
-                                awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                                do {
-                                    val event = awaitPointerEvent(PointerEventPass.Initial)
-                                    if (event.changes.size >= 2) {
-                                        val zoom = event.calculateZoom()
-                                        if (zoom != 1f) {
-                                            scale = (scale * zoom).coerceIn(1f, 4f)
-                                            event.changes.forEach { it.consume() }
-                                        }
-                                    }
-                                } while (event.changes.any { it.pressed })
-                            }
-                        },
-                ) {
-                    val density = LocalDensity.current
-                    val viewWidthPx = with(density) { maxWidth.toPx() }
-                    // pages render at the nearest quarter step; the bitmap is stretched between steps
-                    val snapped = (Math.round(scale * 4f) / 4f)
-                    val renderWidth = (viewWidthPx * snapped).toInt()
-                    val displayWidth = with(density) { (viewWidthPx * scale).toDp() }
-                    Box(Modifier.fillMaxSize().horizontalScroll(rememberScrollState())) {
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.width(displayWidth),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 10.dp),
-                        ) {
-                            itemsIndexed(List(d.pageCount) { it }) { index, _ ->
-                                PageView(d, index, renderWidth, displayWidth, d.ratios[index], pageFilter)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        }
-        if (chrome) {
-            ReaderBottomBar(
-                listOf(
-                    BottomItem("▤", "Reading Mode", enabled = doc != null) { chrome = false },
-                    BottomItem("⌕", "Go to page", enabled = doc != null) { askPage = true },
-                    BottomItem("🔏", "Signatures", selected = signatures.isNotEmpty()) { toolsTab = "Fill & Sign"; showTools = true },
-                    BottomItem("⊞", "Tools") { toolsTab = "Tools"; showTools = true },
-                ),
-            )
-        }
-    }
-
-    if (showTools) {
-        ToolsSheet(
-            tabs = listOf("Tools", "Fill & Sign", "View"),
-            selected = toolsTab,
-            onSelect = { toolsTab = it },
-            onDismiss = { showTools = false },
-        ) { tab ->
+    val pdfTools: @Composable (String) -> Unit = { tab ->
             when (tab) {
                 "Tools" -> {
                     ToolGroup("Extract PDF content") {
@@ -355,7 +258,105 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
                     }
                 }
             }
+    }
+
+    Column(Modifier.fillMaxSize().background(Color(0xFF202124)).statusBarsPadding().navigationBarsPadding()) {
+        if (chrome) {
+            ReaderTopBar(
+                title = name,
+                subtitle = doc?.let { "Page ${currentPage + 1} of ${it.pageCount}" },
+                onBack = onClose,
+                actions = {
+                    BarAction("⎙", "Print", { print(context, uri, name) }, enabled = doc != null)
+                    BarAction("⋮", "Tools", { toolsTab = "Tools"; showTools = true })
+                },
+            )
+            if (worst != null) {
+                val (tone, text) = sigBanner(worst.verdict, signatures.size)
+                Row(
+                    Modifier.fillMaxWidth().background(tone).clickable { toolsTab = "Fill & Sign"; showTools = true }.padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(text, color = Color.White, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    Text("Details ›", color = Color.White, style = MaterialTheme.typography.labelLarge)
+                }
+            }
         }
+
+        Row(Modifier.weight(1f)) {
+        Box(Modifier.weight(1f)) {
+        when {
+            loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Opening…") }
+            doc == null -> Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(error ?: "This PDF could not be opened.", color = MaterialTheme.colorScheme.error)
+                    if (signatures.isNotEmpty()) {
+                        FilledTonalButton(onClick = { showSignatures = true }) { Text("Check signatures (${signatures.size})") }
+                    }
+                    Button(onClick = onClose) { Text("Back") }
+                }
+            }
+            else -> {
+                val d = doc!!
+                BoxWithConstraints(
+                    Modifier
+                        .fillMaxSize()
+                        .background(if (night) Color(0xFF111111) else Color(0xFFE4E7E5))
+                        .pointerInput(Unit) { detectTapGestures(onTap = { chrome = !chrome }) }
+                        .pointerInput(Unit) {
+                            awaitEachGesture {
+                                awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                                do {
+                                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                                    if (event.changes.size >= 2) {
+                                        val zoom = event.calculateZoom()
+                                        if (zoom != 1f) {
+                                            scale = (scale * zoom).coerceIn(1f, 4f)
+                                            event.changes.forEach { it.consume() }
+                                        }
+                                    }
+                                } while (event.changes.any { it.pressed })
+                            }
+                        },
+                ) {
+                    val density = LocalDensity.current
+                    val viewWidthPx = with(density) { maxWidth.toPx() }
+                    // pages render at the nearest quarter step; the bitmap is stretched between steps
+                    val snapped = (Math.round(scale * 4f) / 4f)
+                    val renderWidth = (viewWidthPx * snapped).toInt()
+                    val displayWidth = with(density) { (viewWidthPx * scale).toDp() }
+                    Box(Modifier.fillMaxSize().horizontalScroll(rememberScrollState())) {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.width(displayWidth),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 10.dp),
+                        ) {
+                            itemsIndexed(List(d.pageCount) { it }) { index, _ ->
+                                PageView(d, index, renderWidth, displayWidth, d.ratios[index], pageFilter)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        }
+        if (wide) ToolsPanel(listOf("Tools", "Fill & Sign", "View"), toolsTab, { toolsTab = it }) { pdfTools(it) }
+        }
+        if (chrome) {
+            ReaderBottomBar(
+                listOf(
+                    BottomItem("▤", "Reading Mode", enabled = doc != null) { chrome = false },
+                    BottomItem("⌕", "Go to page", enabled = doc != null) { askPage = true },
+                    BottomItem("🔏", "Signatures", selected = signatures.isNotEmpty()) { toolsTab = "Fill & Sign"; showTools = true },
+                    BottomItem("⊞", "Tools") { toolsTab = "Tools"; showTools = true },
+                ),
+            )
+        }
+    }
+
+    if (showTools && !wide) {
+        ToolsSheet(tabs = listOf("Tools", "Fill & Sign", "View"), selected = toolsTab, onSelect = { toolsTab = it }, onDismiss = { showTools = false }) { tab -> pdfTools(tab) }
     }
 
     if (askPage) {

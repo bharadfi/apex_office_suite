@@ -218,7 +218,8 @@ fun DocsScreen(uri: Uri, name: String, onClose: () -> Unit) {
 
     BackHandler { if (dirty) askLeave = true else onClose() }
 
-    var editing by remember { mutableStateOf(false) }
+    val wide = LocalWide.current
+    var editing by remember { mutableStateOf(wide) }
     var showTools by remember { mutableStateOf(false) }
     var toolsTab by remember { mutableStateOf("Home") }
     var zoom by remember { mutableFloatStateOf(1f) }
@@ -230,79 +231,7 @@ fun DocsScreen(uri: Uri, name: String, onClose: () -> Unit) {
         runCatching { context.startActivity(Intent.createChooser(send, name)) }
     }
 
-    Column(Modifier.fillMaxSize().background(Color(0xFF202124)).statusBarsPadding().navigationBarsPadding().imePadding()) {
-        ReaderTopBar(
-            title = name + if (dirty) " •" else "",
-            subtitle = if (editing) "Editing" else "Read-only",
-            onBack = { if (dirty) askLeave = true else onClose() },
-            actions = {
-                if (editing) {
-                    BarAction("↶", "Undo", { editor?.undoEdit() }, enabled = loaded)
-                    BarAction("↷", "Redo", { editor?.redoEdit() }, enabled = loaded)
-                    BarAction("💾", "Save", { askSave = true }, enabled = loaded)
-                }
-            },
-        )
-        if (editing) {
-            Box(Modifier.background(MaterialTheme.colorScheme.surface)) {
-                Toolbar(editor, tick, onColor = { askColor = true }, onFind = { askFind = true }, enabled = loaded)
-            }
-        }
-        Box(Modifier.weight(1f)) {
-            if (error != null) {
-                Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(error!!, color = MaterialTheme.colorScheme.error)
-                    Button(onClick = onClose, modifier = Modifier.padding(top = 12.dp)) { Text("Back") }
-                }
-            } else {
-                Box(Modifier.fillMaxSize().background(Color(0xFFE4E7E5)), contentAlignment = Alignment.TopCenter) {
-                    AndroidView(
-                        modifier = Modifier.widthIn(max = 820.dp).fillMaxSize(),
-                        factory = { ctx ->
-                            Editor(ctx).also { ed ->
-                                ed.setBackgroundColor(AColor.WHITE)
-                                ed.setTextColor(AColor.BLACK)
-                                ed.onChanged = { dirty = true; tick++ }
-                                ed.onSelection = { tick++ }
-                                editor = ed
-                            }
-                        },
-                        update = { ed ->
-                            // read-only until the user chooses to edit; reading and selecting still work
-                            ed.isFocusable = editing
-                            ed.isFocusableInTouchMode = editing
-                            ed.isCursorVisible = editing
-                            ed.showSoftInputOnFocus = editing
-                            if (!editing) ed.clearFocus()
-                            ed.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f * zoom)
-                        },
-                    )
-                }
-            }
-        }
-        ReaderBottomBar(
-            if (!editing) listOf(
-                BottomItem("✎", "Edit", enabled = loaded) { editing = true },
-                BottomItem("⇔", "Fit to Screen", enabled = loaded) { zoom = 1f },
-                BottomItem("⌕", "Find and Replace", enabled = loaded) { askFind = true },
-                BottomItem("⊞", "Tools") { toolsTab = "Home"; showTools = true },
-                BottomItem("⇪", "Share") { share() },
-            ) else listOf(
-                BottomItem("✓", "Done", selected = true) { editing = false },
-                BottomItem("⌕", "Find and Replace", enabled = loaded) { askFind = true },
-                BottomItem("⊞", "Tools") { toolsTab = "Home"; showTools = true },
-                BottomItem("💾", "Save", enabled = loaded) { askSave = true },
-            ),
-        )
-    }
-
-    if (showTools) {
-        ToolsSheet(
-            tabs = listOf("Home", "Review", "View"),
-            selected = toolsTab,
-            onSelect = { toolsTab = it },
-            onDismiss = { showTools = false },
-        ) { tab ->
+    val docTools: @Composable (String) -> Unit = { tab ->
             @Suppress("UNUSED_EXPRESSION") tick
             val ed = editor
             val s = ed?.selectionStart?.coerceAtLeast(0) ?: 0
@@ -381,7 +310,79 @@ fun DocsScreen(uri: Uri, name: String, onClose: () -> Unit) {
                     }
                 }
             }
+    }
+
+    Column(Modifier.fillMaxSize().background(Color(0xFF202124)).statusBarsPadding().navigationBarsPadding().imePadding()) {
+        ReaderTopBar(
+            title = name + if (dirty) " •" else "",
+            subtitle = if (editing) "Editing" else "Read-only",
+            onBack = { if (dirty) askLeave = true else onClose() },
+            actions = {
+                if (editing) {
+                    BarAction("↶", "Undo", { editor?.undoEdit() }, enabled = loaded)
+                    BarAction("↷", "Redo", { editor?.redoEdit() }, enabled = loaded)
+                    BarAction("💾", "Save", { askSave = true }, enabled = loaded)
+                }
+            },
+        )
+        if (editing) {
+            Box(Modifier.background(MaterialTheme.colorScheme.surface)) {
+                Toolbar(editor, tick, onColor = { askColor = true }, onFind = { askFind = true }, enabled = loaded)
+            }
         }
+        Row(Modifier.weight(1f)) {
+        Box(Modifier.weight(1f)) {
+            if (error != null) {
+                Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(error!!, color = MaterialTheme.colorScheme.error)
+                    Button(onClick = onClose, modifier = Modifier.padding(top = 12.dp)) { Text("Back") }
+                }
+            } else {
+                Box(Modifier.fillMaxSize().background(Color(0xFFE4E7E5)), contentAlignment = Alignment.TopCenter) {
+                    AndroidView(
+                        modifier = Modifier.widthIn(max = 820.dp).fillMaxSize(),
+                        factory = { ctx ->
+                            Editor(ctx).also { ed ->
+                                ed.setBackgroundColor(AColor.WHITE)
+                                ed.setTextColor(AColor.BLACK)
+                                ed.onChanged = { dirty = true; tick++ }
+                                ed.onSelection = { tick++ }
+                                editor = ed
+                            }
+                        },
+                        update = { ed ->
+                            // read-only until the user chooses to edit; reading and selecting still work
+                            ed.isFocusable = editing
+                            ed.isFocusableInTouchMode = editing
+                            ed.isCursorVisible = editing
+                            ed.showSoftInputOnFocus = editing
+                            if (!editing) ed.clearFocus()
+                            ed.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f * zoom)
+                        },
+                    )
+                }
+            }
+        }
+        if (wide) ToolsPanel(listOf("Home", "Review", "View"), toolsTab, { toolsTab = it }) { docTools(it) }
+        }
+        ReaderBottomBar(
+            if (!editing) listOf(
+                BottomItem("✎", "Edit", enabled = loaded) { editing = true },
+                BottomItem("⇔", "Fit to Screen", enabled = loaded) { zoom = 1f },
+                BottomItem("⌕", "Find and Replace", enabled = loaded) { askFind = true },
+                BottomItem("⊞", "Tools") { toolsTab = "Home"; showTools = true },
+                BottomItem("⇪", "Share") { share() },
+            ) else listOf(
+                BottomItem("✓", "Done", selected = true) { editing = false },
+                BottomItem("⌕", "Find and Replace", enabled = loaded) { askFind = true },
+                BottomItem("⊞", "Tools") { toolsTab = "Home"; showTools = true },
+                BottomItem("💾", "Save", enabled = loaded) { askSave = true },
+            ),
+        )
+    }
+
+    if (showTools && !wide) {
+        ToolsSheet(tabs = listOf("Home", "Review", "View"), selected = toolsTab, onSelect = { toolsTab = it }, onDismiss = { showTools = false }) { tab -> docTools(tab) }
     }
 
     if (askSave) {
