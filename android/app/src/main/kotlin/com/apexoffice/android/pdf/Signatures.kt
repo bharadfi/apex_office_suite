@@ -72,7 +72,8 @@ object SignatureVerifier {
         val out = ArrayList<SignatureInfo>()
         for ((n, m) in byteRange.findAll(text).withIndex()) {
             val (a, b, c, d) = m.groupValues.drop(1).map { it.toLongOrNull() ?: -1L }
-            out.add(one(n + 1, bytes, a, b, c, d, trusted).also { it.byteRange = listOf(a, b, c, d) })
+            val legacy = legacyCertificates(text, m.range.first, m.range.last)
+            out.add(one(n + 1, bytes, a, b, c, d, trusted, legacy).also { it.byteRange = listOf(a, b, c, d) })
         }
         return out
     }
@@ -80,7 +81,7 @@ object SignatureVerifier {
     private fun unreadable(i: Int, why: String) =
         SignatureInfo(i, "Unknown signer", "", null, "", Verdict.UNREADABLE, false, why)
 
-    private fun one(i: Int, bytes: ByteArray, a: Long, b: Long, c: Long, d: Long, trusted: Set<String>): SignatureInfo {
+    private fun one(i: Int, bytes: ByteArray, a: Long, b: Long, c: Long, d: Long, trusted: Set<String>, legacy: List<ByteArray>?): SignatureInfo {
         if (a != 0L || b <= 0 || c < b || c + d > bytes.size) return unreadable(i, "Invalid byte range")
         // the hex string sits in the gap: <...>
         var start = b.toInt()
@@ -92,6 +93,7 @@ object SignatureVerifier {
         System.arraycopy(bytes, 0, signed, 0, b.toInt())
         System.arraycopy(bytes, c.toInt(), signed, b.toInt(), d.toInt())
         val whole = c + d == bytes.size.toLong() || bytes.copyOfRange((c + d).toInt(), bytes.size).all { it in WHITESPACE }
+        if (legacy != null) return oneLegacy(i, container, signed, whole, legacy, trusted)
         return try {
             val info = ContentInfo.getInstance(ASN1InputStream(container).readObject())
             val cms = CMSSignedData(CMSProcessableByteArray(signed), info)
@@ -126,6 +128,117 @@ object SignatureVerifier {
         }
     }
 
+    private val legacyFilter = Regex("/SubFilter\\s*/adbe\\.x509\\.rsa_sha1")
+
+    /**
+     * For the original (PDF 1.2) signature format, the certificates held in the signature's /Cert
+     * entry (signer first); null for every other format. The entry is a hex or literal string, or an
+     * array of them, read from the file as written.
+     */
+    private fun legacyCertificates(text: String, from: Int, to: Int): List<ByteArray>? {
+        val begin = text.lastIndexOf("obj", from).coerceAtLeast(0)
+        val finish = text.indexOf("endobj", to).let { if (it < 0) text.length else it }
+        val dict = text.substring(begin, finish)
+        if (!legacyFilter.containsMatchIn(dict)) return null
+        val cert = Regex("/Cert(?![A-Za-z])\\s*").find(dict) ?: return emptyList()
+        return readStrings(dict, cert.range.last + 1)
+    }
+
+    private fun readStrings(s: String, start: Int): List<ByteArray> {
+        var i = start
+        fun skipSpace() { while (i < s.length && s[i].isWhitespace()) i++ }
+        fun hex(): ByteArray? {
+            val end = s.indexOf('>', i)
+            if (end < 0) return null
+            val digits = s.substring(i + 1, end).filter { !it.isWhitespace() }.let { if (it.length % 2 == 1) it + "0" else it }
+            i = end + 1
+            return ByteArray(digits.length / 2) { k -> digits.substring(2 * k, 2 * k + 2).toInt(16).toByte() }
+        }
+        fun literal(): ByteArray {
+            val buf = java.io.ByteArrayOutputStream()
+            var depth = 1
+            i++
+            while (i < s.length && depth > 0) {
+                val ch = s[i]
+                when {
+                    ch == '\\' -> {
+                        i++
+                        val n = s.getOrNull(i) ?: break
+                        when (n) {
+                            'n' -> buf.write(10)
+                            'r' -> buf.write(13)
+                            't' -> buf.write(9)
+                            'b' -> buf.write(8)
+                            'f' -> buf.write(12)
+                            '\r' -> if (s.getOrNull(i + 1) == '\n') i++
+                            '\n' -> {}
+                            in '0'..'7' -> {
+                                var v = n - '0'
+                                var k = 0
+                                while (k < 2 && s.getOrNull(i + 1)?.let { it in '0'..'7' } == true) { i++; v = v * 8 + (s[i] - '0'); k++ }
+                                buf.write(v and 0xFF)
+                            }
+                            else -> buf.write(n.code and 0xFF)
+                        }
+                    }
+                    ch == '(' -> { depth++; buf.write('('.code) }
+                    ch == ')' -> { depth--; if (depth > 0) buf.write(')'.code) }
+                    ch == '\r' -> { buf.write(10); if (s.getOrNull(i + 1) == '\n') i++ }
+                    else -> buf.write(ch.code and 0xFF)
+                }
+                i++
+            }
+            return buf.toByteArray()
+        }
+        fun item(): ByteArray? {
+            skipSpace()
+            return when (s.getOrNull(i)) { '<' -> hex(); '(' -> literal(); else -> null }
+        }
+        skipSpace()
+        val out = ArrayList<ByteArray>()
+        if (s.getOrNull(i) == '[') {
+            i++
+            while (true) { out.add(item() ?: break) }
+        } else {
+            item()?.let(out::add)
+        }
+        return out
+    }
+
+    /**
+     * A signature in the original format: a bare RSA PKCS#1 v1.5 signature (a DER OCTET STRING holding
+     * it, or the value itself) over the SHA-1 of the signed ranges, made with the first certificate in /Cert.
+     */
+    private fun oneLegacy(i: Int, container: ByteArray, signed: ByteArray, whole: Boolean, certs: List<ByteArray>, trusted: Set<String>): SignatureInfo {
+        val factory = java.security.cert.CertificateFactory.getInstance("X.509")
+        val parsed = certs.mapNotNull { der ->
+            runCatching { factory.generateCertificate(der.inputStream()) as java.security.cert.X509Certificate }.getOrNull()
+        }
+        val leaf = parsed.firstOrNull() ?: return unreadable(i, "Signer certificate is missing")
+        val signature = try {
+            if (container.firstOrNull() == 0x04.toByte()) (ASN1InputStream(container).readObject() as org.bouncycastle.asn1.ASN1OctetString).octets
+            else {
+                val size = ((leaf.publicKey as? java.security.interfaces.RSAPublicKey)?.modulus?.bitLength() ?: 0).let { (it + 7) / 8 }
+                if (size in 1..container.size) container.copyOfRange(0, size) else container
+            }
+        } catch (e: Exception) {
+            return unreadable(i, "Signature data is not valid")
+        }
+        val intact = runCatching {
+            java.security.Signature.getInstance("SHA1withRSA").run { initVerify(leaf.publicKey); update(signed); verify(signature) }
+        }.getOrDefault(false)
+        val holder = X509CertificateHolder(leaf.encoded)
+        val chain = chainFingerprints(holder, parsed.map { X509CertificateHolder(it.encoded) })
+        val verdict = when {
+            !intact -> Verdict.INVALID
+            chain.none { it in trusted } -> Verdict.VALID_UNTRUSTED
+            !whole -> Verdict.VALID_MODIFIED
+            else -> Verdict.VALID_TRUSTED
+        }
+        return SignatureInfo(i, commonName(holder.subject), commonName(holder.issuer), null, sha256(holder.encoded), verdict, whole,
+            if (intact) null else "The signature does not match the signed bytes")
+            .also { it.email = emailOf(holder) }
+    }
     /** Same digest and RSA checks as the strict path, over the signed attributes exactly as they were stored. */
     private fun lenientRsa(signer: SignerInformation, holder: X509CertificateHolder, signed: ByteArray): Boolean = try {
         val attrs = signer.toASN1Structure().authenticatedAttributes
