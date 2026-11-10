@@ -46,3 +46,6 @@ _scratch-*
 android/app/src/main/assets/docs/
 android/app/src/main/assets/markdown/
 android/app/src/main/assets/html/
+android/app/src/main/assets/slides/
+android/app/src/main/assets/pdf/
+android/app/src/main/assets/sheets/

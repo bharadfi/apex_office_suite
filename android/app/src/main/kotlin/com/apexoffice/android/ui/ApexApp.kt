@@ -353,11 +353,11 @@ private fun RecentThumb(file: RecentFile) {
 private fun OpenDocument(openDocument: RecentFile, onCloseDocument: () -> Unit) {
     when (openDocument.kind) {
         AppKind.SHEETS -> SheetsScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
-        AppKind.SLIDES -> SlidesScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
+        AppKind.SLIDES -> DocsWebScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument, "slides")
         AppKind.MARKDOWN -> DocsWebScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument, "markdown")
         AppKind.HTML -> DocsWebScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument, "html")
         AppKind.DOCS -> DocsWebScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
-        AppKind.PDF -> PdfScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
+        AppKind.PDF -> DocsWebScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument, "pdf")
         null -> DocumentPlaceholder(openDocument, onCloseDocument)
     }
 }

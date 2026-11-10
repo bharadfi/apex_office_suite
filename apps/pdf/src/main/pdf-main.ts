@@ -1255,7 +1255,7 @@ export async function readMergeInputs(
   return { base: new Uint8Array(await io.readFile(basePath)), others }
 }
 
-function registerPdfIpc(): void {
+export function registerPdfIpc(): void {
   if (ipcRegistered) return
   ipcRegistered = true
 
@@ -2645,7 +2645,7 @@ function registerPdfIpc(): void {
   ipcMain.handle(PDF_CHANNELS.getLanguage, () => getUiLang())
 }
 
-function grantAndTrack(wc: WebContents, openPath?: string | null): void {
+export function grantAndTrack(wc: WebContents, openPath?: string | null): void {
   const wcId = wc.id
   const allowedPaths = new Set<string>()
   allowedByWc.set(wcId, allowedPaths)
