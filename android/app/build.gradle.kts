@@ -63,6 +63,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.17.0")
     // PDF signatures: CMS/PKCS#7 verification and certificate parsing
     implementation("org.bouncycastle:bcprov-jdk18on:1.80")
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0") { exclude(group = "org.bouncycastle") } // reads where each signature sits on its page
     implementation("org.bouncycastle:bcpkix-jdk18on:1.80")
     // on-device OCR (bundled Latin model, no network)
     implementation("com.google.mlkit:text-recognition:16.0.1")

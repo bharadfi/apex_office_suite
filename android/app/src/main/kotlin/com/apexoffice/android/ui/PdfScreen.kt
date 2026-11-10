@@ -2,6 +2,8 @@ package com.apexoffice.android.ui
 
 import android.content.ClipData
 import android.content.Intent
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
@@ -142,6 +144,23 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
                 SignatureVerifier.verify(bytes, trustedSet)
             }.getOrDefault(emptyList())
         }
+    }
+
+    // where each signature sits on its page; read once per file, coloured by the current verdicts
+    var fieldMarks by remember { mutableStateOf<List<com.apexoffice.android.pdf.FieldMark>>(emptyList()) }
+    LaunchedEffect(uri) {
+        fieldMarks = withContext(Dispatchers.Default) {
+            runCatching {
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: ByteArray(0)
+                com.apexoffice.android.pdf.SignatureFields.locate(context, bytes)
+            }.getOrDefault(emptyList())
+        }
+    }
+    val pageMarks = remember(fieldMarks, signatures) {
+        fieldMarks.mapNotNull { f ->
+            val sig = signatures.firstOrNull { it.byteRange == f.byteRange } ?: return@mapNotNull null
+            PageMark(f.page, f.x0, f.y0, f.x1, f.y1, sig.verdict)
+        }.groupBy { it.page }
     }
 
     val listState = rememberLazyListState()
@@ -333,7 +352,7 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 10.dp),
                         ) {
                             itemsIndexed(List(d.pageCount) { it }) { index, _ ->
-                                PageView(d, index, renderWidth, displayWidth, d.ratios[index], pageFilter)
+                                PageView(d, index, renderWidth, displayWidth, d.ratios[index], pageFilter, pageMarks[index].orEmpty()) { toolsTab = "Fill & Sign"; showTools = true }
                             }
                         }
                     }
@@ -441,7 +460,7 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
 }
 
 @Composable
-private fun PageView(doc: PdfDoc, index: Int, renderWidth: Int, displayWidth: androidx.compose.ui.unit.Dp, ratio: Float, filter: androidx.compose.ui.graphics.ColorFilter?) {
+private fun PageView(doc: PdfDoc, index: Int, renderWidth: Int, displayWidth: androidx.compose.ui.unit.Dp, ratio: Float, filter: androidx.compose.ui.graphics.ColorFilter?, marks: List<PageMark>, onMark: () -> Unit) {
     val bitmap by produceState<Bitmap?>(null, doc, index, renderWidth) {
         val key = "${System.identityHashCode(doc)}:$index:$renderWidth"
         value = bitmapCache.get(key) ?: withContext(Dispatchers.Default) {
@@ -452,6 +471,25 @@ private fun PageView(doc: PdfDoc, index: Int, renderWidth: Int, displayWidth: an
     Box(Modifier.width(displayWidth).height(height).background(Color.White)) {
         bitmap?.let {
             Image(it.asImageBitmap(), contentDescription = "Page ${index + 1}", contentScale = ContentScale.FillWidth, colorFilter = filter, modifier = Modifier.fillMaxSize())
+        }
+        for (m in marks) {
+            val w = displayWidth * (m.x1 - m.x0)
+            val h = height * (m.y1 - m.y0)
+            val (tone, glyph) = markStyle(m.verdict)
+            Box(
+                Modifier
+                    .offset(x = displayWidth * m.x0, y = height * m.y0)
+                    .size(w, h)
+                    .clickable(onClick = onMark),
+                contentAlignment = Alignment.Center,
+            ) {
+                val badge = minOf(w, h, 56.dp)
+                Box(
+                    Modifier.size(badge).background(tone, androidx.compose.foundation.shape.CircleShape)
+                        .border(2.dp, Color.White, androidx.compose.foundation.shape.CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) { Text(glyph, color = Color.White, fontWeight = FontWeight.Bold, fontSize = (badge.value * 0.55f).sp) }
+            }
         }
     }
 }
@@ -529,4 +567,15 @@ private fun sigBanner(v: Verdict, count: Int): Pair<Color, String> {
         Verdict.INVALID -> Color(0xFFB02A2A) to "$n. A signature is invalid."
         Verdict.UNREADABLE -> Color(0xFF5E6B78) to "$n. A signature could not be read."
     }
+}
+/** A signature's visible area on a page (fractions of the page) with its current verdict. */
+private class PageMark(val page: Int, val x0: Float, val y0: Float, val x1: Float, val y1: Float, val verdict: Verdict)
+
+/** The Acrobat-style status marks: green tick, amber question mark or warning, red cross. */
+private fun markStyle(v: Verdict): Pair<Color, String> = when (v) {
+    Verdict.VALID_TRUSTED -> Color(0xFF1E8E5A) to "✓"
+    Verdict.VALID_UNTRUSTED -> Color(0xFFE0A100) to "?"
+    Verdict.VALID_MODIFIED -> Color(0xFFE0A100) to "!"
+    Verdict.INVALID -> Color(0xFFC53030) to "✕"
+    Verdict.UNREADABLE -> Color(0xFF718096) to "?"
 }

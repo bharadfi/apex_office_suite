@@ -6,3 +6,6 @@
 -keep class com.google.android.gms.internal.mlkit_** { *; }
 -keep class com.google.android.odml.** { *; }
 -dontwarn com.google.mlkit.**
+-keep class com.tom_roush.** { *; }
+-dontwarn com.tom_roush.**
+-dontwarn com.gemalto.jp2.**

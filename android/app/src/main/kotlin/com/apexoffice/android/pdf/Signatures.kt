@@ -33,6 +33,9 @@ class SignatureInfo(
     val coversWholeFile: Boolean,
     val detail: String?,
 ) {
+    /** the four numbers of the signature's /ByteRange; identifies its form field */
+    var byteRange: List<Long> = emptyList()
+
     val label: String
         get() = when (verdict) {
             Verdict.VALID_TRUSTED -> "Valid, signer trusted"
@@ -66,7 +69,7 @@ object SignatureVerifier {
         val out = ArrayList<SignatureInfo>()
         for ((n, m) in byteRange.findAll(text).withIndex()) {
             val (a, b, c, d) = m.groupValues.drop(1).map { it.toLongOrNull() ?: -1L }
-            out.add(one(n + 1, bytes, a, b, c, d, trusted))
+            out.add(one(n + 1, bytes, a, b, c, d, trusted).also { it.byteRange = listOf(a, b, c, d) })
         }
         return out
     }
@@ -94,11 +97,15 @@ object SignatureVerifier {
             val matches = cms.certificates.getMatches(signer.sid as org.bouncycastle.util.Selector<X509CertificateHolder>)
             val holder = matches.firstOrNull() ?: return unreadable(i, "Signer certificate is missing")
             val fingerprint = sha256(holder.encoded)
-            val integrity = try {
+            var why: String? = null
+            var integrity = try {
                 signer.verify(JcaSimpleSignerInfoVerifierBuilder().setProvider(BouncyCastleProvider()).build(holder))
             } catch (e: Exception) {
+                why = e.javaClass.simpleName + ": " + e.message
                 false
             }
+            // some signers write the signed attributes unsorted; check the signature over them as stored
+            if (!integrity && lenientRsa(signer, holder, signed)) { integrity = true; why = null }
             val time = signingTime(signer)
             // trusted when the signer's certificate, or a certificate that issued it, was trusted by the user
             val chain = chainFingerprints(holder, cms.certificates.getMatches(null).map { it as X509CertificateHolder })
@@ -109,10 +116,43 @@ object SignatureVerifier {
                 !whole -> Verdict.VALID_MODIFIED
                 else -> Verdict.VALID_TRUSTED
             }
-            SignatureInfo(i, commonName(holder.subject), commonName(holder.issuer), time, fingerprint, verdict, whole, null)
+            SignatureInfo(i, commonName(holder.subject), commonName(holder.issuer), time, fingerprint, verdict, whole, if (verdict == Verdict.INVALID) (why ?: "The signature does not match the signed bytes") else null)
         } catch (e: Exception) {
             unreadable(i, e.message ?: "Signature format not supported")
         }
+    }
+
+    /** Same digest and RSA checks as the strict path, over the signed attributes exactly as they were stored. */
+    private fun lenientRsa(signer: SignerInformation, holder: X509CertificateHolder, signed: ByteArray): Boolean = try {
+        val attrs = signer.toASN1Structure().authenticatedAttributes
+        val digestName = when (signer.digestAlgOID) {
+            "1.3.14.3.2.26" -> "SHA1"
+            "2.16.840.1.101.3.4.2.1" -> "SHA256"
+            "2.16.840.1.101.3.4.2.2" -> "SHA384"
+            "2.16.840.1.101.3.4.2.3" -> "SHA512"
+            else -> null
+        }
+        if (attrs == null || digestName == null || !signer.encryptionAlgOID.startsWith("1.2.840.113549.1.1.")) {
+            false
+        } else {
+            val claimed = org.bouncycastle.asn1.cms.AttributeTable(attrs)
+                .get(org.bouncycastle.asn1.cms.CMSAttributes.messageDigest)?.attrValues?.getObjectAt(0)
+                ?.let { (it as org.bouncycastle.asn1.ASN1OctetString).octets }
+            val actual = java.security.MessageDigest.getInstance(digestName.replace("SHA", "SHA-").replace("SHA-1", "SHA-1")).digest(signed)
+            if (claimed == null || !java.security.MessageDigest.isEqual(claimed, actual)) {
+                false
+            } else {
+                val key = java.security.cert.CertificateFactory.getInstance("X.509")
+                    .generateCertificate(holder.encoded.inputStream()).publicKey
+                java.security.Signature.getInstance(digestName + "withRSA").run {
+                    initVerify(key)
+                    update(attrs.encoded)
+                    verify(signer.signature)
+                }
+            }
+        }
+    } catch (e: Exception) {
+        false
     }
 
     private val WHITESPACE = setOf(0x0A.toByte(), 0x0D.toByte(), 0x20.toByte(), 0x00.toByte())

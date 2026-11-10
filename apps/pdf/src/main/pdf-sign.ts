@@ -643,9 +643,10 @@ async function createSignature(
       certificate: loaded.certificate,
       digestAlgorithm: forge.pki.oids.sha256,
       authenticatedAttributes: [
+        // DER sorts a SET OF by encoding, which puts signingTime ahead of messageDigest; strict verifiers re-sort
         { type: forge.pki.oids.contentType, value: forge.pki.oids.data },
-        { type: forge.pki.oids.messageDigest },
         { type: forge.pki.oids.signingTime, value: signingTime as unknown as string },
+        { type: forge.pki.oids.messageDigest },
       ],
     })
     p7.sign({ detached: true })
