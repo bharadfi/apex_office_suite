@@ -36,11 +36,16 @@ export let openedName = ''
 
 const raw = host?.takePending()
 if (raw) {
-  const file = JSON.parse(raw) as { path: string; name: string; base64: string }
+  const file = JSON.parse(raw) as { path: string; realPath?: string; name: string; base64: string }
   uri = file.path
   openedName = file.name
-  openedPath = `/storage/${file.name}`
-  seedFile(openedPath, toBytes(file.base64))
+  if (file.realPath) {
+    // already a real file on the phone (the workbook engine opens it by path); the host copies saves back
+    openedPath = file.realPath
+  } else {
+    openedPath = `/storage/${file.name}`
+    seedFile(openedPath, toBytes(file.base64))
+  }
 }
 
 let saves = 0
@@ -72,3 +77,18 @@ const errors: string[] = []
 Object.assign(window, { __errors: errors })
 window.addEventListener('error', (e) => errors.push(String(e.message) + ' ' + String(e.error?.stack ?? '').slice(0, 500)))
 window.addEventListener('unhandledrejection', (e) => errors.push('rejected: ' + String((e.reason as Error)?.stack ?? e.reason).slice(0, 700)))
+
+/** the Back button: ask the app's own close guard (it shows its Save / Don't Save / Cancel question) and report whether to leave */
+export function registerClose(guard: () => Promise<boolean>): void {
+  Object.assign(window, {
+    __apexClose: async () => {
+      let proceed = false
+      try {
+        proceed = await guard()
+      } catch {
+        proceed = false
+      }
+      if (proceed) host?.saveDone(true) // the app leaves the document
+    },
+  })
+}

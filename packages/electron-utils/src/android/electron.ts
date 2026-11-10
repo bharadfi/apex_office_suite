@@ -7,7 +7,28 @@
  * a harmless default.
  */
 
+import { realRoot } from './fs'
+
 type Listener = (event: unknown, ...args: unknown[]) => unknown
+
+/** ask the phone's user a question with buttons; resolves with the chosen button's index */
+const dialogHost = (window as unknown as { AndroidHost?: { showDialog?(json: string): void } }).AndroidHost
+let dialogWaiter: ((index: number) => void) | undefined
+Object.assign(window, { __dialogAnswer: (index: number) => dialogWaiter?.(index) })
+function askAndroid(options: { message?: string; detail?: string; buttons?: string[]; cancelId?: number }): Promise<number> {
+  const cancel = options.cancelId ?? (options.buttons ? options.buttons.length - 1 : 0)
+  if (!dialogHost?.showDialog) return Promise.resolve(cancel)
+  return new Promise((resolve) => {
+    dialogWaiter = resolve
+    dialogHost.showDialog!(JSON.stringify({ message: options.message ?? '', detail: options.detail ?? '', buttons: options.buttons ?? ['OK'] }))
+  })
+}
+
+let nextOpenDialogPath: string | undefined
+/** the next file-open dialog answers with this path (the Android app opened the file already) */
+export function answerNextOpenDialog(path: string): void {
+  nextOpenDialogPath = path
+}
 
 const handlers = new Map<string, Listener>()
 const mainListeners = new Map<string, Set<Listener>>()
@@ -181,7 +202,7 @@ const readyPromise = Promise.resolve()
 export const app = inert(
   {},
   {
-    getPath: (name: string) => `/data/${name}`,
+    getPath: (name: string) => `/${realRoot ? realRoot.slice(1) : 'data'}/${name}`,
     getAppPath: () => '/app',
     getName: () => 'Apex Office',
     getVersion: () => '1.0.5',
@@ -234,9 +255,17 @@ export const webContents = inert(
 export const dialog = inert(
   {},
   {
-    showOpenDialog: async () => ({ canceled: true, filePaths: [] }),
+    showOpenDialog: async () => {
+      const path = nextOpenDialogPath
+      nextOpenDialogPath = undefined
+      return path ? { canceled: false, filePaths: [path] } : { canceled: true, filePaths: [] }
+    },
     showSaveDialog: async () => ({ canceled: true, filePath: undefined }),
-    showMessageBox: async () => ({ response: 0, checkboxChecked: false }),
+    showMessageBox: async (...args: unknown[]) => {
+      const options = (args.find((a) => a && typeof a === 'object' && 'buttons' in (a as object)) ?? {}) as { message?: string; detail?: string; buttons?: string[]; cancelId?: number }
+      const response = await askAndroid(options)
+      return { response, checkboxChecked: false }
+    },
     showMessageBoxSync: () => 0,
     showErrorBox: () => undefined,
   },

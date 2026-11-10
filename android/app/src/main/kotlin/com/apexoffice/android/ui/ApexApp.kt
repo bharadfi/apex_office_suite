@@ -352,7 +352,7 @@ private fun RecentThumb(file: RecentFile) {
 @Composable
 private fun OpenDocument(openDocument: RecentFile, onCloseDocument: () -> Unit) {
     when (openDocument.kind) {
-        AppKind.SHEETS -> SheetsScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument)
+        AppKind.SHEETS -> DocsWebScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument, "sheets")
         AppKind.SLIDES -> DocsWebScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument, "slides")
         AppKind.MARKDOWN -> DocsWebScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument, "markdown")
         AppKind.HTML -> DocsWebScreen(android.net.Uri.parse(openDocument.uri), openDocument.name, onCloseDocument, "html")

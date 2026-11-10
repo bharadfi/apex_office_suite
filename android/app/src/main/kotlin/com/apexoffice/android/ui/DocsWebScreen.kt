@@ -39,21 +39,143 @@ private class DocsHost(
     private val onRefused: (String) -> Unit,
     private val onPickImage: () -> Unit,
     private val onPreview: (String) -> Unit = {},
+    private val appDir: String = "docs",
+    private val webView: () -> WebView? = { null },
 ) {
     private val main = android.os.Handler(android.os.Looper.getMainLooper())
     private var pending: String? = null
+    private val root = java.io.File(context.filesDir, "rt").apply { mkdirs() }
+    private var sessionFile: java.io.File? = null
+    private var copiedAt = 0L
+    private var process: Process? = null
 
     init {
         pending = runCatching {
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@runCatching null
             val hash = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
-            val b64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
-            """{"path":${quote(uri.toString())},"name":${quote(name)},"hash":"$hash","base64":"$b64"}"""
+            // the workbook engine is a separate process that opens files by path, so the document gets a real path
+            var real = ""
+            if (appDir == "sheets") {
+                val f = java.io.File(root, "session/$name").apply { parentFile?.mkdirs(); writeBytes(bytes) }
+                sessionFile = f
+                copiedAt = f.lastModified()
+                real = f.absolutePath
+            }
+            val b64 = if (appDir == "sheets") "" else Base64.encodeToString(bytes, Base64.NO_WRAP)
+            """{"path":${quote(uri.toString())},"realPath":${quote(real)},"name":${quote(name)},"hash":"$hash","base64":"$b64"}"""
         }.getOrNull()
     }
 
     private fun quote(s: String) = "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
+
+    // ---- a question with buttons, answered by the person using the phone ----
+    @JavascriptInterface
+    fun showDialog(json: String) {
+        main.post {
+            val o = org.json.JSONObject(json)
+            val labels = o.getJSONArray("buttons")
+            val answer = { i: Int -> webView()?.evaluateJavascript("window.__dialogAnswer($i)", null); Unit }
+            val b = android.app.AlertDialog.Builder(context).setTitle(o.optString("message")).setMessage(o.optString("detail")).setCancelable(false)
+            if (labels.length() > 0) b.setPositiveButton(labels.getString(0)) { _, _ -> answer(0) }
+            if (labels.length() > 1) b.setNegativeButton(labels.getString(1)) { _, _ -> answer(1) }
+            if (labels.length() > 2) b.setNeutralButton(labels.getString(2)) { _, _ -> answer(2) }
+            b.show()
+        }
+    }
+
+    // ---- real files for the page (paths under the app's own folder only) ----
+    private fun inside(path: String): java.io.File? {
+        val f = java.io.File(path).canonicalFile
+        return if (f.path == root.canonicalPath || f.path.startsWith(root.canonicalPath + "/")) f else null
+    }
+
+    private fun copyBack() {
+        val f = sessionFile ?: return
+        if (f.lastModified() == copiedAt || !f.exists()) return
+        runCatching {
+            context.contentResolver.openOutputStream(uri, "wt")?.use { it.write(f.readBytes()) }
+            copiedAt = f.lastModified()
+        }
+    }
+
+    @JavascriptInterface
+    fun realRoot(): String = root.absolutePath
+
+    @JavascriptInterface
+    fun fsExists(path: String): Boolean = inside(path)?.exists() == true
+
+    @JavascriptInterface
+    fun fsRead(path: String): String? = inside(path)?.takeIf { it.isFile }?.let { Base64.encodeToString(it.readBytes(), Base64.NO_WRAP) }
+
+    @JavascriptInterface
+    fun fsWrite(path: String, base64: String): Boolean = runCatching {
+        val f = inside(path) ?: return false
+        f.parentFile?.mkdirs()
+        f.writeBytes(Base64.decode(base64, Base64.DEFAULT))
+        if (f == sessionFile?.canonicalFile) copyBack()
+        true
+    }.getOrDefault(false)
+
+    @JavascriptInterface
+    fun fsMkdir(path: String): Boolean = inside(path)?.mkdirs() == true || inside(path)?.isDirectory == true
+
+    @JavascriptInterface
+    fun fsRemove(path: String): Boolean = inside(path)?.let { it.exists() && it.deleteRecursively() } == true
+
+    @JavascriptInterface
+    fun fsList(path: String): String {
+        val dir = inside(path)?.takeIf { it.isDirectory } ?: return "[]"
+        return (dir.listFiles() ?: emptyArray()).joinToString(",", "[", "]") { """{"name":${quote(it.name)},"dir":${it.isDirectory}}""" }
+    }
+
+    @JavascriptInterface
+    fun fsStat(path: String): String? = inside(path)?.takeIf { it.exists() }?.let { """{"size":${it.length()},"mtime":${it.lastModified()},"dir":${it.isDirectory}}""" }
+
+    @JavascriptInterface
+    fun fsRename(from: String, to: String): Boolean = runCatching {
+        val a = inside(from) ?: return false
+        val b = inside(to) ?: return false
+        b.parentFile?.mkdirs()
+        val ok = a.renameTo(b) || (a.copyTo(b, overwrite = true).exists() && a.delete())
+        if (ok && b == sessionFile?.canonicalFile) copyBack()
+        ok
+    }.getOrDefault(false)
+
+    // ---- the workbook engine, a native program the page talks to over lines of text ----
+    @JavascriptInterface
+    fun sidecarStart(): Boolean {
+        process?.takeIf { it.isAlive }?.let { return true }
+        val binary = java.io.File(context.applicationInfo.nativeLibraryDir, "libxlsx_sidecar.so")
+        if (!binary.exists()) return false
+        val p = ProcessBuilder(binary.absolutePath).redirectErrorStream(false).start()
+        process = p
+        fun send(js: String) = main.post { webView()?.evaluateJavascript(js, null) }
+        Thread {
+            p.inputStream.bufferedReader().forEachLine { line ->
+                copyBack()
+                send("window.__sidecarOut(" + org.json.JSONObject.quote(line) + ")")
+            }
+        }.start()
+        Thread { p.errorStream.bufferedReader().forEachLine { line -> send("window.__sidecarErr(" + org.json.JSONObject.quote(line + "\n") + ")") } }.start()
+        Thread {
+            val code = p.waitFor()
+            send("window.__sidecarExit($code)")
+        }.start()
+        return true
+    }
+
+    @JavascriptInterface
+    fun sidecarWrite(line: String) {
+        val out = process?.outputStream ?: return
+        synchronized(out) { out.write((line + "\n").toByteArray(Charsets.UTF_8)); out.flush() }
+    }
+
+    @JavascriptInterface
+    fun sidecarKill() {
+        process?.destroy()
+        process = null
+    }
     @JavascriptInterface
     fun takePending(): String? = pending.also { pending = null }
 
@@ -96,6 +218,7 @@ fun DocsWebScreen(uri: Uri, name: String, onClose: () -> Unit, appDir: String = 
     BackHandler {
         val view = web
         if (view == null) onClose()
+        else if (appDir == "slides" || appDir == "sheets" || appDir == "pdf") view.evaluateJavascript("window.__apexClose ? window.__apexClose() : null", null)
         else view.evaluateJavascript("window.__apexCloseCheck && window.__apexCloseCheck()", null)
     }
     if (asking) {
@@ -152,7 +275,7 @@ fun DocsWebScreen(uri: Uri, name: String, onClose: () -> Unit, appDir: String = 
                 settings.setSupportZoom(true)
                 settings.builtInZoomControls = true
                 settings.displayZoomControls = false
-                addJavascriptInterface(DocsHost(ctx, uri, name, { dirty -> if (dirty) asking = true else onClose() }, { onClose() }, { reason -> android.widget.Toast.makeText(ctx, reason, android.widget.Toast.LENGTH_LONG).show(); onClose() }, { pickPicture.launch("image/*") }, { previewHtml = it }), "AndroidHost")
+                addJavascriptInterface(DocsHost(ctx, uri, name, { dirty -> if (dirty) asking = true else onClose() }, { onClose() }, { reason -> android.widget.Toast.makeText(ctx, reason, android.widget.Toast.LENGTH_LONG).show(); onClose() }, { pickPicture.launch("image/*") }, { previewHtml = it }, appDir, { web }), "AndroidHost")
                 webChromeClient = object : WebChromeClient() {
                     override fun onConsoleMessage(m: android.webkit.ConsoleMessage): Boolean {
                         android.util.Log.d("ApexDocsWeb", "${m.messageLevel()} ${m.message()} (${m.sourceId()}:${m.lineNumber()})")

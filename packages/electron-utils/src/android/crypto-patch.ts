@@ -6,3 +6,13 @@ Object.assign(nodeCrypto as unknown as Record<string, unknown>, {
   webcrypto: globalThis.crypto,
   subtle: globalThis.crypto.subtle,
 })
+
+// the temp and home folders must be real folders on the phone, since the workbook engine process writes into them
+import nodeOs from 'node:os'
+import { realRoot } from './fs'
+if (realRoot) {
+  Object.assign(nodeOs as unknown as Record<string, unknown>, {
+    tmpdir: (): string => realRoot + '/tmp',
+    homedir: (): string => realRoot + '/home',
+  })
+}

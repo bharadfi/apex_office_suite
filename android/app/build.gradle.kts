@@ -50,6 +50,9 @@ android {
     }
 
     buildFeatures { compose = true }
+
+    // the workbook engine is a program shipped as a library file; it must be unpacked to run
+    packaging { jniLibs { useLegacyPackaging = true } }
 }
 
 dependencies {
