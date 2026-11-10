@@ -38,6 +38,7 @@ private class DocsHost(
     private val onSaved: (Boolean) -> Unit,
     private val onRefused: (String) -> Unit,
     private val onPickImage: () -> Unit,
+    private val onPreview: (String) -> Unit = {},
 ) {
     private val main = android.os.Handler(android.os.Looper.getMainLooper())
     private var pending: String? = null
@@ -66,6 +67,9 @@ private class DocsHost(
     fun pickImage() { main.post { onPickImage() } }
 
     @JavascriptInterface
+    fun updatePreview(text: String) { onPreview(text) }
+
+    @JavascriptInterface
     fun saveDone(ok: Boolean) { main.post { onSaved(ok) } }
 
     @JavascriptInterface
@@ -82,7 +86,9 @@ private class DocsHost(
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun DocsWebScreen(uri: Uri, name: String, onClose: () -> Unit) {
+fun DocsWebScreen(uri: Uri, name: String, onClose: () -> Unit, appDir: String = "docs") {
+    // the HTML editor's live preview is served from the latest text the editor pushed
+    var previewHtml by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
     val context = LocalContext.current
     var web by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<WebView?>(null) }
     var asking by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
@@ -146,7 +152,7 @@ fun DocsWebScreen(uri: Uri, name: String, onClose: () -> Unit) {
                 settings.setSupportZoom(true)
                 settings.builtInZoomControls = true
                 settings.displayZoomControls = false
-                addJavascriptInterface(DocsHost(ctx, uri, name, { dirty -> if (dirty) asking = true else onClose() }, { onClose() }, { reason -> android.widget.Toast.makeText(ctx, reason, android.widget.Toast.LENGTH_LONG).show(); onClose() }, { pickPicture.launch("image/*") }), "AndroidHost")
+                addJavascriptInterface(DocsHost(ctx, uri, name, { dirty -> if (dirty) asking = true else onClose() }, { onClose() }, { reason -> android.widget.Toast.makeText(ctx, reason, android.widget.Toast.LENGTH_LONG).show(); onClose() }, { pickPicture.launch("image/*") }, { previewHtml = it }), "AndroidHost")
                 webChromeClient = object : WebChromeClient() {
                     override fun onConsoleMessage(m: android.webkit.ConsoleMessage): Boolean {
                         android.util.Log.d("ApexDocsWeb", "${m.messageLevel()} ${m.message()} (${m.sourceId()}:${m.lineNumber()})")
@@ -155,9 +161,9 @@ fun DocsWebScreen(uri: Uri, name: String, onClose: () -> Unit) {
                 }
                 webViewClient = object : WebViewClient() {
                     override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
-                        loader.shouldInterceptRequest(request.url)
+                        if (request.url.path?.startsWith("/__preview__/") == true) WebResourceResponse("text/html", "utf-8", java.io.ByteArrayInputStream(previewHtml.toByteArray(Charsets.UTF_8))) else loader.shouldInterceptRequest(request.url)
                 }
-                loadUrl("https://appassets.androidplatform.net/docs/android.html")
+                loadUrl("https://appassets.androidplatform.net/$appDir/android.html")
             }
         },
     )

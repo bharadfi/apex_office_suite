@@ -44,3 +44,5 @@ _scratch-*
 
 # built Word web bundle for the Android app (npm run build:android -w @genoffice/docs)
 android/app/src/main/assets/docs/
+android/app/src/main/assets/markdown/
+android/app/src/main/assets/html/
