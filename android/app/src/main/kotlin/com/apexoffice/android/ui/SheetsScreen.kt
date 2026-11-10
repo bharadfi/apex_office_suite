@@ -146,23 +146,16 @@ fun SheetsScreen(uri: Uri, name: String, onClose: () -> Unit) {
 
     BackHandler { if (dirty) askDiscard = true else onClose() }
 
-    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding()) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TextButton(onClick = { if (dirty) askDiscard = true else onClose() }) { Text("← Back") }
-            Text(
-                (session?.displayName ?: name) + if (dirty) " •" else "",
-                modifier = Modifier.weight(1f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            FilledTonalButton(onClick = { save() }, enabled = session != null) { Text("Save") }
-        }
-        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-        when {
+    var editingMode by remember { mutableStateOf(false) }
+    var showTools by remember { mutableStateOf(false) }
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).statusBarsPadding().navigationBarsPadding().imePadding()) {
+        ReaderTopBar(
+            title = (session?.displayName ?: name) + if (dirty) " •" else "",
+            subtitle = if (editingMode) "Editing" else "Read-only",
+            onBack = { if (dirty) askDiscard = true else onClose() },
+            actions = { if (editingMode) BarAction("💾", "Save", { save() }, enabled = session != null) },
+        )
+        Box(Modifier.weight(1f)) {        when {
             loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Opening…") }
             session == null -> Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -170,9 +163,25 @@ fun SheetsScreen(uri: Uri, name: String, onClose: () -> Unit) {
                     Button(onClick = onClose) { Text("Back") }
                 }
             }
-            else -> SheetBody(session!!, onEdited = { dirty = true })
+            else -> SheetBody(session!!, canEdit = editingMode, showTools = showTools, onToolsClose = { showTools = false }, onStartEdit = { editingMode = true }, onEdited = { dirty = true })
         }
-    }
+        }
+        ReaderBottomBar(
+            if (!editingMode) listOf(
+                BottomItem("✎", "Edit", enabled = session != null) { editingMode = true },
+                BottomItem("⊞", "Tools") { showTools = true },
+                BottomItem("⇪", "Share") {
+                    val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                        type = XLSX_MIME; putExtra(android.content.Intent.EXTRA_STREAM, uri); addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    runCatching { context.startActivity(android.content.Intent.createChooser(send, name)) }
+                },
+            ) else listOf(
+                BottomItem("✓", "Done", selected = true) { editingMode = false },
+                BottomItem("⊞", "Tools") { showTools = true },
+                BottomItem("💾", "Save", enabled = session != null) { save() },
+            ),
+        )    }
 
     if (askDiscard) {
         AlertDialog(
@@ -191,7 +200,7 @@ fun SheetsScreen(uri: Uri, name: String, onClose: () -> Unit) {
 }
 
 @Composable
-private fun SheetBody(session: SheetsSession, onEdited: () -> Unit) {
+private fun SheetBody(session: SheetsSession, canEdit: Boolean, showTools: Boolean, onToolsClose: () -> Unit, onStartEdit: () -> Unit, onEdited: () -> Unit) {
     var sheet by remember { mutableIntStateOf(0) }
     var selRow by remember { mutableIntStateOf(1) }
     var selCol by remember { mutableIntStateOf(1) }
@@ -278,6 +287,7 @@ private fun SheetBody(session: SheetsSession, onEdited: () -> Unit) {
                 value = formula,
                 onValueChange = { formula = it; editing = true },
                 singleLine = true,
+                enabled = canEdit,
                 textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { commit() }),
@@ -287,38 +297,67 @@ private fun SheetBody(session: SheetsSession, onEdited: () -> Unit) {
                     .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
                     .padding(horizontal = 10.dp, vertical = 9.dp),
             )
-            TextButton(onClick = { commit() }, enabled = editing) { Text("✓") }
+            if (canEdit) TextButton(onClick = { commit() }, enabled = editing) { Text("✓") }
         }
-        Row(
-            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Chip("Undo") { commit(); if (session.undo()) changed() }
-            Chip("Redo") { commit(); if (session.redo()) changed() }
-            Chip("Select range", selected = rangeMode) { rangeMode = !rangeMode; if (!rangeMode) { endRow = selRow; endCol = selCol } }
-            Chip("Copy") { copy(false) }
-            Chip("Cut") { copy(true) }
-            Chip("Paste") { paste() }
-            Chip("Clear") { clearRange() }
-            Chip("Number format") { askFormat = true }
-            Chip("+ Row") { act(0, selRow) }
-            Chip("− Row") { act(1, selRow) }
-            Chip("+ Col") { act(2, selCol) }
-            Chip("− Col") { act(3, selCol) }
-            Chip("Wider") { if (session.resizeColumn(sheet, selCol, 1.25)) changed() }
-            Chip("Narrower") { if (session.resizeColumn(sheet, selCol, 0.8)) changed() }
-        }
-        Row(
-            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Chip("B", bold = true) { styleRange(0) }
-            Chip("I", italic = true) { styleRange(1) }
-            Chip("Fill") { colorTarget = 2 }
-            Chip("Text colour") { colorTarget = 3 }
-            Chip("Left") { styleRange(4, 1) }
-            Chip("Centre") { styleRange(4, 2) }
-            Chip("Right") { styleRange(4, 3) }
+        if (showTools) {
+            var toolsTab by remember { mutableStateOf("Home") }
+            ToolsSheet(
+                tabs = listOf("Home", "Cells"),
+                selected = toolsTab,
+                onSelect = { toolsTab = it },
+                onDismiss = onToolsClose,
+            ) { tab ->
+                if (!canEdit) {
+                    ToolGroup("Read-only") {
+                        ToolLine("Tap Edit to change this workbook.", onClick = { onStartEdit(); onToolsClose() }) {
+                            Text("Edit ›", color = Color(0xFF8DD4B1))
+                        }
+                    }
+                } else if (tab == "Home") {
+                    ToolGroup("Edit") {
+                        ToolRow {
+                            ToolButton("↶", "Undo") { commit(); if (session.undo()) changed() }
+                            ToolButton("↷", "Redo") { commit(); if (session.redo()) changed() }
+                            ToolButton("▭", "Select range", active = rangeMode) { rangeMode = !rangeMode; if (!rangeMode) { endRow = selRow; endCol = selCol } }
+                        }
+                        ToolRow {
+                            ToolButton("⧉", "Copy") { copy(false) }
+                            ToolButton("✂", "Cut") { copy(true) }
+                            ToolButton("📋", "Paste") { paste() }
+                            ToolButton("⌫", "Clear") { clearRange() }
+                        }
+                    }
+                    ToolGroup("Font and fill") {
+                        ToolRow {
+                            ToolButton("B", "Bold") { styleRange(0) }
+                            ToolButton("I", "Italic") { styleRange(1) }
+                            ToolButton("▣", "Fill") { onToolsClose(); colorTarget = 2 }
+                            ToolButton("A", "Text colour") { onToolsClose(); colorTarget = 3 }
+                        }
+                    }
+                    ToolGroup("Alignment and number") {
+                        ToolRow {
+                            ToolButton("≡←", "Left") { styleRange(4, 1) }
+                            ToolButton("≡", "Centre") { styleRange(4, 2) }
+                            ToolButton("→≡", "Right") { styleRange(4, 3) }
+                            ToolButton("123", "Number format") { onToolsClose(); askFormat = true }
+                        }
+                    }
+                } else {
+                    ToolGroup("Rows and columns") {
+                        ToolRow {
+                            ToolButton("＋", "Insert row") { act(0, selRow) }
+                            ToolButton("－", "Delete row") { act(1, selRow) }
+                            ToolButton("⫼", "Insert column") { act(2, selCol) }
+                            ToolButton("⫽", "Delete column") { act(3, selCol) }
+                        }
+                        ToolRow {
+                            ToolButton("↔", "Wider column") { if (session.resizeColumn(sheet, selCol, 1.25)) changed() }
+                            ToolButton("⇹", "Narrower column") { if (session.resizeColumn(sheet, selCol, 0.8)) changed() }
+                        }
+                    }
+                }
+            }
         }
         if (colorTarget != 0) {
             val palette = listOf(-1, 0xFFE699, 0xC6EFCE, 0xBDD7EE, 0xF8CBAD, 0xD9D2E9, 0xFFFF00, 0xC53030, 0x1E8E5A, 0x2B6CB0, 0x000000)
@@ -389,7 +428,7 @@ private fun SheetBody(session: SheetsSession, onEdited: () -> Unit) {
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                 )
             }
-            item {
+            if (canEdit) item {
                 TextButton(onClick = { if (session.addSheet()) { tabs = session.sheetNames; sheet = tabs.size - 1; onEdited() } }) { Text("+") }
             }
         }

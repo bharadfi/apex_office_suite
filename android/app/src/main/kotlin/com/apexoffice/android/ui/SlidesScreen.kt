@@ -114,9 +114,27 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
     }
     BackHandler { if (present) present = false else if (dirty) askLeave = true else onClose() }
 
-    Column(Modifier.fillMaxSize().then(if (present) Modifier.background(Color.Black) else Modifier.statusBarsPadding().navigationBarsPadding())) {
-        if (!present) TopBar(name, dirty, onBack = { if (dirty) askLeave = true else onClose() }, onSave = { askSave = true }, canSave = deck != null && dirty)
+    var canEdit by remember { mutableStateOf(false) }
+    var showTools by remember { mutableStateOf(false) }
+    var toolsTab by remember { mutableStateOf("Home") }
+    fun duplicateSlide() {
+        val d = deck ?: return
+        scope.launch {
+            val next = withContext(Dispatchers.Default) { runCatching { Deck.read(d.withDuplicate(page)) }.getOrNull() }
+            if (next != null) { startPage = page + 1; deck = next; version++; dirty = true }
+            else Toast.makeText(context, "Could not duplicate this slide", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    Column(Modifier.fillMaxSize().then(if (present) Modifier.background(Color.Black) else Modifier.background(MaterialTheme.colorScheme.surface).statusBarsPadding().navigationBarsPadding())) {
+        if (!present) ReaderTopBar(
+            title = name + if (dirty) " •" else "",
+            subtitle = if (canEdit) "Editing" else "Read-only",
+            onBack = { if (dirty) askLeave = true else onClose() },
+            actions = { if (canEdit) BarAction("💾", "Save", { askSave = true }, enabled = deck != null && dirty) },
+        )
         val d = deck
+        Box(Modifier.weight(1f)) {
         when {
             error != null -> ErrorBox(error!!, onClose)
             d == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Opening…") }
@@ -127,20 +145,55 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
                     onPage = { page = it },
                     onPresent = { present = true },
                     onExit = { present = false },
-                    onDuplicate = {
-                        scope.launch {
-                            val next = withContext(Dispatchers.Default) { runCatching { Deck.read(d.withDuplicate(page)) }.getOrNull() }
-                            if (next != null) { startPage = page + 1; deck = next; version++; dirty = true }
-                            else Toast.makeText(context, "Could not duplicate this slide", Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    onDelete = { confirmDelete = true },
+                    canEdit = canEdit,
                     onEdit = { slide, shape -> editing = slide to shape },
                 )
             }
         }
+        }
+        if (!present) ReaderBottomBar(
+            if (!canEdit) listOf(
+                BottomItem("✎", "Edit", enabled = deck != null) { canEdit = true },
+                BottomItem("▶", "Present", enabled = deck != null) { present = true },
+                BottomItem("⊞", "Tools") { toolsTab = "Home"; showTools = true },
+                BottomItem("⇪", "Share") {
+                    val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                        type = PPTX_MIME; putExtra(android.content.Intent.EXTRA_STREAM, uri); addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    runCatching { context.startActivity(android.content.Intent.createChooser(send, name)) }
+                },
+            ) else listOf(
+                BottomItem("✓", "Done", selected = true) { canEdit = false },
+                BottomItem("▶", "Present", enabled = deck != null) { present = true },
+                BottomItem("⊞", "Tools") { toolsTab = "Home"; showTools = true },
+                BottomItem("💾", "Save", enabled = deck != null && dirty) { askSave = true },
+            ),
+        )
     }
 
+    if (showTools) {
+        ToolsSheet(tabs = listOf("Home", "View"), selected = toolsTab, onSelect = { toolsTab = it }, onDismiss = { showTools = false }) { tab ->
+            if (tab == "Home") {
+                if (!canEdit) {
+                    ToolGroup("Read-only") {
+                        ToolLine("Tap Edit to change this presentation.", onClick = { canEdit = true; showTools = false }) { Text("Edit ›", color = Color(0xFF8DD4B1)) }
+                    }
+                } else {
+                    ToolGroup("Slides") {
+                        ToolRow {
+                            ToolButton("⧉", "Duplicate slide") { showTools = false; duplicateSlide() }
+                            ToolButton("🗑", "Delete slide") { showTools = false; confirmDelete = true }
+                        }
+                    }
+                    ToolGroup("Text") { ToolLine("Tap a text box on the slide to edit its text.") }
+                }
+            } else {
+                ToolGroup("Slide show") {
+                    ToolRow { ToolButton("▶", "Present", enabled = deck != null) { showTools = false; present = true } }
+                }
+            }
+        }
+    }
     editing?.let { (slide, shape) ->
         val d = deck!!
         var text by remember(shape) { mutableStateOf(d.paragraphsOf(shape).joinToString("\n")) }
@@ -208,7 +261,7 @@ fun SlidesScreen(uri: Uri, name: String, onClose: () -> Unit) {
 private fun SlideViewer(
     deck: Deck, version: Int, present: Boolean, startPage: Int,
     onPage: (Int) -> Unit, onPresent: () -> Unit, onExit: () -> Unit,
-    onDuplicate: () -> Unit, onDelete: () -> Unit, onEdit: (Slide, Shape) -> Unit,
+    canEdit: Boolean, onEdit: (Slide, Shape) -> Unit,
 ) {
     val pager = rememberPagerState(initialPage = startPage.coerceIn(0, deck.slides.size - 1)) { deck.slides.size }
     LaunchedEffect(pager.currentPage) { onPage(pager.currentPage) }
@@ -247,6 +300,7 @@ private fun SlideViewer(
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         SlideImage(deck, slide, 1600, version, Modifier.fillMaxWidth().border(1.dp, Color(0xFFB8C0BB)), onTap = { fx, fy ->
                             // topmost text shape under the tap
+                            if (!present && !canEdit) return@SlideImage
                             if (present) { scope.launch { pager.animateScrollToPage((pager.currentPage + 1).coerceAtMost(deck.slides.size - 1)) }; return@SlideImage }
                             val ex = (fx * deck.width).toLong()
                             val ey = (fy * deck.height).toLong()
@@ -265,9 +319,7 @@ private fun SlideViewer(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Slide ${pager.currentPage + 1} of ${deck.slides.size}", style = MaterialTheme.typography.bodyMedium)
                         Row {
-                            androidx.compose.material3.TextButton(onClick = onPresent) { Text("Present") }
-                            androidx.compose.material3.TextButton(onClick = onDuplicate) { Text("Duplicate") }
-                            androidx.compose.material3.TextButton(onClick = onDelete) { Text("Delete") }
+                            if (canEdit) Text("Tap a text box to edit it", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
                         }
                     }
                     OutlinedButton(onClick = { scope.launch { pager.animateScrollToPage((pager.currentPage + 1).coerceAtMost(deck.slides.size - 1)) } }, enabled = pager.currentPage < deck.slides.size - 1) { Text("→") }

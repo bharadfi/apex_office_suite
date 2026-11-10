@@ -131,13 +131,45 @@ class SheetsSession private constructor(
             } ?: return null to "The file could not be read."
             return when (Formats.extensionOf(name)) {
                 "xlsx", "xlsm" -> {
-                    val h = NativeSheets.nativeOpen(bytes)
+                    var h = NativeSheets.nativeOpen(bytes)
+                    if (h == 0L && NativeSheets.nativeLastError().contains("table name", ignoreCase = true)) {
+                        // the file spec makes a table's name optional (displayName always present); the engine wants it
+                        h = NativeSheets.nativeOpen(nameTables(bytes))
+                    }
                     if (h == 0L) null to NativeSheets.nativeLastError().ifBlank { "This workbook could not be opened." }
                     else SheetsSession(h, name, needsSaveAs = false) to null
                 }
                 "csv", "tsv", "vcf" -> fromTable(name, bytes)
                 else -> null to "Opening .${Formats.extensionOf(name)} files in Sheets is not available yet."
             }
+        }
+
+        /** Copy of the package where every table part has a `name` attribute (copied from displayName). */
+        private fun nameTables(bytes: ByteArray): ByteArray {
+            val out = java.io.ByteArrayOutputStream()
+            java.util.zip.ZipInputStream(bytes.inputStream()).use { zin ->
+                java.util.zip.ZipOutputStream(out).use { zout ->
+                    while (true) {
+                        val entry = zin.nextEntry ?: break
+                        var data = zin.readBytes()
+                        if (entry.name.startsWith("xl/tables/") && entry.name.endsWith(".xml")) {
+                            val xml = String(data, Charsets.UTF_8)
+                            val root = Regex("<table\\b[^>]*>").find(xml)
+                            if (root != null && !Regex("\\sname=").containsMatchIn(root.value)) {
+                                val display = Regex("displayName=\"([^\"]*)\"").find(root.value)?.groupValues?.get(1)
+                                if (display != null) {
+                                    val fixed = root.value.replaceFirst("<table", "<table name=\"$display\"")
+                                    data = xml.replaceRange(root.range, fixed).toByteArray(Charsets.UTF_8)
+                                }
+                            }
+                        }
+                        zout.putNextEntry(java.util.zip.ZipEntry(entry.name))
+                        zout.write(data)
+                        zout.closeEntry()
+                    }
+                }
+            }
+            return out.toByteArray()
         }
 
         private fun fromTable(name: String, bytes: ByteArray): Pair<SheetsSession?, String?> {

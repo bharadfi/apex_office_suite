@@ -12,7 +12,9 @@ import android.view.Gravity
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.Toast
+import android.content.Intent
 import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -216,23 +218,39 @@ fun DocsScreen(uri: Uri, name: String, onClose: () -> Unit) {
 
     BackHandler { if (dirty) askLeave = true else onClose() }
 
-    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = { if (dirty) askLeave = true else onClose() }) { Text("← Back") }
-            Text(
-                name + if (dirty) " •" else "",
-                modifier = Modifier.weight(1f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            FilledTonalButton(onClick = { askSave = true }, enabled = loaded) { Text("Save") }
+    var editing by remember { mutableStateOf(false) }
+    var showTools by remember { mutableStateOf(false) }
+    var toolsTab by remember { mutableStateOf("Home") }
+    var zoom by remember { mutableFloatStateOf(1f) }
+
+    fun share() {
+        val send = Intent(Intent.ACTION_SEND).apply {
+            type = DOCX_MIME; putExtra(Intent.EXTRA_STREAM, uri); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        Toolbar(editor, tick, onColor = { askColor = true }, onFind = { askFind = true }, enabled = loaded)
-        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-        Box(Modifier.fillMaxSize()) {
+        runCatching { context.startActivity(Intent.createChooser(send, name)) }
+    }
+
+    Column(Modifier.fillMaxSize().background(Color(0xFF202124)).statusBarsPadding().navigationBarsPadding().imePadding()) {
+        ReaderTopBar(
+            title = name + if (dirty) " •" else "",
+            subtitle = if (editing) "Editing" else "Read-only",
+            onBack = { if (dirty) askLeave = true else onClose() },
+            actions = {
+                if (editing) {
+                    BarAction("↶", "Undo", { editor?.undoEdit() }, enabled = loaded)
+                    BarAction("↷", "Redo", { editor?.redoEdit() }, enabled = loaded)
+                    BarAction("💾", "Save", { askSave = true }, enabled = loaded)
+                }
+            },
+        )
+        if (editing) {
+            Box(Modifier.background(MaterialTheme.colorScheme.surface)) {
+                Toolbar(editor, tick, onColor = { askColor = true }, onFind = { askFind = true }, enabled = loaded)
+            }
+        }
+        Box(Modifier.weight(1f)) {
             if (error != null) {
-                Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(error!!, color = MaterialTheme.colorScheme.error)
                     Button(onClick = onClose, modifier = Modifier.padding(top = 12.dp)) { Text("Back") }
                 }
@@ -249,7 +267,118 @@ fun DocsScreen(uri: Uri, name: String, onClose: () -> Unit) {
                                 editor = ed
                             }
                         },
+                        update = { ed ->
+                            // read-only until the user chooses to edit; reading and selecting still work
+                            ed.isFocusable = editing
+                            ed.isFocusableInTouchMode = editing
+                            ed.isCursorVisible = editing
+                            ed.showSoftInputOnFocus = editing
+                            if (!editing) ed.clearFocus()
+                            ed.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f * zoom)
+                        },
                     )
+                }
+            }
+        }
+        ReaderBottomBar(
+            if (!editing) listOf(
+                BottomItem("✎", "Edit", enabled = loaded) { editing = true },
+                BottomItem("⇔", "Fit to Screen", enabled = loaded) { zoom = 1f },
+                BottomItem("⌕", "Find and Replace", enabled = loaded) { askFind = true },
+                BottomItem("⊞", "Tools") { toolsTab = "Home"; showTools = true },
+                BottomItem("⇪", "Share") { share() },
+            ) else listOf(
+                BottomItem("✓", "Done", selected = true) { editing = false },
+                BottomItem("⌕", "Find and Replace", enabled = loaded) { askFind = true },
+                BottomItem("⊞", "Tools") { toolsTab = "Home"; showTools = true },
+                BottomItem("💾", "Save", enabled = loaded) { askSave = true },
+            ),
+        )
+    }
+
+    if (showTools) {
+        ToolsSheet(
+            tabs = listOf("Home", "Review", "View"),
+            selected = toolsTab,
+            onSelect = { toolsTab = it },
+            onDismiss = { showTools = false },
+        ) { tab ->
+            @Suppress("UNUSED_EXPRESSION") tick
+            val ed = editor
+            val s = ed?.selectionStart?.coerceAtLeast(0) ?: 0
+            val e = ed?.selectionEnd?.coerceAtLeast(0) ?: 0
+            when (tab) {
+                "Home" -> {
+                    if (!editing) {
+                        ToolGroup("Read-only") {
+                            ToolLine("Tap Edit to change this document.", onClick = { editing = true; showTools = false }) {
+                                Text("Edit ›", color = Color(0xFF8DD4B1))
+                            }
+                        }
+                    } else {
+                        val text = ed?.text
+                        val heading = if (text != null) RichText.headingAt(text, s) else 0
+                        ToolGroup("Font format") {
+                            ToolRow {
+                                ToolButton("B", "Bold", active = ed != null && docActive(ed, CharStyle.BOLD)) { docFormat(ed, CharStyle.BOLD) }
+                                ToolButton("I", "Italic", active = ed != null && docActive(ed, CharStyle.ITALIC)) { docFormat(ed, CharStyle.ITALIC) }
+                                ToolButton("U", "Underline", active = ed != null && docActive(ed, CharStyle.UNDERLINE)) { docFormat(ed, CharStyle.UNDERLINE) }
+                                ToolButton("S", "Strike", active = ed != null && docActive(ed, CharStyle.STRIKE)) { docFormat(ed, CharStyle.STRIKE) }
+                            }
+                            ToolRow {
+                                ToolButton("H1", "Heading 1", active = heading == 1) { setHeading(ed, if (heading == 1) 0 else 1) }
+                                ToolButton("H2", "Heading 2", active = heading == 2) { setHeading(ed, if (heading == 2) 0 else 2) }
+                                ToolButton("H3", "Heading 3", active = heading == 3) { setHeading(ed, if (heading == 3) 0 else 3) }
+                                ToolButton("¶", "Normal", active = heading == 0) { setHeading(ed, 0) }
+                            }
+                            ToolRow {
+                                ToolButton("A−", "Smaller") { resize(ed, -1) }
+                                ToolButton("A+", "Larger") { resize(ed, +1) }
+                                ToolButton("🎨", "Colour") { askColor = true }
+                            }
+                        }
+                        ToolGroup("Paragraph") {
+                            val al = if (text != null) RichText.alignmentAt(text, s) else Layout.Alignment.ALIGN_NORMAL
+                            ToolRow {
+                                ToolButton("•", "Bullets", active = text != null && RichText.isBullet(text, s)) {
+                                    ed?.let { x -> x.checkpoint(); RichText.toggleBullet(x.text, minOf(s, e), maxOf(s, e)); x.onChanged?.invoke() }
+                                }
+                                ToolButton("1.", "Numbering", active = text != null && RichText.isNumbered(text, s)) {
+                                    ed?.let { x -> x.checkpoint(); RichText.toggleNumbered(x.text, minOf(s, e), maxOf(s, e)); x.onChanged?.invoke() }
+                                }
+                            }
+                            ToolRow {
+                                ToolButton("≡←", "Left", active = al == Layout.Alignment.ALIGN_NORMAL) { align(ed, Layout.Alignment.ALIGN_NORMAL) }
+                                ToolButton("≡", "Centre", active = al == Layout.Alignment.ALIGN_CENTER) { align(ed, Layout.Alignment.ALIGN_CENTER) }
+                                ToolButton("→≡", "Right", active = al == Layout.Alignment.ALIGN_OPPOSITE) { align(ed, Layout.Alignment.ALIGN_OPPOSITE) }
+                            }
+                        }
+                        ToolGroup("Edit") {
+                            ToolRow {
+                                ToolButton("↶", "Undo") { ed?.undoEdit() }
+                                ToolButton("↷", "Redo") { ed?.redoEdit() }
+                            }
+                        }
+                    }
+                }
+                "Review" -> {
+                    val words = ed?.text?.toString()?.split(Regex("\\s+"))?.count { it.isNotEmpty() } ?: 0
+                    ToolGroup("Proofing") {
+                        ToolRow {
+                            ToolButton("⌕", "Find and Replace", enabled = loaded) { showTools = false; askFind = true }
+                        }
+                        ToolLine("Words") { Text("$words", color = Color(0xFFE8EAED)) }
+                        ToolLine("Characters") { Text("${ed?.text?.length ?: 0}", color = Color(0xFFE8EAED)) }
+                    }
+                }
+                else -> {
+                    ToolGroup("Zoom") {
+                        ToolRow {
+                            ToolButton("−", "Smaller text", enabled = zoom > 0.7f) { zoom = (zoom - 0.15f).coerceAtLeast(0.7f) }
+                            ToolButton("⇔", "Fit to Screen") { zoom = 1f }
+                            ToolButton("+", "Larger text", enabled = zoom < 2.5f) { zoom = (zoom + 0.15f).coerceAtMost(2.5f) }
+                        }
+                    }
                 }
             }
         }
@@ -471,4 +600,27 @@ private fun ToolButton(
             color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
         )
     }
+}
+
+private fun docActive(ed: Editor, style: CharStyle): Boolean {
+    val s = ed.selectionStart.coerceAtLeast(0)
+    val e = ed.selectionEnd.coerceAtLeast(0)
+    if (style in ed.pendingOn) return true
+    if (style in ed.pendingOff) return false
+    return RichText.covered(ed.text, minOf(s, e), maxOf(s, e), style)
+}
+
+private fun docFormat(ed: Editor?, style: CharStyle) {
+    val x = ed ?: return
+    val s = x.selectionStart.coerceAtLeast(0)
+    val e = x.selectionEnd.coerceAtLeast(0)
+    if (maxOf(s, e) > minOf(s, e)) {
+        x.checkpoint()
+        RichText.toggle(x.text, minOf(s, e), maxOf(s, e), style)
+    } else if (docActive(x, style)) {
+        x.pendingOn.remove(style); x.pendingOff.add(style)
+    } else {
+        x.pendingOff.remove(style); x.pendingOn.add(style)
+    }
+    x.onChanged?.invoke()
 }
