@@ -70,18 +70,32 @@ object SignatureVerifier {
     fun verify(bytes: ByteArray, trusted: Set<String>): List<SignatureInfo> {
         val text = String(bytes, Charsets.ISO_8859_1)
         val out = ArrayList<SignatureInfo>()
-        for ((n, m) in byteRange.findAll(text).withIndex()) {
-            val (a, b, c, d) = m.groupValues.drop(1).map { it.toLongOrNull() ?: -1L }
-            val legacy = legacyCertificates(text, m.range.first, m.range.last)
-            out.add(one(n + 1, bytes, a, b, c, d, trusted, legacy).also { it.byteRange = listOf(a, b, c, d) })
+        val finalDoc = lazy { try { com.tom_roush.pdfbox.pdmodel.PDDocument.load(bytes) } catch (e: Exception) { null } }
+        try {
+            for ((n, m) in byteRange.findAll(text).withIndex()) {
+                val (a, b, c, d) = m.groupValues.drop(1).map { it.toLongOrNull() ?: -1L }
+                val legacy = legacyCertificates(text, m.range.first, m.range.last)
+                out.add(one(n + 1, bytes, a, b, c, d, trusted, legacy, finalDoc).also { it.byteRange = listOf(a, b, c, d) })
+            }
+        } finally {
+            if (finalDoc.isInitialized()) try { finalDoc.value?.close() } catch (_: Exception) {}
         }
         return out
+    }
+
+    /** Content after the signed bytes is fine when it is only whitespace or what the signature allows (later signatures) */
+    private fun unchangedAfter(bytes: ByteArray, whole: Boolean, c: Long, d: Long, b: Long, doc: Lazy<com.tom_roush.pdfbox.pdmodel.PDDocument?>): Boolean {
+        if (whole) return true
+        val loaded = doc.value ?: return false
+        return try {
+            Revisions.onlyPermittedChangesAfter(bytes, (c + d).toInt(), loaded, Revisions.certifiedLevel(loaded, b))
+        } catch (e: Exception) { false }
     }
 
     private fun unreadable(i: Int, why: String) =
         SignatureInfo(i, "Unknown signer", "", null, "", Verdict.UNREADABLE, false, why)
 
-    private fun one(i: Int, bytes: ByteArray, a: Long, b: Long, c: Long, d: Long, trusted: Set<String>, legacy: List<ByteArray>?): SignatureInfo {
+    private fun one(i: Int, bytes: ByteArray, a: Long, b: Long, c: Long, d: Long, trusted: Set<String>, legacy: List<ByteArray>?, doc: Lazy<com.tom_roush.pdfbox.pdmodel.PDDocument?>): SignatureInfo {
         if (a != 0L || b <= 0 || c < b || c + d > bytes.size) return unreadable(i, "Invalid byte range")
         // the hex string sits in the gap: <...>
         var start = b.toInt()
@@ -93,7 +107,8 @@ object SignatureVerifier {
         System.arraycopy(bytes, 0, signed, 0, b.toInt())
         System.arraycopy(bytes, c.toInt(), signed, b.toInt(), d.toInt())
         val whole = c + d == bytes.size.toLong() || bytes.copyOfRange((c + d).toInt(), bytes.size).all { it in WHITESPACE }
-        if (legacy != null) return oneLegacy(i, container, signed, whole, legacy, trusted)
+        val unchanged = unchangedAfter(bytes, whole, c, d, b, doc)
+        if (legacy != null) return oneLegacy(i, container, signed, whole, unchanged, legacy, trusted)
         return try {
             val info = ContentInfo.getInstance(ASN1InputStream(container).readObject())
             val cms = CMSSignedData(CMSProcessableByteArray(signed), info)
@@ -118,7 +133,7 @@ object SignatureVerifier {
             val verdict = when {
                 !integrity -> Verdict.INVALID
                 !isTrusted -> Verdict.VALID_UNTRUSTED
-                !whole -> Verdict.VALID_MODIFIED
+                !unchanged -> Verdict.VALID_MODIFIED
                 else -> Verdict.VALID_TRUSTED
             }
             SignatureInfo(i, commonName(holder.subject), commonName(holder.issuer), time, fingerprint, verdict, whole, if (verdict == Verdict.INVALID) (why ?: "The signature does not match the signed bytes") else null)
@@ -209,7 +224,7 @@ object SignatureVerifier {
      * A signature in the original format: a bare RSA PKCS#1 v1.5 signature (a DER OCTET STRING holding
      * it, or the value itself) over the SHA-1 of the signed ranges, made with the first certificate in /Cert.
      */
-    private fun oneLegacy(i: Int, container: ByteArray, signed: ByteArray, whole: Boolean, certs: List<ByteArray>, trusted: Set<String>): SignatureInfo {
+    private fun oneLegacy(i: Int, container: ByteArray, signed: ByteArray, whole: Boolean, unchanged: Boolean, certs: List<ByteArray>, trusted: Set<String>): SignatureInfo {
         val factory = java.security.cert.CertificateFactory.getInstance("X.509")
         val parsed = certs.mapNotNull { der ->
             runCatching { factory.generateCertificate(der.inputStream()) as java.security.cert.X509Certificate }.getOrNull()
@@ -232,7 +247,7 @@ object SignatureVerifier {
         val verdict = when {
             !intact -> Verdict.INVALID
             chain.none { it in trusted } -> Verdict.VALID_UNTRUSTED
-            !whole -> Verdict.VALID_MODIFIED
+            !unchanged -> Verdict.VALID_MODIFIED
             else -> Verdict.VALID_TRUSTED
         }
         return SignatureInfo(i, commonName(holder.subject), commonName(holder.issuer), null, sha256(holder.encoded), verdict, whole,
