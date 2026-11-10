@@ -208,15 +208,15 @@ object SignatureFields {
      */
     private fun glyph(verdict: MarkVerdict): String = when (verdict) {
         MarkVerdict.VALID ->
-            "q 0.88 0 0 0.88 1.9 10.6 cm " + solid(TICK, "0 0.70 0.25") + " Q"
+            "q 0.88 0 0 0.88 1.9 10.6 cm " + solid(TICK, "0 0.70 0.25", 5.1f) + " Q"
         MarkVerdict.INVALID ->
-            "q 1.15 0 0 1.15 -10.6 -4.3 cm " + solid(CROSS, "0.88 0.07 0.07") + " Q"
+            "q 1.15 0 0 1.15 -10.6 -4.3 cm " + solid(CROSS, "0.88 0.07 0.07", 4.4f) + " Q"
         MarkVerdict.UNKNOWN -> {
             val hook = "32 70 m 32 90 68 90 68 70 c 68 55 50 52 50 38 c"
             val dotOuter = "61 14 m 61 20.07 55.07 25 50 25 c 44.93 25 39 20.07 39 14 c 39 7.93 44.93 3 50 3 c 55.07 3 61 7.93 61 14 c f"
             val dotInner = "57.5 14 m 57.5 18.14 54.14 21.5 50 21.5 c 45.86 21.5 42.5 18.14 42.5 14 c 42.5 9.86 45.86 6.5 50 6.5 c 54.14 6.5 57.5 9.86 57.5 14 c f"
             "q 0.92 0 0 0.92 4 6 cm 1 J 1 j " +
-                "q 1 0 0 1 5 -5 cm 0 G 0 g 20 w $hook S $dotOuter Q " +
+                "q 1 0 0 1 2.7 -2.7 cm 0 G 0 g 20 w $hook S $dotOuter Q " +
                 "0.15 0.12 0 RG 20 w $hook S 1 0.80 0 RG 12 w $hook S " +
                 "0.15 0.12 0 rg $dotOuter 1 0.80 0 rg $dotInner Q"
         }
@@ -229,8 +229,8 @@ object SignatureFields {
     private const val CROSS = "14.93 70.93 m 29.07 85.07 l 50 64.14 l 70.93 85.07 l 85.07 70.93 l 64.14 50 l 85.07 29.07 l 70.93 14.93 l 50 35.86 l 29.07 14.93 l 14.93 29.07 l 35.86 50 l h"
 
     /** A filled shape with a black border on every edge and a black shadow to its lower right. */
-    private fun solid(path: String, rgb: String): String =
-        "0 J 0 j q 1 0 0 1 5.25 -5.25 cm 0 g $path f Q $rgb rg 0 G 4.5 w $path B"
+    private fun solid(path: String, rgb: String, shadow: Float): String =
+        "0 J 0 j q 1 0 0 1 $shadow -$shadow cm 0 g $path f Q $rgb rg 0 G 4.5 w $path B"
     /** A certifying signature carries a DocMDP reference. */
     private fun isCertifying(sig: PDSignature): Boolean {
         val refs = sig.cosObject.getDictionaryObject(COSName.getPDFName("Reference")) as? COSArray ?: return false
