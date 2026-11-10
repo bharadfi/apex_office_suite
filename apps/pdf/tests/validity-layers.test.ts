@@ -127,56 +127,65 @@ describe('findValidityLayers', () => {
 })
 
 describe('markContent', () => {
-  it('opens with the marker comment of its verdict and scales to the layer box', () => {
+  it('opens with the marker comment of its verdict and keeps the mark in proportion', () => {
     for (const [verdict, marker] of [
       ['valid', '% DSValid'],
       ['invalid', '% DSInvalid'],
       ['unknown', '% DSUnknown'],
     ] as const) {
-      const content = markContent(verdict, [0, 0, 100, 100])
-      expect(content.startsWith(`${marker}\n`)).toBe(true)
-      expect(content).toContain('/DSA gs')
-      expect(content).toContain('/DSB gs')
+      expect(markContent(verdict, [0, 0, 100, 100]).startsWith(`${marker}\n`)).toBe(true)
     }
-    expect(markContent('valid', [10, 20, 60, 120])).toContain('q 0.5 0 0 1 10 20 cm')
+    // a wide box: the mark is centred at its natural proportions, not stretched to the width
+    expect(markContent('valid', [10, 20, 310, 120])).toContain('q 1 0 0 1 110 20 cm')
   })
 
-  it('draws a tick, a cross, or a question mark', () => {
-    expect(markContent('valid', [0, 0, 100, 100])).toContain('30 50 m 45 34 l 72 68 l S')
-    expect(markContent('invalid', [0, 0, 100, 100])).toContain('33 33 m 67 67 l S')
-    expect(markContent('unknown', [0, 0, 100, 100])).toContain('(?) Tj')
+  it('draws a bordered tick, a bordered cross, or a question mark, each with a shadow', () => {
+    const tick = markContent('valid', [0, 0, 100, 100])
+    expect(tick).toContain('0.89 39.37 m 43.67 -3.9 l 102.81 88.2 l')
+    expect(tick).toContain('0 0.70 0.25 rg') // green fill
+    expect(tick).toContain('0 G 4.5 w') // black border all round
+    expect(tick).toContain('1 0 0 1 5.6 -5.6 cm') // shadow to the lower right
+    const cross = markContent('invalid', [0, 0, 100, 100])
+    expect(cross).toContain('14.93 70.93 m 29.07 85.07 l 50 64.14 l')
+    expect(cross).toContain('0.88 0.07 0.07 rg') // red fill
+    const unknown = markContent('unknown', [0, 0, 100, 100])
+    expect(unknown).toContain('1 0.80 0 RG') // yellow
+    expect(unknown).not.toContain('Tj') // drawn as shapes: no font needed
   })
 })
 
 describe('applyVerdicts', () => {
-  it("draws the verdict over the signer's guess, once, for every verdict", async () => {
-    for (const verdict of ['valid', 'unknown', 'invalid'] as const) {
+  it('draws the tick or the cross in the layer of the signer\'s guess, once', async () => {
+    for (const verdict of ['valid', 'invalid'] as const) {
       const doc = await PDFDocument.create()
       const { widget, refs } = layeredBox(doc)
       expect(applyVerdicts(doc.context, [{ field: widget, verdict }])).toBe(true)
       const content = contentOf(doc.context, refs.n1)
-      expect(
-        content.startsWith(
-          verdict === 'valid' ? '% DSValid' : verdict === 'invalid' ? '% DSInvalid' : '% DSUnknown',
-        ),
-      ).toBe(true)
+      expect(content.startsWith(verdict === 'valid' ? '% DSValid' : '% DSInvalid')).toBe(true)
       // the signer's text and the blanks are untouched
       expect(contentOf(doc.context, refs.n2)).toContain('(Signed by Someone)')
       expect(contentOf(doc.context, refs.n0)).toBe('% DSBlank\n')
     }
   })
 
-  it('draws the mark in the layer box it was given, with the transparency it needs', async () => {
+  it("leaves the signer's own question mark exactly as signed", async () => {
     const doc = await PDFDocument.create()
     const { widget, refs } = layeredBox(doc)
-    applyVerdicts(doc.context, [{ field: widget, verdict: 'unknown' }])
+    const before = contentOf(doc.context, refs.n1)
+    expect(applyVerdicts(doc.context, [{ field: widget, verdict: 'unknown' }])).toBe(false)
+    expect(contentOf(doc.context, refs.n1)).toBe(before)
+  })
+
+  it('draws the mark in the layer box it was given, with no resources of its own to carry', async () => {
+    const doc = await PDFDocument.create()
+    const { widget, refs } = layeredBox(doc)
+    applyVerdicts(doc.context, [{ field: widget, verdict: 'invalid' }])
     const layer = doc.context.lookup(refs.n1) as PDFRawStream
     expect(layer.dict.get(PDFName.of('Subtype'))?.toString()).toBe('/Form')
     expect((layer.dict.get(PDFName.of('BBox')) as PDFArray).size()).toBe(4)
     const resources = layer.dict.lookup(PDFName.of('Resources'), PDFDict)
-    expect(resources.has(PDFName.of('ExtGState'))).toBe(true)
-    // the question mark is text, so it needs its font; a tick or cross does not
-    expect(resources.has(PDFName.of('Font'))).toBe(true)
+    expect(resources.has(PDFName.of('ExtGState'))).toBe(false)
+    expect(resources.has(PDFName.of('Font'))).toBe(false)
   })
 
   it('survives a save and reload with the new mark in place', async () => {
@@ -207,13 +216,57 @@ describe('applyVerdicts', () => {
     expect(caption).toContain('(<alice@example.org>.)')
   })
 
-  it('does nothing when no box has a mark layer', async () => {
-    const doc = await PDFDocument.create()
-    const { widget } = layeredBox(doc, 'q Q\n', false)
-    expect(applyVerdicts(doc.context, [{ field: widget, verdict: 'valid' }])).toBe(false)
+  describe('a box with no validity layer of its own', () => {
+    /** A box whose appearance is the signer's artwork and text, with no marker layers */
+    function plainBox(doc: PDFDocument, withAppearance = true) {
+      const ctx = doc.context
+      const ap = formStream(ctx, 'BT /F1 7 Tf 1 0 0 1 8 63 Tm (Signed by Someone) Tj ET\n', {
+        BBox: [0, 0, 150, 70],
+      })
+      const widget = ctx.obj({
+        Type: 'Annot',
+        Subtype: 'Widget',
+        FT: 'Sig',
+        Rect: [20, 30, 170, 100],
+        ...(withAppearance ? { AP: { N: ap } } : {}),
+      }) as PDFDict
+      return { widget, ap }
+    }
+
+    it('puts the mark first in its appearance, so the signer\'s text draws on top', async () => {
+      const doc = await PDFDocument.create()
+      const { widget, ap } = plainBox(doc)
+      expect(applyVerdicts(doc.context, [{ field: widget, verdict: 'valid' }])).toBe(true)
+      const content = contentOf(doc.context, ap)
+      expect(content.indexOf('0.89 39.37 m')).toBeGreaterThanOrEqual(0)
+      expect(content.indexOf('0.89 39.37 m')).toBeLessThan(content.indexOf('(Signed by Someone)'))
+    })
+
+    it('draws a question mark too, since nothing in the file stands for it', async () => {
+      const doc = await PDFDocument.create()
+      const { widget, ap } = plainBox(doc)
+      expect(applyVerdicts(doc.context, [{ field: widget, verdict: 'unknown' }])).toBe(true)
+      expect(contentOf(doc.context, ap)).toContain('1 0.80 0 RG')
+    })
+
+    it('gives a box with no appearance at all one that holds the mark', async () => {
+      const doc = await PDFDocument.create()
+      const { widget } = plainBox(doc, false)
+      expect(applyVerdicts(doc.context, [{ field: widget, verdict: 'invalid' }])).toBe(true)
+      const ap = widget.lookup(PDFName.of('AP'), PDFDict)
+      const normal = doc.context.lookup(ap.get(PDFName.of('N'))) as PDFRawStream
+      expect(Buffer.from(decodePDFRawStream(normal).decode()).toString('latin1')).toContain(
+        '14.93 70.93 m',
+      )
+    })
+
+    it('leaves an invisible signature alone', async () => {
+      const doc = await PDFDocument.create()
+      const widget = doc.context.obj({ FT: 'Sig', Rect: [0, 0, 0, 0] }) as PDFDict
+      expect(applyVerdicts(doc.context, [{ field: widget, verdict: 'valid' }])).toBe(false)
+    })
   })
 })
-
 describe('captionContent', () => {
   const original = 'BT\n/F1 7 Tf 1 0 0 1 2 60 Tm ((Signature Not Verified)) Tj\nET\n'
 

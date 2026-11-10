@@ -13,7 +13,6 @@
   --pdf-sig-warn: #a05a00;
   /* signature marks sit on the page, which stays light in every theme: same values in all three blocks */
   --pdf-sigmark-ok: #1b6b3a;
-  --pdf-sigmark-warn: #a85f00;
   --pdf-sigmark-bad: #b3261e;
   --pdf-sigmark-ink: #1f1f1f;
   --pdf-thumb-border-hover: #a8a6a4;
@@ -101,7 +100,6 @@
   --pdf-sig-warn: #e0a94f;
   /* signature marks sit on the page, which stays light in every theme: same values in all three blocks */
   --pdf-sigmark-ok: #1b6b3a;
-  --pdf-sigmark-warn: #a85f00;
   --pdf-sigmark-bad: #b3261e;
   --pdf-sigmark-ink: #1f1f1f;
   --pdf-thumb-border-hover: #777;
@@ -132,7 +130,6 @@
     --pdf-sig-warn: #e0a94f;
     /* signature marks sit on the page, which stays light in every theme: same values in all three blocks */
     --pdf-sigmark-ok: #1b6b3a;
-    --pdf-sigmark-warn: #a85f00;
     --pdf-sigmark-bad: #b3261e;
     --pdf-sigmark-ink: #1f1f1f;
     --pdf-thumb-border-hover: #777;
@@ -5175,34 +5172,6 @@ button {
   align-items: center;
   justify-content: center;
   pointer-events: none;
-}
-
-.pdf-sig-mark {
-  height: min(100%, 64px);
-  max-width: 100%;
-  aspect-ratio: 1;
-  mix-blend-mode: multiply;
-  color: var(--pdf-sigmark-ok);
-}
-
-.pdf-sig-mark.untrusted,
-.pdf-sig-mark.warning {
-  color: var(--pdf-sigmark-warn);
-}
-
-.pdf-sig-mark.invalid {
-  color: var(--pdf-sigmark-bad);
-}
-
-.pdf-sig-mark svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.pdf-sig-mark-disc {
-  fill: currentColor;
-  opacity: 0.28;
 }
 
 .pdf-sig-caption {

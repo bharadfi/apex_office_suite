@@ -1,7 +1,9 @@
 // @vitest-environment node
+import { deflateSync } from 'node:zlib'
 import forge from 'node-forge'
 import {
   PDFArray,
+  PDFDict,
   PDFDocument,
   PDFName,
   PDFRawStream,
@@ -12,6 +14,7 @@ import {
 import { beforeAll, describe, expect, it } from 'vitest'
 import { signPdf } from '../src/main/pdf-sign'
 import { buildPrintCopy, pagesToPrint } from '../src/main/print-copy'
+import { collectSignatureFields } from '../src/main/pdf-signatures'
 import { certifiedCaption, signatureDisplayCopy, verdictOf } from '../src/main/signature-display'
 
 /** pages are told apart by their width: 100, 110, 120… */
@@ -123,6 +126,41 @@ describe('verdictOf and certifiedCaption', () => {
   })
 })
 
+/** A small opaque PNG, enough for a visible signature appearance */
+function tinyPng(w: number, h: number): Uint8Array {
+  const table = Array.from({ length: 256 }, (_, n) => {
+    let c = n
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
+    return c >>> 0
+  })
+  const crc = (b: Buffer) => {
+    let c = 0xffffffff
+    for (const x of b) c = table[(c ^ x) & 255]! ^ (c >>> 8)
+    return (c ^ 0xffffffff) >>> 0
+  }
+  const chunk = (type: string, data: Buffer) => {
+    const length = Buffer.alloc(4)
+    length.writeUInt32BE(data.length)
+    const body = Buffer.concat([Buffer.from(type), data])
+    const sum = Buffer.alloc(4)
+    sum.writeUInt32BE(crc(body))
+    return Buffer.concat([length, body, sum])
+  }
+  const header = Buffer.alloc(13)
+  header.writeUInt32BE(w, 0)
+  header.writeUInt32BE(h, 4)
+  header[8] = 8
+  header[9] = 2
+  const row = Buffer.concat([Buffer.from([0]), Buffer.alloc(w * 3, 0xf0)])
+  const raw = Buffer.concat(Array.from({ length: h }, () => row))
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk('IHDR', header),
+    chunk('IDAT', deflateSync(raw)),
+    chunk('IEND', Buffer.alloc(0)),
+  ])
+}
+
 describe('signatureDisplayCopy', () => {
   let p12: Uint8Array
   beforeAll(() => {
@@ -145,6 +183,27 @@ describe('signatureDisplayCopy', () => {
     expect(await signatureDisplayCopy(signed)).toBeNull()
   })
 
+  it('draws the standard mark beneath a visible signature box, for the screen and for print', async () => {
+    const png = tinyPng(120, 40)
+    const signed = await signPdf(await textPdf(1), {
+      p12,
+      password: 'pw',
+      visible: { pageIndex: 0, position: 'bottom-right', width: 120, height: 40, png },
+    })
+    const copy = await signatureDisplayCopy(signed)
+    expect(copy).not.toBeNull()
+    // self-signed: intact but not trusted yet, so the yellow question mark stands in the box
+    const doc = await PDFDocument.load(copy!)
+    const [field] = collectSignatureFields(doc)
+    const widgetAp = field!.widget.lookup(PDFName.of('AP'), PDFDict)
+    const normal = doc.context.lookup(widgetAp.get(PDFName.of('N'))) as PDFRawStream
+    const drawing = Buffer.from(decodePDFRawStream(normal).decode()).toString('latin1')
+    expect(drawing).toContain('1 0.80 0 RG')
+    expect(drawing.indexOf('1 0.80 0 RG')).toBeLessThan(drawing.indexOf('/FRM Do'))
+    // what prints is what is shown, and the file on disk is the signed original
+    expect(await buildPrintCopy(signed, undefined)).not.toBe(signed)
+    expect(Buffer.from(signed).includes(Buffer.from('1 0.80 0 RG'))).toBe(false)
+  })
   it('prints a signed file unchanged when there is no mark to redraw', async () => {
     const signed = await signPdf(await textPdf(2), { p12, password: 'pw' })
     expect(await buildPrintCopy(signed, undefined)).toBe(signed)

@@ -162,6 +162,7 @@ import { buildBatesInserts, type BatesConfig } from './bates'
 import { MeasureScaleDialog } from './MeasureScaleDialog'
 import { formatLength, type MeasureScale } from './measure'
 import { SignaturesDialog, overallSignatureStatus } from './SignaturesDialog'
+import { hasVisibleBox } from '../shared/signature-box'
 import { SignatureMarks, marksForPage } from './SignatureMarks'
 import { SignatureDialog, fileToCanvas } from './SignatureDialog'
 import { hasCustomLabels, labelOf } from '../shared/page-labels'
@@ -7470,7 +7471,7 @@ export default function App() {
         setDigitalSignatures(list)
         // draw each box's own verdict once per loaded document; the redrawn copy becomes the
         // document on screen, which must not trigger another redraw
-        if (list.some((s) => s.validityLayer) && redrawnDocRef.current !== doc) {
+        if (list.some(hasVisibleBox) && redrawnDocRef.current !== doc) {
           redrawnDocRef.current = doc
           void refreshDisplayCopy()
         }

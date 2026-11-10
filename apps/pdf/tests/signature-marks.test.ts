@@ -36,40 +36,34 @@ function sig(over: Partial<PdfSignatureInfo> = {}): PdfSignatureInfo {
 }
 
 describe('marksForPage', () => {
-  it('marks a visible signature on its own page only', () => {
-    const list = [sig(), sig({ fieldName: 'S2', pageIndex: 1, status: 'invalid' })]
-    expect(marksForPage(list, 0).map((m) => m.status)).toEqual(['valid'])
-    expect(marksForPage(list, 1).map((m) => m.status)).toEqual(['invalid'])
+  const certified = (over: Partial<PdfSignatureInfo> = {}) =>
+    sig({ certifiedLevel: 2, signer: signer({ email: 'alice@example.org' }), ...over })
+
+  it('captions a certified signature on its own page only', () => {
+    const list = [certified(), certified({ fieldName: 'S2', pageIndex: 1 })]
+    expect(marksForPage(list, 0)).toHaveLength(1)
+    expect(marksForPage(list, 1)).toHaveLength(1)
     expect(marksForPage(list, 2)).toEqual([])
   })
 
-  it('gives the box and the verdict as they are, whatever the status', () => {
-    for (const status of ['valid', 'untrusted', 'warning', 'invalid'] as const) {
-      expect(marksForPage([sig({ status })], 0)[0]).toMatchObject({
-        status,
-        rect: [100, 50, 260, 110],
-      })
-    }
+  it('gives the box as it is', () => {
+    expect(marksForPage([certified()], 0)[0]).toMatchObject({ rect: [100, 50, 260, 110] })
   })
 
   it('skips an invisible signature, a time stamp and a signature with no page', () => {
-    expect(marksForPage([sig({ rect: undefined })], 0)).toEqual([])
-    expect(marksForPage([sig({ kind: 'timestamp' })], 0)).toEqual([])
-    expect(marksForPage([sig({ pageIndex: -1 })], 0)).toEqual([])
+    expect(marksForPage([certified({ rect: undefined })], 0)).toEqual([])
+    expect(marksForPage([certified({ kind: 'timestamp' })], 0)).toEqual([])
+    expect(marksForPage([certified({ pageIndex: -1 })], 0)).toEqual([])
   })
 
   it('names the certifier of a certified signature that verifies', () => {
-    const certified = sig({
-      certifiedLevel: 2,
-      signer: signer({ email: 'alice@example.org' }),
-    })
-    expect(marksForPage([certified], 0)[0]!.certifiedBy).toEqual({
+    expect(marksForPage([certified()], 0)[0]!.certifiedBy).toEqual({
       name: 'Alice',
       email: 'alice@example.org',
     })
     // intact but not trusted yet still says who certified it
     expect(
-      marksForPage([{ ...certified, status: 'untrusted', trusted: false }], 0)[0]!.certifiedBy,
+      marksForPage([certified({ status: 'untrusted', trusted: false })], 0)[0]!.certifiedBy,
     ).toEqual({ name: 'Alice', email: 'alice@example.org' })
   })
 
@@ -77,14 +71,17 @@ describe('marksForPage', () => {
     expect(marksForPage([sig({ certifiedLevel: 1 })], 0)[0]!.certifiedBy).toEqual({ name: 'Alice' })
   })
 
-  it('names no certifier for an ordinary signature or one that does not verify', () => {
-    expect(marksForPage([sig()], 0)[0]!.certifiedBy).toBeUndefined()
+  it('has no caption for an ordinary signature or one that does not verify (the mark is in the copy)', () => {
+    expect(marksForPage([sig()], 0)).toEqual([])
     for (const status of ['warning', 'invalid'] as const) {
-      expect(marksForPage([sig({ certifiedLevel: 2, status })], 0)[0]!.certifiedBy).toBeUndefined()
+      expect(marksForPage([certified({ status })], 0)).toEqual([])
     }
   })
-})
 
+  it('leaves the caption of a box with its own validity layers to the redrawn copy', () => {
+    expect(marksForPage([certified({ validityLayer: true })], 0)).toEqual([])
+  })
+})
 describe('trustAction', () => {
   it('offers to add a signer that is not trusted yet', () => {
     expect(trustAction(sig({ status: 'untrusted', trusted: false }))).toBe('add')

@@ -1,5 +1,6 @@
 import { PDFDocument } from 'pdf-lib'
 import type { PdfSignatureInfo } from '../shared/ipc'
+import { hasVisibleBox } from '../shared/signature-box'
 import { decryptDocument } from './pdf-crypt'
 import { collectSignatureFields, readPdfSignatures } from './pdf-signatures'
 import { applyVerdicts, type FieldVerdict, type Verdict } from './validity-layers'
@@ -32,10 +33,11 @@ export function certifiedCaption(
 }
 
 /**
- * The copy of a signed PDF to DISPLAY or PRINT: each signature box's own verdict mark (and
- * certified caption) drawn in place of the guess the signer baked in. The file on disk is never
- * changed. Returns null when there is nothing to redraw (no signatures, none with a mark layer,
- * an unreadable file, or a protected one without its password), in which case the original is shown as it is.
+ * The copy of a signed PDF to DISPLAY or PRINT: each signature box's verdict mark (and certified
+ * caption) drawn in the standard style, in place of the signer's guess where it baked one in. The
+ * file on disk is never changed. Returns null when there is nothing to redraw (no signatures, none
+ * with a visible box, an unreadable file, a protected one without its password, or only the
+ * signer's own question marks, which stand as signed), in which case the original is shown as it is.
  */
 export async function signatureDisplayCopy(
   bytes: Uint8Array,
@@ -43,7 +45,7 @@ export async function signatureDisplayCopy(
   password?: string,
 ): Promise<Uint8Array | null> {
   const infos = await readPdfSignatures(bytes, userTrusted, password)
-  if (!infos.some((info) => info.validityLayer)) return null
+  if (!infos.some(hasVisibleBox)) return null
   const load = (data: Uint8Array) =>
     PDFDocument.load(data, { updateMetadata: false, throwOnInvalidObject: false })
   let pdf: PDFDocument
