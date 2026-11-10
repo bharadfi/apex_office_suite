@@ -1195,6 +1195,11 @@ button {
   align-items: flex-start;
   gap: 16px;
   margin-top: 16px;
+  /* As wide as its pages, never narrower than the window. A row only as wide as the window, with
+     a zoomed page overflowing it, is judged off screen by the visibility observer as soon as you
+     scroll past the window's width, and the page is released: it goes blank. */
+  width: max-content;
+  min-width: 100%;
 }
 
 .pdf-row:last-child {
