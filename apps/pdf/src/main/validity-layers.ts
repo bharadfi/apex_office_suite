@@ -133,43 +133,49 @@ const MARKERS: Record<Verdict, string> = {
 
 /** The tick as one outline: two bold arms with square ends, on a 100 x 100 square */
 const TICK = '0.89 39.37 m 43.67 -3.9 l 102.81 88.2 l 85.99 99 l 40.34 27.91 l 15.11 53.43 l h'
-/** The cross as one outline: two crossing bars, 12 corners */
+/**
+ * The cross as one outline, traced from the standard red cross: two crossing bars with square
+ * ends, 12 corners, on the same 100 x 100 square.
+ */
 const CROSS =
-  '14.93 70.93 m 29.07 85.07 l 50 64.14 l 70.93 85.07 l 85.07 70.93 l 64.14 50 l 85.07 29.07 l 70.93 14.93 l 50 35.86 l 29.07 14.93 l 14.93 29.07 l 35.86 50 l h'
-const HOOK = '32 70 m 32 90 68 90 68 70 c 68 55 50 52 50 38 c'
-const DOT_OUTER =
-  '61 14 m 61 20.07 55.07 25 50 25 c 44.93 25 39 20.07 39 14 c 39 7.93 44.93 3 50 3 c 55.07 3 61 7.93 61 14 c f'
-const DOT_INNER =
-  '57.5 14 m 57.5 18.14 54.14 21.5 50 21.5 c 45.86 21.5 42.5 18.14 42.5 14 c 42.5 9.86 45.86 6.5 50 6.5 c 54.14 6.5 57.5 9.86 57.5 14 c f'
+  '50 64.59 m 70.94 87.41 l 81.92 76.15 l 62.28 50.72 l 84.81 22.12 l 71.52 9.41 l 50 35.41 l 28.48 9.41 l 15.19 22.12 l 37.72 50.72 l 18.08 76.15 l 29.06 87.41 l h'
 
 /**
- * A filled shape with a black border on every edge and a black shadow to its lower right. The shadow
- * offset is given in the shape's own units: each mark is drawn at its own scale, so the offsets are
- * chosen to leave the same thin shadow on the page for the tick, the cross and the question mark.
+ * The standard "not checked" question mark, exactly as signing software draws it in its own
+ * validity layer: pale yellow with a hairline border and a black shadow 2.6 units to the lower
+ * right. Used where a box has no layer of its own to carry one.
+ */
+const QUESTION_MARK =
+  'q 0.1 0 0 0.1 9 0 cm 0 J 0 j 4 M [] 0 d 1 i 0 g ' +
+  '313 292 m 313 404 325 453 432 529 c 478 561 504 597 504 645 c 504 736 440 760 391 760 c 286 760 271 681 265 626 c 265 625 l 100 625 l 100 828 253 898 381 898 c 451 898 679 878 679 650 c 679 555 628 499 538 435 c 488 399 467 376 467 292 c 313 292 l h 308 214 170 -164 re f ' +
+  '0.44 G 1.2 w 1 1 0.4 rg ' +
+  '287 318 m 287 430 299 479 406 555 c 451 587 478 623 478 671 c 478 762 414 786 365 786 c 260 786 245 707 239 652 c 239 651 l 74 651 l 74 854 227 924 355 924 c 425 924 653 904 653 676 c 653 581 602 525 512 461 c 462 425 441 402 441 318 c 287 318 l h 282 240 170 -164 re B Q'
+/**
+ * The tick: a filled shape with a black border on every edge and a black shadow to its lower right.
+ * The shadow offset is in the shape's own units, before the tick is scaled into its box.
  */
 const solid = (path: string, rgb: string, shadow: number): string =>
   `0 J 0 j q 1 0 0 1 ${shadow} ${-shadow} cm 0 g ${path} f Q ${rgb} rg 0 G 4.5 w ${path} B`
 
 /**
  * The three standard marks on a 100 x 100 square, in the style every reader uses: a bold colour
- * with a black outline and a black shadow. A green tick, a red cross, and a yellow question mark.
+ * with a black outline and a black shadow. A green tick, a red cross, and a pale yellow question mark.
  */
 function glyph(verdict: Verdict): string {
   switch (verdict) {
     case 'valid':
       return `q 0.88 0 0 0.88 1.9 10.6 cm ${solid(TICK, '0 0.70 0.25', 5.1)} Q`
     case 'invalid':
-      return `q 1.15 0 0 1.15 -10.6 -4.3 cm ${solid(CROSS, '0.88 0.07 0.07', 4.4)} Q`
-    case 'unknown':
+      // pure red, a thin black border all round, and a black shadow 2 units to the lower right
       return (
-        'q 0.92 0 0 0.92 4 6 cm 1 J 1 j ' +
-        `q 1 0 0 1 2.7 -2.7 cm 0 G 0 g 20 w ${HOOK} S ${DOT_OUTER} Q ` +
-        `0.15 0.12 0 RG 20 w ${HOOK} S 1 0.80 0 RG 12 w ${HOOK} S ` +
-        `0.15 0.12 0 rg ${DOT_OUTER} 1 0.80 0 rg ${DOT_INNER} Q`
+        '0 J 0 j ' +
+        `q 1 0 0 1 2 -2 cm 0 g 0 G 1.8 w ${CROSS} B Q ` +
+        `0 G 1.8 w ${CROSS} S 1 0 0 rg ${CROSS} f`
       )
+    case 'unknown':
+      return QUESTION_MARK
   }
 }
-
 /** The mark at its natural proportions, centred in `bbox` (PDF user space of the box it goes in) */
 export function placedMark(
   verdict: Verdict,

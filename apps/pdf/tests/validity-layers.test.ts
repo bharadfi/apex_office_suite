@@ -145,13 +145,13 @@ describe('markContent', () => {
     expect(tick).toContain('0 0.70 0.25 rg') // green fill
     expect(tick).toContain('0 G 4.5 w') // black border all round
     expect(tick).toContain('1 0 0 1 5.1 -5.1 cm') // shadow to the lower right
-    expect(markContent('invalid', [0, 0, 100, 100])).toContain('1 0 0 1 4.4 -4.4 cm')
-    expect(markContent('unknown', [0, 0, 100, 100])).toContain('1 0 0 1 2.7 -2.7 cm')
     const cross = markContent('invalid', [0, 0, 100, 100])
-    expect(cross).toContain('14.93 70.93 m 29.07 85.07 l 50 64.14 l')
-    expect(cross).toContain('0.88 0.07 0.07 rg') // red fill
+    expect(cross).toContain('50 64.59 m 70.94 87.41 l 81.92 76.15 l')
+    expect(cross).toContain('1 0 0 rg') // pure red fill
+    expect(cross).toContain('1 0 0 1 2 -2 cm') // a thin shadow to the lower right
     const unknown = markContent('unknown', [0, 0, 100, 100])
-    expect(unknown).toContain('1 0.80 0 RG') // yellow
+    expect(unknown).toContain('1 1 0.4 rg') // the standard pale yellow
+    expect(unknown).toContain('0.1 0 0 0.1 9 0 cm') // the standard artwork, as signers draw it
     expect(unknown).not.toContain('Tj') // drawn as shapes: no font needed
   })
 })
@@ -248,7 +248,7 @@ describe('applyVerdicts', () => {
       const doc = await PDFDocument.create()
       const { widget, ap } = plainBox(doc)
       expect(applyVerdicts(doc.context, [{ field: widget, verdict: 'unknown' }])).toBe(true)
-      expect(contentOf(doc.context, ap)).toContain('1 0.80 0 RG')
+      expect(contentOf(doc.context, ap)).toContain('1 1 0.4 rg')
     })
 
     it('gives a box with no appearance at all one that holds the mark', async () => {
@@ -258,7 +258,7 @@ describe('applyVerdicts', () => {
       const ap = widget.lookup(PDFName.of('AP'), PDFDict)
       const normal = doc.context.lookup(ap.get(PDFName.of('N'))) as PDFRawStream
       expect(Buffer.from(decodePDFRawStream(normal).decode()).toString('latin1')).toContain(
-        '14.93 70.93 m',
+        '50 64.59 m',
       )
     })
 

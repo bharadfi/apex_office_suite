@@ -67,5 +67,3 @@ export function parsePageRanges(input: string, max: number): number[] | null {
   }
   return out.size > 0 ? [...out].sort((x, y) => x - y) : null
 }
-/** Page bitmap budget: at 800% a hi-dpi Letter page would otherwise be ~125M px */
-export const MAX_PAGE_RENDER_PIXELS = 48_000_000

@@ -4,7 +4,7 @@ import { AnnotationMode, TextLayer } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist'
 import { pdfRectToCss, quadToRect } from './annotations'
 import type { LocalMarkup, PageGeom } from './annotations'
-import { MAX_PAGE_RENDER_PIXELS } from './view-config'
+import { pageRenderDpr } from './page-bitmap'
 
 /** Which items in the container are within the (expanded) viewport — shared lazy-render basis
     for pages/thumbnails. Rebuild the observer when enabled flips (sidebar toggles unmount/remount the root) */
@@ -86,31 +86,37 @@ export function PdfPage({
       if (cancelled) return
       const viewport = page.getViewport({ scale, rotation: (page.rotate + rotationDelta) % 360 })
       // Cap at 2x: on hi-dpi screens a 3x-dpr full-page bitmap doubles memory with no visible gain.
-      // Deep zoom trades dpr for the pixel budget instead — the page is already magnified.
-      const dpr = Math.min(
-        window.devicePixelRatio || 1,
-        2,
-        Math.sqrt(MAX_PAGE_RENDER_PIXELS / (viewport.width * viewport.height)),
-      )
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.floor(viewport.width * dpr)
-      canvas.height = Math.floor(viewport.height * dpr)
-      canvas.style.width = `${Math.floor(viewport.width)}px`
-      canvas.style.height = `${Math.floor(viewport.height)}px`
-      renderTask = page.render({
-        canvas,
-        viewport,
-        // FormLayer renders interactive widgets as HTML. Exclude their saved appearance
-        // streams from the page bitmap or filled values are drawn twice after a reload.
-        annotationMode: AnnotationMode.ENABLE_FORMS,
-        transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : undefined,
-      })
-      try {
-        await renderTask.promise
-      } catch {
-        return // cancelled
+      // Deep zoom trades dpr for the pixel budget and the longest-side limit instead: the page is
+      // already magnified, and a canvas past the browser's limits would leave part of it blank.
+      let dpr = pageRenderDpr(viewport.width, viewport.height, window.devicePixelRatio || 1)
+      let canvas: HTMLCanvasElement | null = null
+      for (let attempt = 0; attempt < 3 && !canvas; attempt++) {
+        const attemptCanvas = document.createElement('canvas')
+        attemptCanvas.width = Math.max(1, Math.floor(viewport.width * dpr))
+        attemptCanvas.height = Math.max(1, Math.floor(viewport.height * dpr))
+        attemptCanvas.style.width = `${Math.floor(viewport.width)}px`
+        attemptCanvas.style.height = `${Math.floor(viewport.height)}px`
+        renderTask = page.render({
+          canvas: attemptCanvas,
+          viewport,
+          // FormLayer renders interactive widgets as HTML. Exclude their saved appearance
+          // streams from the page bitmap or filled values are drawn twice after a reload.
+          annotationMode: AnnotationMode.ENABLE_FORMS,
+          transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : undefined,
+        })
+        try {
+          await renderTask.promise
+          canvas = attemptCanvas
+        } catch (error) {
+          if (cancelled || (error as Error)?.name === 'RenderingCancelledException') return
+          // the browser could not give a bitmap this big: try a smaller one, never leave a blank page
+          dpr /= 2
+        }
       }
-      if (cancelled) return
+      if (!canvas) {
+        onRenderState(doc, pageNo, false)
+        return
+      }      if (cancelled) return
       const textDiv = document.createElement('div')
       textDiv.className = 'textLayer'
       holder.replaceChildren(canvas, textDiv)

@@ -194,17 +194,17 @@ describe('signatureDisplayCopy', () => {
     })
     const copy = await signatureDisplayCopy(signed)
     expect(copy).not.toBeNull()
-    // self-signed: intact but not trusted yet, so the yellow question mark stands in the box
+    // self-signed: intact but not trusted yet, so the standard yellow question mark stands in the box
     const doc = await PDFDocument.load(copy!)
     const [field] = collectSignatureFields(doc)
     const widgetAp = field!.widget.lookup(PDFName.of('AP'), PDFDict)
     const normal = doc.context.lookup(widgetAp.get(PDFName.of('N'))) as PDFRawStream
     const drawing = Buffer.from(decodePDFRawStream(normal).decode()).toString('latin1')
-    expect(drawing).toContain('1 0.80 0 RG')
-    expect(drawing.indexOf('1 0.80 0 RG')).toBeLessThan(drawing.indexOf('/FRM Do'))
+    expect(drawing).toContain('1 1 0.4 rg')
+    expect(drawing.indexOf('1 1 0.4 rg')).toBeLessThan(drawing.indexOf('/FRM Do'))
     // what prints is what is shown, and the file on disk is the signed original
     expect(await buildPrintCopy(signed, undefined)).not.toBe(signed)
-    expect(Buffer.from(signed).includes(Buffer.from('1 0.80 0 RG'))).toBe(false)
+    expect(Buffer.from(signed).includes(Buffer.from('1 1 0.4 rg'))).toBe(false)
   })
   it('prints a signed file unchanged when there is no mark to redraw', async () => {
     const signed = await signPdf(await textPdf(2), { p12, password: 'pw' })
