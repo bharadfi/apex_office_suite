@@ -13,6 +13,8 @@ interface AndroidHost {
   takePending(): string | null
   /** write the saved document back to the opened file */
   save(path: string, base64: string): boolean
+  closeChecked(dirty: boolean): void
+  saveDone(ok: boolean): void
   language?(): string
 }
 
@@ -57,6 +59,44 @@ const known: Record<string, (...args: never[]) => unknown> = {
   saveDocxTo: async (path: string, data: ArrayBuffer) => ({ ok: host?.save(path, toBase64(data)) ?? false }),
   writeRecoveryCopy: async () => ({ ok: true }),
 }
+
+// Closing: the editor answers a "close check" with its unsaved-changes state and can save on request.
+let closeCheck: (() => void) | undefined
+let closeSave: (() => void) | undefined
+let closeState: { dirty: boolean } | undefined
+let savedSince = 0
+known.onCloseCheck = (handler: () => void) => {
+  closeCheck = handler
+  return () => {}
+}
+known.onCloseSaveRequest = (handler: () => void) => {
+  closeSave = handler
+  return () => {}
+}
+known.reportCloseCheck = (state: { dirty: boolean }) => {
+  closeState = state
+}
+const saveOk = known.saveDocx
+known.saveDocx = async (...args: never[]) => {
+  savedSince++
+  return saveOk(...args)
+}
+Object.assign(window, {
+  /** JSON {dirty} after asking the editor; the Android back button uses it */
+  __apexCloseCheck: async () => {
+    closeState = undefined
+    closeCheck?.()
+    for (let i = 0; i < 20 && !closeState; i++) await new Promise((r) => setTimeout(r, 25))
+    host?.closeChecked(closeState?.dirty ?? false)
+  },
+  /** save the open document, resolving once it has been written (or after a few seconds) */
+  __apexSave: async () => {
+    const before = savedSince
+    closeSave?.()
+    for (let i = 0; i < 80 && savedSince === before; i++) await new Promise((r) => setTimeout(r, 50))
+    host?.saveDone(savedSince !== before)
+  },
+})
 
 const desktop = new Proxy(known, {
   get(target, key) {

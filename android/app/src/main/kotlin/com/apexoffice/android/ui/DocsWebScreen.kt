@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,7 +34,10 @@ private class DocsHost(
     private val context: android.content.Context,
     private val uri: Uri,
     private val name: String,
+    private val onChecked: (Boolean) -> Unit,
+    private val onSaved: (Boolean) -> Unit,
 ) {
+    private val main = android.os.Handler(android.os.Looper.getMainLooper())
     private var pending: String? = null
 
     init {
@@ -50,6 +55,12 @@ private class DocsHost(
     fun takePending(): String? = pending.also { pending = null }
 
     @JavascriptInterface
+    fun closeChecked(dirty: Boolean) { main.post { onChecked(dirty) } }
+
+    @JavascriptInterface
+    fun saveDone(ok: Boolean) { main.post { onSaved(ok) } }
+
+    @JavascriptInterface
     fun language(): String = java.util.Locale.getDefault().language
 
     @JavascriptInterface
@@ -65,7 +76,33 @@ private class DocsHost(
 @Composable
 fun DocsWebScreen(uri: Uri, name: String, onClose: () -> Unit) {
     val context = LocalContext.current
-    BackHandler { onClose() }
+    var web by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<WebView?>(null) }
+    var asking by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    // leave straight away when nothing is unsaved; otherwise ask what to do with the changes
+    BackHandler {
+        val view = web
+        if (view == null) onClose()
+        else view.evaluateJavascript("window.__apexCloseCheck && window.__apexCloseCheck()", null)
+    }
+    if (asking) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { asking = false },
+            title = { androidx.compose.material3.Text("Save changes?") },
+            text = { androidx.compose.material3.Text("$name has changes that are not saved.") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    asking = false
+                    web?.evaluateJavascript("window.__apexSave()", null) ?: onClose()
+                }) { androidx.compose.material3.Text("Save") }
+            },
+            dismissButton = {
+                androidx.compose.foundation.layout.Row {
+                    androidx.compose.material3.TextButton(onClick = { asking = false }) { androidx.compose.material3.Text("Cancel") }
+                    androidx.compose.material3.TextButton(onClick = { asking = false; onClose() }) { androidx.compose.material3.Text("Discard") }
+                }
+            },
+        )
+    }
     val loader = remember {
         WebViewAssetLoader.Builder()
             .setDomain("appassets.androidplatform.net")
@@ -76,7 +113,9 @@ fun DocsWebScreen(uri: Uri, name: String, onClose: () -> Unit) {
         modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(),
         factory = { ctx ->
             WebView(ctx).apply {
-                WebView.setWebContentsDebuggingEnabled(true)
+                web = this
+                // inspectable from a computer only in debug builds
+                WebView.setWebContentsDebuggingEnabled((ctx.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0)
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
                 settings.allowFileAccess = false
@@ -86,7 +125,7 @@ fun DocsWebScreen(uri: Uri, name: String, onClose: () -> Unit) {
                 settings.setSupportZoom(true)
                 settings.builtInZoomControls = true
                 settings.displayZoomControls = false
-                addJavascriptInterface(DocsHost(ctx, uri, name), "AndroidHost")
+                addJavascriptInterface(DocsHost(ctx, uri, name, { dirty -> if (dirty) asking = true else onClose() }, { onClose() }), "AndroidHost")
                 webChromeClient = object : WebChromeClient() {
                     override fun onConsoleMessage(m: android.webkit.ConsoleMessage): Boolean {
                         android.util.Log.d("ApexDocsWeb", "${m.messageLevel()} ${m.message()} (${m.sourceId()}:${m.lineNumber()})")
