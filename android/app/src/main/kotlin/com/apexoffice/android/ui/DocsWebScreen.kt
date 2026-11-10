@@ -36,6 +36,8 @@ private class DocsHost(
     private val name: String,
     private val onChecked: (Boolean) -> Unit,
     private val onSaved: (Boolean) -> Unit,
+    private val onRefused: (String) -> Unit,
+    private val onPickImage: () -> Unit,
 ) {
     private val main = android.os.Handler(android.os.Looper.getMainLooper())
     private var pending: String? = null
@@ -56,6 +58,12 @@ private class DocsHost(
 
     @JavascriptInterface
     fun closeChecked(dirty: Boolean) { main.post { onChecked(dirty) } }
+
+    @JavascriptInterface
+    fun refuse(reason: String) { main.post { onRefused(reason) } }
+
+    @JavascriptInterface
+    fun pickImage() { main.post { onPickImage() } }
 
     @JavascriptInterface
     fun saveDone(ok: Boolean) { main.post { onSaved(ok) } }
@@ -103,6 +111,17 @@ fun DocsWebScreen(uri: Uri, name: String, onClose: () -> Unit) {
             },
         )
     }
+    val pickPicture = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { picked ->
+        val view = web
+        if (picked == null || view == null) { view?.evaluateJavascript("window.__apexImagePicked(null)", null); return@rememberLauncherForActivityResult }
+        val reply = runCatching {
+            val mime = context.contentResolver.getType(picked) ?: "image/png"
+            val bytes = context.contentResolver.openInputStream(picked)?.use { it.readBytes() }
+            val kind = when { mime.contains("jpeg") || mime.contains("jpg") -> "image/jpeg"; mime.contains("gif") -> "image/gif"; else -> "image/png" }
+            if (bytes == null) null else "{\"base64\":\"" + Base64.encodeToString(bytes, Base64.NO_WRAP) + "\",\"mime\":\"$kind\",\"name\":\"image\"}"
+        }.getOrNull()
+        view.evaluateJavascript("window.__apexImagePicked(" + (reply?.let { org.json.JSONObject.quote(it) } ?: "null") + ")", null)
+    }
     val loader = remember {
         WebViewAssetLoader.Builder()
             .setDomain("appassets.androidplatform.net")
@@ -125,7 +144,7 @@ fun DocsWebScreen(uri: Uri, name: String, onClose: () -> Unit) {
                 settings.setSupportZoom(true)
                 settings.builtInZoomControls = true
                 settings.displayZoomControls = false
-                addJavascriptInterface(DocsHost(ctx, uri, name, { dirty -> if (dirty) asking = true else onClose() }, { onClose() }), "AndroidHost")
+                addJavascriptInterface(DocsHost(ctx, uri, name, { dirty -> if (dirty) asking = true else onClose() }, { onClose() }, { reason -> android.widget.Toast.makeText(ctx, reason, android.widget.Toast.LENGTH_LONG).show(); onClose() }, { pickPicture.launch("image/*") }), "AndroidHost")
                 webChromeClient = object : WebChromeClient() {
                     override fun onConsoleMessage(m: android.webkit.ConsoleMessage): Boolean {
                         android.util.Log.d("ApexDocsWeb", "${m.messageLevel()} ${m.message()} (${m.sourceId()}:${m.lineNumber()})")

@@ -15,6 +15,10 @@ interface AndroidHost {
   save(path: string, base64: string): boolean
   closeChecked(dirty: boolean): void
   saveDone(ok: boolean): void
+  /** the file cannot be opened here (the app tells the user and goes back) */
+  refuse(reason: string): void
+  /** open the phone's image picker; the answer comes back through window.__apexImagePicked */
+  pickImage(): void
   language?(): string
 }
 
@@ -48,7 +52,14 @@ const known: Record<string, (...args: never[]) => unknown> = {
     const raw = host?.takePending()
     if (!raw) return null
     const file = JSON.parse(raw) as { path: string; name: string; hash?: string; base64: string }
-    const blob = new Blob([toBytes(file.base64) as BlobPart])
+    const bytes = toBytes(file.base64)
+    // a password-protected docx is an OLE2 container, not a zip: opening it as a document would show a blank page
+    // and a save would then overwrite the protected file, so it is refused until it can be decrypted
+    if (bytes[0] === 0xd0 && bytes[1] === 0xcf && bytes[2] === 0x11 && bytes[3] === 0xe0) {
+      host?.refuse('This document is password protected. Opening protected documents is not available on Android yet.')
+      return null
+    }
+    const blob = new Blob([bytes as BlobPart])
     return { path: file.path, name: file.name, dataUrl: URL.createObjectURL(blob), hash: file.hash ?? '' }
   },
   consumeNewBlankDoc: async () => false,
@@ -65,6 +76,19 @@ let closeCheck: (() => void) | undefined
 let closeSave: (() => void) | undefined
 let closeState: { dirty: boolean } | undefined
 let savedSince = 0
+let imageWaiter: ((r: unknown) => void) | undefined
+known.pickImage = () =>
+  new Promise((resolve) => {
+    imageWaiter = resolve
+    host?.pickImage()
+  })
+Object.assign(window, {
+  __apexImagePicked: (json: string | null) => {
+    const wait = imageWaiter
+    imageWaiter = undefined
+    wait?.(json ? JSON.parse(json) : null)
+  },
+})
 known.onCloseCheck = (handler: () => void) => {
   closeCheck = handler
   return () => {}

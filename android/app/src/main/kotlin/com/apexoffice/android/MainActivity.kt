@@ -61,6 +61,13 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == Intent.ACTION_VIEW) intent.data?.let(::openUri)
+        // debug builds only: open a test file kept in the app's own folder (no picker, no user files)
+        if ((applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            intent?.getStringExtra("apex_debug_open")?.let { name ->
+                val file = java.io.File(filesDir, name)
+                if (file.exists()) open = store.add(Uri.fromFile(file))
+            }
+        }
     }
 
     private fun createBlank(kind: AppKind, uri: Uri) {
