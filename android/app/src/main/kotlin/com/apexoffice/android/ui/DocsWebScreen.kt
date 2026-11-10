@@ -133,6 +133,8 @@ fun DocsWebScreen(uri: Uri, name: String, onClose: () -> Unit) {
         factory = { ctx ->
             WebView(ctx).apply {
                 web = this
+                // document passwords must never be offered to a password manager
+                importantForAutofill = android.view.View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
                 // inspectable from a computer only in debug builds
                 WebView.setWebContentsDebuggingEnabled((ctx.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0)
                 settings.javaScriptEnabled = true

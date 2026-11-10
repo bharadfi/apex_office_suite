@@ -8,6 +8,8 @@
  * is exactly the desktop one.
  */
 
+import { decryptOoxml, encryptOoxml, isEncryptedOoxml } from '../../../../../packages/electron-utils/src/ooxml-encryption'
+
 interface AndroidHost {
   /** the file Android opened: JSON {path,name,hash,base64}, or null when none */
   takePending(): string | null
@@ -41,6 +43,10 @@ function toBase64(buffer: ArrayBuffer): string {
   return btoa(bin)
 }
 
+/** encrypted files waiting for their password, and the password that opened (and re-protects) each */
+const locked = new Map<string, Uint8Array>()
+const passwords = new Map<string, string>()
+
 const known: Record<string, (...args: never[]) => unknown> = {
   getLanguage: async () => (host?.language?.() as string | undefined) ?? 'en',
   getSystemLocale: async () => navigator.language,
@@ -53,11 +59,10 @@ const known: Record<string, (...args: never[]) => unknown> = {
     if (!raw) return null
     const file = JSON.parse(raw) as { path: string; name: string; hash?: string; base64: string }
     const bytes = toBytes(file.base64)
-    // a password-protected docx is an OLE2 container, not a zip: opening it as a document would show a blank page
-    // and a save would then overwrite the protected file, so it is refused until it can be decrypted
-    if (bytes[0] === 0xd0 && bytes[1] === 0xcf && bytes[2] === 0x11 && bytes[3] === 0xe0) {
-      host?.refuse('This document is password protected. Opening protected documents is not available on Android yet.')
-      return null
+    // a password-protected docx is an OLE2 container, not a zip: ask for the password first
+    if (isEncryptedOoxml(Buffer.from(bytes))) {
+      locked.set(file.path, bytes)
+      return { needsPassword: true, path: file.path, name: file.name }
     }
     const blob = new Blob([bytes as BlobPart])
     return { path: file.path, name: file.name, dataUrl: URL.createObjectURL(blob), hash: file.hash ?? '' }
@@ -66,7 +71,33 @@ const known: Record<string, (...args: never[]) => unknown> = {
   consumeAiDocContent: async () => null,
   consumeHeadlessExport: async () => null,
   confirmDocumentReplace: async () => true,
-  saveDocx: async (path: string, data: ArrayBuffer) => ({ ok: host?.save(path, toBase64(data)) ?? false }),
+  openDocxDecrypt: async (path: string, password: string) => {
+    const bytes = locked.get(path)
+    if (!bytes) return { ok: false, reason: 'error', error: 'The file is no longer available.' }
+    try {
+      const plain = await decryptOoxml(Buffer.from(bytes), password)
+      locked.delete(path)
+      passwords.set(path, password)
+      const blob = new Blob([plain as unknown as BlobPart])
+      const name = decodeURIComponent(path.split('/').pop() ?? 'document.docx')
+      return { ok: true, result: { path, name, dataUrl: URL.createObjectURL(blob), hash: '', encrypted: true } }
+    } catch (e) {
+      const reason = (e as { reason?: string }).reason === 'unsupported' ? 'unsupported' : 'wrong-password'
+      return { ok: false, reason }
+    }
+  },
+  setDocPassword: async (path: string | null, password: string | null) => {
+    if (path) {
+      if (password) passwords.set(path, password)
+      else passwords.delete(path)
+    }
+    return { ok: true }
+  },
+  saveDocx: async (path: string, data: ArrayBuffer) => {
+    const pw = passwords.get(path)
+    const out = pw ? encryptOoxml(Buffer.from(data), pw) : null
+    return { ok: host?.save(path, toBase64(out ? out.buffer.slice(out.byteOffset, out.byteOffset + out.byteLength) as ArrayBuffer : data)) ?? false }
+  },
   saveDocxTo: async (path: string, data: ArrayBuffer) => ({ ok: host?.save(path, toBase64(data)) ?? false }),
   writeRecoveryCopy: async () => ({ ok: true }),
 }

@@ -2,11 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
     <title>Apex Office Docs</title>
     <style>
       /* a WebView does not always resolve height:100% of the root; size the chain from the window */
       html, body, #root { height: 100vh !important; }
+      /* phone: the desktop ribbon at about two thirds size so the page keeps most of the screen */
+      .ribbon { zoom: 0.68; }
+      .status-bar, .statusbar { zoom: 0.85; }
     </style>
   </head>
   <body>
