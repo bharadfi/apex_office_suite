@@ -339,6 +339,57 @@ function parseSignedData(contents: Buffer): ParsedSignedData {
   }
 }
 
+/** The original (PDF 1.2) signature format: a bare RSA signature, the certificates held apart in /Cert */
+const SUBFILTER_RSA_SHA1 = 'adbe.x509.rsa_sha1'
+
+/** The certificates of a legacy signature: /Cert holds one DER certificate, or an array of them, signer first */
+function legacyCertificates(value: PDFDict): X509Certificate[] {
+  const entry = value.lookup(PDFName.of('Cert'))
+  const items = entry instanceof PDFArray ? entry.asArray() : entry ? [entry] : []
+  const out: X509Certificate[] = []
+  for (const item of items) {
+    const resolved = value.context.lookup(item)
+    if (!(resolved instanceof PDFString) && !(resolved instanceof PDFHexString)) continue
+    try {
+      out.push(new X509Certificate(Buffer.from(resolved.asBytes())))
+    } catch {
+      /* an unreadable certificate is skipped; the signer lookup reports it if it was the signer's */
+    }
+  }
+  return out
+}
+
+/**
+ * A legacy signature as the same record a CMS signature parses to: the signature value is an RSA
+ * PKCS#1 v1.5 signature (a DER OCTET STRING holding it, or the bare value), the digest is SHA-1 of
+ * the signed ranges, and the first certificate in /Cert is the signer's. There are no signed
+ * attributes, so the signed bytes are the ranges themselves and no signing time is signed.
+ */
+function parseLegacyRsaSha1(contents: Buffer, value: PDFDict): ParsedSignedData {
+  const certificates = legacyCertificates(value)
+  const signer = certificates[0]
+  if (!signer) throw new Error('no certificate')
+  let signature: Buffer
+  if (contents[0] === 0x04) {
+    const total = derElementLength(contents)
+    if (total > contents.length) throw new Error('truncated')
+    const octets = A.fromDer(forge.util.createBuffer(contents.subarray(0, total).toString('binary')))
+    signature = Buffer.from(octets.value as string, 'binary')
+  } else {
+    // the bare signature value, followed by the zero padding of the /Contents string
+    const size = Math.ceil((signer.publicKey.asymmetricKeyDetails?.modulusLength ?? 0) / 8)
+    signature = size > 0 && size <= contents.length ? contents.subarray(0, size) : contents
+  }
+  return {
+    certificates,
+    certificateIssuerDer: [''],
+    digestOid: '1.3.14.3.2.26',
+    signatureOid: '1.2.840.113549.1.1.1',
+    signature,
+    signerSerialHex: signer.serialNumber,
+    signerIssuerDer: '',
+  }
+}
 function findSigner(parsed: ParsedSignedData): X509Certificate | undefined {
   const serial = stripLeadingZeros(parsed.signerSerialHex)
   const matches = parsed.certificates
@@ -536,7 +587,10 @@ function verifyOne(
 
   let parsed: ParsedSignedData
   try {
-    parsed = parseSignedData(contents)
+    parsed =
+      subFilter === SUBFILTER_RSA_SHA1
+        ? parseLegacyRsaSha1(contents, value)
+        : parseSignedData(contents)
   } catch {
     return fail('malformed')
   }
@@ -589,7 +643,11 @@ function verifyOne(
 
   if (problems.length === 0) {
     if (!info.coversWholeDocument) problems.push('document-changed-after-signing')
-    const at = parsed.signingTime ?? new Date()
+    // The certificate must have been valid when the document was signed. A signed time is best; a
+    // signature without one (the legacy format has none) is judged at the time it claims, as other
+    // readers do ("validated as of the signing time"), and only without any claim at the time now.
+    const claimed = claimedTime ? new Date(claimedTime) : undefined
+    const at = parsed.signingTime ?? (claimed && !Number.isNaN(claimed.getTime()) ? claimed : new Date())
     if (at.getTime() < new Date(signer.validFrom).getTime())
       problems.push('certificate-not-yet-valid')
     else if (at.getTime() > new Date(signer.validTo).getTime()) problems.push('certificate-expired')
