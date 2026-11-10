@@ -66,20 +66,34 @@ class PdfDoc private constructor(
                     return OpenResult.Failed("The file could not be read.")
                 }
             }
+            return fromDescriptor(pfd!!, password)
+        }
+
+        /** Opens a PDF kept in a private file (the redrawn display copy of a signed document). */
+        fun openFile(file: File, password: String?): OpenResult {
+            val pfd = try {
+                ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+            } catch (e: Exception) {
+                return OpenResult.Failed("The file could not be read.")
+            }
+            return fromDescriptor(pfd, password)
+        }
+
+        private fun fromDescriptor(pfd: ParcelFileDescriptor, password: String?): OpenResult {
             return try {
                 val renderer = if (Build.VERSION.SDK_INT >= 35 && password != null) {
-                    PdfRenderer(pfd!!, LoadParams.Builder().setPassword(password).build())
-                } else PdfRenderer(pfd!!)
+                    PdfRenderer(pfd, LoadParams.Builder().setPassword(password).build())
+                } else PdfRenderer(pfd)
                 val count = renderer.pageCount
                 val ratios = FloatArray(count) { i ->
                     renderer.openPage(i).use { it.height.toFloat() / it.width }
                 }
                 OpenResult.Ok(PdfDoc(renderer, pfd, count, ratios))
             } catch (e: SecurityException) {
-                pfd?.close()
+                pfd.close()
                 OpenResult.NeedsPassword
             } catch (e: Exception) {
-                pfd?.close()
+                pfd.close()
                 OpenResult.Failed(e.message ?: "This PDF could not be opened.")
             }
         }

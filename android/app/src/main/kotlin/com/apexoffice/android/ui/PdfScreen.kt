@@ -2,6 +2,7 @@ package com.apexoffice.android.ui
 
 import android.content.ClipData
 import android.content.Intent
+import java.io.File
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -159,8 +160,29 @@ fun PdfScreen(uri: Uri, name: String, onClose: () -> Unit) {
     val pageMarks = remember(fieldMarks, signatures) {
         fieldMarks.mapNotNull { f ->
             val sig = signatures.firstOrNull { it.byteRange == f.byteRange } ?: return@mapNotNull null
-            PageMark(f.page, f.x0, f.y0, f.x1, f.y1, sig.verdict)
+            PageMark(f.page, f.x0, f.y0, f.x1, f.y1, sig.verdict, f.hasLayers)
         }.groupBy { it.page }
+    }
+
+    // signed boxes carry the signer's own "unknown" mark; show the real verdict in its place, in the page itself
+    val layerVerdicts = remember(signatures) {
+        signatures.associate { it.byteRange to when (it.verdict) {
+            Verdict.VALID_TRUSTED -> com.apexoffice.android.pdf.MarkVerdict.VALID
+            Verdict.INVALID -> com.apexoffice.android.pdf.MarkVerdict.INVALID
+            else -> com.apexoffice.android.pdf.MarkVerdict.UNKNOWN
+        } }
+    }
+    LaunchedEffect(uri, password, fieldMarks, layerVerdicts) {
+        if (fieldMarks.none { it.hasLayers } || layerVerdicts.isEmpty()) return@LaunchedEffect
+        val reopened = withContext(Dispatchers.IO) {
+            runCatching {
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@runCatching null
+                val copy = com.apexoffice.android.pdf.SignatureFields.display(context, bytes, layerVerdicts, File(context.cacheDir, "display-${System.nanoTime()}.pdf"))
+                    ?: return@runCatching null
+                (PdfDoc.openFile(copy, password) as? OpenResult.Ok)?.doc.also { copy.delete() }
+            }.getOrNull()
+        }
+        if (reopened != null) doc = reopened else Unit
     }
 
     val listState = rememberLazyListState()
@@ -484,7 +506,8 @@ private fun PageView(doc: PdfDoc, index: Int, renderWidth: Int, displayWidth: an
                 contentAlignment = Alignment.Center,
             ) {
                 val badge = minOf(w, h, 56.dp)
-                Box(
+                // a box whose own verdict layer is redrawn in the page needs no second mark: tap area only
+                if (!m.hasLayers) Box(
                     Modifier.size(badge).background(tone, androidx.compose.foundation.shape.CircleShape)
                         .border(2.dp, Color.White, androidx.compose.foundation.shape.CircleShape),
                     contentAlignment = Alignment.Center,
@@ -569,7 +592,7 @@ private fun sigBanner(v: Verdict, count: Int): Pair<Color, String> {
     }
 }
 /** A signature's visible area on a page (fractions of the page) with its current verdict. */
-private class PageMark(val page: Int, val x0: Float, val y0: Float, val x1: Float, val y1: Float, val verdict: Verdict)
+private class PageMark(val page: Int, val x0: Float, val y0: Float, val x1: Float, val y1: Float, val verdict: Verdict, val hasLayers: Boolean)
 
 /** The Acrobat-style status marks: green tick, amber question mark or warning, red cross. */
 private fun markStyle(v: Verdict): Pair<Color, String> = when (v) {
