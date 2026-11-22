@@ -19,8 +19,8 @@ android {
         applicationId = "com.apexoffice.android"
         minSdk = 31 // Android 12
         targetSdk = 36 // Android 16
-        versionCode = 10006
-        versionName = "1.0.6"
+        versionCode = 10100
+        versionName = "1.1.0"
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
     }
 
