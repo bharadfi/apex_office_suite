@@ -19,6 +19,7 @@ import {
 } from '../pagination-cuts'
 import { pageOfY as pageOfCut } from '../pagination-slices'
 import { TopLevelPositions } from './top-level-pos'
+import { sectionNoteSlot } from './section-endnotes'
 import { appliedFloatShift, floatShiftTarget, layoutHealth, writeFloatShift } from './layout-health'
 
 const anchorRange = rangeSlot()
@@ -201,12 +202,18 @@ export function rowFillAttrs(
   targetPx: number,
   extraPx = 0,
   gapPx = 0,
-): { style: string; 'data-split-extra'?: string } {
-  // the target is a row pitch (tr top to tr top): a separate-borders row owns the
-  // border-spacing below it, which the tr height would otherwise add once per pass
+): { style: string; 'data-row-fill': '1'; 'data-split-extra'?: string } {
+  // the target is a row pitch (tr top to tr top, table edge for an edge row): the
+  // part outside the tr box would otherwise be added once per pass
   const h = Math.round(targetPx - gapPx)
   const extra = extraPx > 0 ? h + gapPx - (targetPx - extraPx) : 0
-  return { style: `height:${h}px`, ...(extra > 0 ? { 'data-split-extra': extra.toFixed(1) } : {}) }
+  // data-row-fill: the fill belongs to the row's last fragment, so its cells
+  // align to the top (styles.css) instead of centering the whole row's content
+  return {
+    style: `height:${h}px`,
+    'data-row-fill': '1',
+    ...(extra > 0 ? { 'data-split-extra': extra.toFixed(1) } : {}),
+  }
 }
 
 /** the canvas zoom as applied to the `.doc-zoom` host (its inline `zoom`), not
@@ -218,14 +225,29 @@ export function canvasZoomOf(zoomEl: { style: { zoom: string } } | null, fallbac
   return Number.isFinite(z) && z > 0 ? z : 1
 }
 
-/** vertical border-spacing of the row's table (w:tblCellSpacing tables), else 0 */
-function rowGapPx(tr: Element): number {
+/** the part of a row's measured pitch its tr box does not hold: the vertical
+ *  border-spacing of a separate-borders table, or, in a collapsed one, the outer
+ *  half border between an edge row and the table box */
+export function rowGapPx(tr: Element, zoomFactor = 1): number {
   const table = tr.closest('table')
   if (!table) return 0
   const cs = getComputedStyle(table)
-  if (cs.borderCollapse !== 'separate') return 0
-  const parts = cs.borderSpacing.split(' ')
-  return parseFloat(parts[1] ?? parts[0]) || 0
+  if (cs.borderCollapse === 'separate') {
+    const parts = cs.borderSpacing.split(' ')
+    return parseFloat(parts[1] ?? parts[0]) || 0
+  }
+  const rows = Array.from(table.querySelectorAll('tr')).filter(
+    (r) =>
+      r.closest('table') === table &&
+      !r.classList.contains('page-gap') &&
+      !r.classList.contains('page-repeat-header'),
+  )
+  const box = table.getBoundingClientRect()
+  const row = tr.getBoundingClientRect()
+  let gap = 0
+  if (rows[0] === tr) gap += row.top - box.top
+  if (rows[rows.length - 1] === tr) gap += box.bottom - row.bottom
+  return Math.max(0, gap) / zoomFactor
 }
 
 /** Identity of a pass's applied row fills: a change re-lays out the table (the
@@ -245,10 +267,11 @@ export function setRowFills(
   view: EditorView,
   fills: Array<{ el: Element; targetPx: number; extraPx?: number }>,
   batch?: LayoutBatch,
+  zoomFactor = 1,
 ): void {
   const decos: Decoration[] = []
   for (const [i, fill] of fills.entries()) {
-    const attrs = rowFillAttrs(fill.targetPx, fill.extraPx, rowGapPx(fill.el))
+    const attrs = rowFillAttrs(fill.targetPx, fill.extraPx, rowGapPx(fill.el, zoomFactor))
     try {
       const $inside = view.state.doc.resolve(view.posAtDOM(fill.el, 0))
       for (let d = $inside.depth; d > 0; d--) {
@@ -727,6 +750,31 @@ export type PageGapSpec = {
   | { pos: number; kind?: Exclude<GapKind, 'block'> }
 )
 
+/** Everything baked into a gap's DOM: a gap under the same key can be reused as is */
+function gapContentKey(gap: PageGapSpec): string {
+  const m = gap.metrics
+  // boundaryY in the key: a reused widget must not keep a stale boundary
+  // (cols too: a table-structure edit must rebuild the spanning cell)
+  const mKey = `${m.marginTop},${m.marginBottom},${m.bodyMarginBottom ?? -1},${m.marginLeft},${m.marginRight},${Math.round(gap.pullUp ?? 0)},${Math.round(gap.boundaryY ?? -1)},${gap.cols ?? 0},${Math.round(m.pageLeft ?? -1)}`
+  return `${mKey}${gap.notesKey ? `-${gap.notesKey}` : ''}${gap.hfKey ? `-${gap.hfKey}` : ''}`
+}
+
+/** A gap's element: the band plus its footnote area and header/footer strips */
+function buildGapEl(gap: PageGapSpec, as: GapKind): HTMLElement {
+  const el = makeGapEl(gap.metrics, as, gap.cols)
+  // margins don't apply to table-rows and cuts are zero-height markers;
+  // tables inside mixed-column regions are out of scope anyway (v1)
+  if (gap.pullUp && as !== 'cut' && as !== 'table') el.style.marginTop = `-${gap.pullUp}px`
+  // notes and header/footer strips live on the gap's paper box; a zero-height
+  // cut marker has none and carries neither
+  const paper = el.classList.contains('page-gap-paper') ? el : el.querySelector('.page-gap-paper')
+  if (paper) {
+    if (gap.notes) paper.appendChild(gap.notes)
+    for (const hf of gap.hfEls ?? []) paper.appendChild(hf)
+  }
+  return el
+}
+
 /** Rebuild all page gaps (an empty list clears them); each gap carries its own margins (sections differ) */
 export function setPageGaps(
   view: EditorView,
@@ -757,10 +805,15 @@ export function setPageGaps(
   let ordinal = -1
   for (const gap of gaps) {
     ordinal++
-    const { metrics, notes, hfEls } = gap
     let pos: number
     let kind: GapKind
-    if ('el' in gap) {
+    let side = -1
+    const noteSlot = 'el' in gap ? sectionNoteSlot(view, gap.el) : null
+    if (noteSlot) {
+      // a page opening at a section-end endnote row: the gap goes right before that row's widget
+      kind = 'block'
+      ;({ pos, side } = noteSlot)
+    } else if ('el' in gap) {
       kind = 'block'
       try {
         let after: number
@@ -815,37 +868,18 @@ export function setPageGaps(
       pos = gap.pos
       kind = gap.kind ?? 'inline'
     }
-    // boundaryY in the key: a reused widget must not keep a stale boundary
-    // (cols too: a table-structure edit must rebuild the spanning cell)
-    const mKey = `${metrics.marginTop},${metrics.marginBottom},${metrics.bodyMarginBottom ?? -1},${metrics.marginLeft},${metrics.marginRight},${Math.round(gap.pullUp ?? 0)},${Math.round(gap.boundaryY ?? -1)},${gap.cols ?? 0},${Math.round(metrics.pageLeft ?? -1)}`
-    const build = (as: GapKind) => {
-      const el = makeGapEl(metrics, as, gap.cols)
-      // margins don't apply to table-rows and cuts are zero-height markers;
-      // tables inside mixed-column regions are out of scope anyway (v1)
-      if (gap.pullUp && as !== 'cut' && as !== 'table') el.style.marginTop = `-${gap.pullUp}px`
-      // notes and header/footer strips live on the gap's paper box; a zero-height
-      // cut marker has none and carries neither
-      const paper = el.classList.contains('page-gap-paper')
-        ? el
-        : el.querySelector('.page-gap-paper')
-      if (paper) {
-        if (notes) paper.appendChild(notes)
-        for (const hf of hfEls ?? []) paper.appendChild(hf)
-      }
-      return el
-    }
-    const toDOM = () => build(kind)
+    const toDOM = () => buildGapEl(gap, kind)
     const spec: GapWidgetSpec = {
-      side: -1,
+      side,
       // keyed by page ordinal, NOT pos: edits above a gap shift its mapped
       // position without changing the page, so an ordinal key lets sameGaps
       // skip the dispatch entirely and lets PM reuse the widget DOM when a
       // dispatch does happen
       // full kind, not kind[0]: 'cut' and 'cell' would collide and skip the rebuild
-      key: `page-gap-${kind}-${ordinal}-${mKey}${gap.notesKey ? `-${gap.notesKey}` : ''}${gap.hfKey ? `-${gap.hfKey}` : ''}`,
+      key: `page-gap-${kind}-${ordinal}-${gapContentKey(gap)}`,
       gapKind: kind,
       toDOM,
-      inlineDOM: kind === 'block' ? () => build('inline') : undefined,
+      inlineDOM: kind === 'block' ? () => buildGapEl(gap, 'inline') : undefined,
     }
     decos.push(Decoration.widget(pos, toDOM, spec))
     // repeated header rows (w:tblHeader) directly after the table gap: one widget per
@@ -925,6 +959,285 @@ export function syncCutOverlays(
     el.className = 'page-gap-cut page-cut-overlay'
     el.style.top = `${(top - wrapTop) / zoomFactor}px`
     layer.appendChild(el)
+  }
+}
+
+/**
+ * The nested-table row a page turn opens, when the turn falls between two of
+ * its rows: the anchor's line is the row's first, and no content of the row
+ * starts above it. Only rows of the nested view's own table qualify; a gap row
+ * deeper down would leave its neighbors' content running through the band.
+ * Null for a turn between a row's lines (Word splits the row there; that stays
+ * a cut marker).
+ */
+export function nestedRowAtCut(anchor: LineAnchor, tolPx: number): HTMLTableRowElement | null {
+  const el = anchor.node instanceof Element ? anchor.node : anchor.node.parentElement
+  const root = el?.closest('.doc-nested-table')?.querySelector('table')
+  if (!el || !root) return null
+  let row = el.closest('tr')
+  while (row && row.closest('table') !== root) row = row.parentElement?.closest('tr') ?? null
+  if (!row || row.classList.contains('page-gap')) return null
+  const top = anchorTop(anchor)
+  if (top == null) return null
+  const range = anchorRange()
+  const walk = document.createTreeWalker(row, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT)
+  for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+    let at: number | undefined
+    if (n instanceof Text) {
+      if (!n.data.trim()) continue
+      range.selectNodeContents(n)
+      at = range.getClientRects()[0]?.top
+    } else if (n instanceof Element && n.matches('img, svg, canvas')) {
+      at = n.getBoundingClientRect().top
+    }
+    if (at !== undefined && at < top - tolPx) return null
+  }
+  return row
+}
+
+/**
+ * A table's real column count, for the spanning cell of an in-table gap row: a
+ * wider colSpan adds phantom columns, which collapses colgroup-less fixed-layout
+ * tables to ~1px columns (makeGapEl). Gap rows and repeated headers don't count.
+ */
+export function tableGridCols(table: HTMLTableElement | null): number {
+  const rows = Array.from(
+    table?.querySelectorAll<HTMLTableRowElement>(':scope > tbody > tr') ?? [],
+  ).filter((r) => !r.classList.contains('page-gap') && !r.classList.contains('page-repeat-header'))
+  return Math.max(1, ...rows.map((r) => Array.from(r.cells).reduce((s, c) => s + c.colSpan, 0)))
+}
+
+/** How far (CSS px at zoom 1) a row's content may start above the page turn's
+ *  line and still count as the row's first line (mixed font sizes in one line) */
+export const NESTED_ROW_TOL_PX = 6
+
+/** Where a line starts inside a nested cell, independent of how the cell's text
+ *  nodes are split: the picture itself on a picture line, else the character
+ *  offset into the cell's text (gap widgets' own text excluded) */
+export type CellLineMark = { cell: HTMLTableCellElement } & ({ el: Element } | { text: number })
+
+function cellTextNodes(cell: HTMLElement): Text[] {
+  const out: Text[] = []
+  const walk = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT)
+  for (let n = walk.nextNode(); n; n = walk.nextNode())
+    if (!n.parentElement?.closest('.page-gap')) out.push(n as Text)
+  return out
+}
+
+function markOfLine(cell: HTMLTableCellElement, a: LineAnchor): CellLineMark | null {
+  if (a.node instanceof Element) return { cell, el: a.node }
+  let at = 0
+  for (const t of cellTextNodes(cell)) {
+    if (t === a.node) return { cell, text: at + a.charOffset }
+    at += t.length
+  }
+  return null
+}
+
+/** One cell's share of a nested-table row split across a page turn */
+export interface NestedCellCut {
+  /** first line of the cell's part on the next page */
+  mark: CellLineMark
+  /** how far (px at zoom 1) that line starts above the turn's own line: the
+   *  cell's gap is that much taller, so every cell resumes on the same line */
+  liftPx: number
+  /** the cell's block holding that line (the gap bleeds from its edges to the paper's) */
+  block: Element
+}
+
+/**
+ * A page turn between the lines of a nested-table row (Word splits the row:
+ * each cell carries on at the next page's top). The row must belong to the
+ * nested view's own table, as in nestedRowAtCut. Each cell whose content runs
+ * past the turn gets its first line at or below the turn's line (less tolPx);
+ * cells that end above the turn get nothing. With widow control (Word 2013+
+ * cells, as planRowSplit), a cell's paragraph keeps at least two lines on each
+ * side or moves whole: Word splits a 4-line cell 2+2 where 3 lines would fit.
+ * Null when the row can't be found.
+ */
+export function nestedRowSplit(
+  anchor: LineAnchor,
+  zoomFactor: number,
+  tolPx: number,
+  nextLine: (cell: HTMLElement, offsetInCell: number) => LineAnchor | null,
+  widow = false,
+): { row: HTMLTableRowElement; cells: NestedCellCut[] } | null {
+  const el = anchor.node instanceof Element ? anchor.node : anchor.node.parentElement
+  const root = el?.closest('.doc-nested-table')?.querySelector('table')
+  if (!el || !root) return null
+  let row = el.closest('tr')
+  while (row && row.closest('table') !== root) row = row.parentElement?.closest('tr') ?? null
+  const top = anchorTop(anchor)
+  if (!row || row.classList.contains('page-gap') || top == null) return null
+  const cells: NestedCellCut[] = []
+  for (const cell of Array.from(row.cells)) {
+    const cellTop = cell.getBoundingClientRect().top
+    let a = nextLine(cell, (top - cellTop) / zoomFactor - tolPx)
+    if (a && widow) {
+      const keep = widowLineTop(a)
+      if (keep !== null) a = nextLine(cell, (keep - cellTop) / zoomFactor)
+    }
+    const at = a ? anchorTop(a) : null
+    const mark = a ? markOfLine(cell, a) : null
+    if (!a || !mark || at == null) continue
+    const line = a.node instanceof Element ? a.node : a.node.parentElement
+    const block = line?.closest('td > *, th > *') ?? cell
+    cells.push({ mark, liftPx: Math.max(0, (top - at) / zoomFactor), block })
+  }
+  return cells.length > 0 ? { row, cells } : null
+}
+
+/** Text line tops (screen px) of the cell paragraph holding a line */
+function paragraphLineTops(para: Element): number[] {
+  const range = anchorRange()
+  const tops: number[] = []
+  const walk = document.createTreeWalker(para, NodeFilter.SHOW_TEXT)
+  for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+    if (!(n as Text).data.trim() || n.parentElement?.closest('.page-gap')) continue
+    range.selectNodeContents(n)
+    for (const r of Array.from(range.getClientRects())) {
+      if (r.height <= 0) continue
+      if (!tops.some((t) => Math.abs(t - r.top) < 3)) tops.push(r.top)
+    }
+  }
+  return tops.sort((x, y) => x - y)
+}
+
+/**
+ * Widow/orphan control for a cell paragraph a page turn splits: the top of the
+ * line the next page should start at instead, or null to keep the anchor's.
+ * A lone last line pulls one more along; a lone first line moves the whole
+ * paragraph.
+ */
+function widowLineTop(a: LineAnchor): number | null {
+  const line = a.node instanceof Element ? a.node : a.node.parentElement
+  const para = line?.closest('.doc-cell-para, p')
+  const top = anchorTop(a)
+  if (!para || top == null) return null
+  const tops = paragraphLineTops(para)
+  let k = tops.findIndex((t) => Math.abs(t - top) < 3)
+  if (k <= 0) return null
+  const was = k
+  if (tops.length - k < 2) k = tops.length - 2
+  if (k < 2) k = 0
+  return k === was ? null : tops[k]!
+}
+
+export interface NestedTableGap {
+  /** nested-table row the page turn opens, or the row it splits */
+  row: HTMLTableRowElement
+  /** the page turn as an in-table gap ('table' kind, cols = the row's grid);
+   *  for a split row, the ledger's view of it (the turn's own cell) */
+  gap: PageGapSpec
+  /** a split row: one in-cell gap per cell, at that cell's first line on the
+   *  next page (no gap row then) */
+  cells?: Array<{ mark: CellLineMark; gap: PageGapSpec; liftPx?: number }>
+}
+
+/** Put an in-cell gap at a marked line start, splitting the text node when the
+ *  line starts inside it (removeNestedGap rejoins it) */
+function insertAtMark(mark: CellLineMark, el: HTMLElement): boolean {
+  if ('el' in mark) {
+    if (!mark.el.isConnected) return false
+    mark.el.before(el)
+    return true
+  }
+  let at = 0
+  for (const t of cellTextNodes(mark.cell)) {
+    if (mark.text < at + t.length) {
+      const off = mark.text - at
+      if (off > 0) {
+        el.dataset.splitText = '1'
+        t.splitText(off).before(el)
+      } else t.before(el)
+      return true
+    }
+    at += t.length
+  }
+  return false
+}
+
+function removeNestedGap(el: Element): void {
+  const parent = el.parentElement
+  el.remove()
+  if ((el as HTMLElement).dataset.splitText) parent?.normalize()
+}
+
+/** Content signature of a nested gap: its widgets' keys plus where each goes */
+function nestedGapKey(g: NestedTableGap): string {
+  if (!g.cells) return `row:${gapContentKey(g.gap)}`
+  return g.cells
+    .map(({ mark, gap }) => {
+      const where =
+        'el' in mark
+          ? `el${Array.from(mark.cell.querySelectorAll('img, svg, canvas'))
+              // a gap's own header/footer pictures come and go with the gap
+              .filter((el) => !el.closest('.page-gap'))
+              .indexOf(mark.el)}`
+          : `t${mark.text}`
+      return `${mark.cell.cellIndex}:${where}:${gapContentKey(gap)}`
+    })
+    .join('|')
+}
+
+/**
+ * Page turns inside nested tables, as real page gaps. The nested table is one
+ * read-only PM node, so no decoration can reach inside it: the gaps go straight
+ * into the view's DOM (its NodeView ignores its own mutations and renders afresh
+ * whenever the node changes, which re-paginates). A turn between rows is an
+ * in-table gap row; a turn inside a row puts an in-cell gap at each cell's first
+ * line on the next page. Gaps already in place under the same key are kept, so
+ * a settled pass leaves the layout alone. Like every page-gap-inline, they
+ * collapse while measuring.
+ */
+export function syncNestedTableGaps(view: EditorView, gaps: readonly NestedTableGap[]): void {
+  const root = view.dom as HTMLElement
+  const obs = (view as unknown as { domObserver?: { stop(): void; start(): void } }).domObserver
+  obs?.stop()
+  try {
+    const existing = Array.from(root.querySelectorAll<HTMLElement>('.page-gap-nested'))
+    const keep = new Set<Element>()
+    const todo: Array<{ g: NestedTableGap; key: string }> = []
+    for (const g of gaps) {
+      if (!g.row.isConnected) continue
+      const key = nestedGapKey(g)
+      const mine = existing.filter(
+        (el) =>
+          el.dataset.gapKey === key &&
+          (g.cells ? el.closest('tr') === g.row : el.nextElementSibling === g.row),
+      )
+      if (mine.length === (g.cells?.length ?? 1)) mine.forEach((el) => keep.add(el))
+      else todo.push({ g, key })
+    }
+    // out first: rejoining split text must happen before new marks resolve
+    const stale = existing.filter((el) => !keep.has(el))
+    stale.forEach(removeNestedGap)
+    for (const { g, key } of todo) {
+      if (!g.cells) {
+        const el = buildGapEl(g.gap, 'table')
+        el.classList.add('page-gap-nested')
+        el.dataset.gapKey = key
+        g.row.before(el)
+        continue
+      }
+      for (const c of g.cells) {
+        const el = buildGapEl(c.gap, 'cell')
+        el.classList.add('page-gap-nested')
+        // a cell resuming a line higher than the turn: the gap's top part sits
+        // beside the other cells' last lines, so it stays see-through there
+        if (c.liftPx) {
+          el.style.setProperty('--gap-lift', `${c.liftPx.toFixed(1)}px`)
+          // its own column stays paper there (the gap bleeds to the paper edges)
+          el.style.setProperty('--gap-own-l', `${c.gap.metrics.marginLeft.toFixed(1)}px`)
+          el.style.setProperty('--gap-own-r', `${c.gap.metrics.marginRight.toFixed(1)}px`)
+        }
+        el.dataset.gapKey = key
+        insertAtMark(c.mark, el)
+      }
+    }
+    if (todo.length > 0 || stale.length > 0) syncPhantomRowspans(root)
+  } finally {
+    obs?.start()
   }
 }
 
@@ -1451,6 +1764,130 @@ export function syncPageSheets(
 }
 
 /**
+ * A phantom row inside a grown rowspan keeps to the columns the crossing cells
+ * leave free. Laid over an occupied column, its cells are pushed right into
+ * columns the table does not have; those take width from the real ones, the
+ * cells re-wrap, the row heights change and the next pass cuts elsewhere.
+ * A cell shrinks to its first free run. A header clone cell with no free
+ * column is hidden and a copy of it is painted over the crossing cell at its
+ * own column, as the page shows it; the copy hangs inside a cell that stayed
+ * in the grid (an out-of-flow child of the row itself would be wrapped in an
+ * anonymous cell and push a column again). A gap row keeps its one cell: the
+ * fill hangs on it. Idempotent.
+ */
+function fitPhantomRows(
+  table: HTMLTableElement,
+  isPhantom: (tr: HTMLTableRowElement) => boolean,
+): void {
+  /** rows a cell above still takes in each column */
+  const carry: number[] = []
+  /** the same for the phantom rows' own cells (a header clone of several rows
+   *  with a merge of its own), in the grid they were cloned from */
+  let own: number[] = []
+  const realCells: Array<[HTMLTableCellElement, number]> = []
+  const lifted: Array<{
+    host: HTMLTableCellElement
+    hostCol: number
+    cells: Array<[HTMLTableCellElement, number, number]>
+  }> = []
+  for (const tr of Array.from(table.rows)) {
+    if (isPhantom(tr)) {
+      const isGap = tr.classList.contains('page-gap')
+      let col = 0
+      let host: HTMLTableCellElement | null = null
+      let hostCol = 0
+      const cells: Array<[HTMLTableCellElement, number, number]> = []
+      for (const td of Array.from(tr.cells)) {
+        const base = Number(td.getAttribute('data-base-colspan')) || td.colSpan
+        while ((own[col] ?? 0) > 0) col++
+        for (let k = 0; k < base; k++) own[col + k] = td.rowSpan
+        let run = 0
+        let first = col
+        while (first < col + base && (carry[first] ?? 0) > 0) first++
+        while (first + run < col + base && !((carry[first + run] ?? 0) > 0)) run++
+        const span = Math.max(run, isGap ? 1 : 0)
+        const hide = span === 0
+        if (hide) cells.push([td, col, col + base])
+        else if (!host && !isGap) {
+          host = td
+          hostCol = first
+        }
+        col += base
+        if (td.hidden !== hide) td.hidden = hide
+        if (span === base || hide) {
+          if (!hide) {
+            if (td.colSpan !== base) td.colSpan = base
+            td.removeAttribute('data-base-colspan')
+          }
+          continue
+        }
+        if (td.getAttribute('data-base-colspan') !== String(base))
+          td.setAttribute('data-base-colspan', String(base))
+        if (td.colSpan !== span) td.colSpan = span
+      }
+      for (let c = 0; c < own.length; c++) if ((own[c] ?? 0) > 0) own[c]--
+      // copies of an earlier pass that no longer apply
+      const keep = new Set(host ? cells.map(([, from, to]) => `${from}-${to}`) : [])
+      for (const old of Array.from(tr.querySelectorAll<HTMLElement>('.page-rh-over'))) {
+        if (old.parentElement !== host || !keep.has(old.dataset.rhCols ?? '')) old.remove()
+      }
+      for (const td of Array.from(tr.cells)) {
+        const on = td === host && cells.length > 0
+        if (td.classList.contains('page-rh-host') !== on) td.classList.toggle('page-rh-host', on)
+      }
+      if (host && cells.length > 0) lifted.push({ host, hostCol, cells })
+    } else {
+      own = []
+      let col = 0
+      for (const td of Array.from(tr.cells)) {
+        while ((carry[col] ?? 0) > 0) col++
+        for (let k = 0; k < td.colSpan; k++) carry[col + k] = td.rowSpan
+        realCells.push([td, col])
+        col += td.colSpan
+      }
+    }
+    for (let c = 0; c < carry.length; c++) if ((carry[c] ?? 0) > 0) carry[c]--
+  }
+  if (lifted.length === 0) return
+  // column edges from the real cells, measured before the first style write
+  const box = table.getBoundingClientRect()
+  const zoom = table.offsetWidth > 0 ? box.width / table.offsetWidth || 1 : 1
+  const edges = new Map<number, number>()
+  const wanted = new Set(
+    lifted.flatMap((l) => [l.hostCol, ...l.cells.flatMap(([, from, to]) => [from, to])]),
+  )
+  for (const [td, col] of realCells) {
+    if ([...wanted].every((c) => edges.has(c))) break
+    if (!wanted.has(col) && !wanted.has(col + td.colSpan)) continue
+    const r = td.getBoundingClientRect()
+    if (!edges.has(col)) edges.set(col, (r.left - box.left) / zoom)
+    if (!edges.has(col + td.colSpan)) edges.set(col + td.colSpan, (r.right - box.left) / zoom)
+  }
+  const px = (v: number) => `${Math.round(v * 10) / 10}px`
+  for (const { host, hostCol, cells } of lifted) {
+    const origin = edges.get(hostCol) ?? 0
+    for (const [td, from, to] of cells) {
+      const key = `${from}-${to}`
+      let copy = Array.from(host.children).find(
+        (c): c is HTMLElement => c instanceof HTMLElement && c.dataset.rhCols === key,
+      )
+      if (!copy) {
+        copy = td.cloneNode(true) as HTMLElement
+        copy.hidden = false
+        copy.removeAttribute('id')
+        copy.classList.add('page-rh-over')
+        copy.dataset.rhCols = key
+        host.appendChild(copy)
+      }
+      const left = px((edges.get(from) ?? 0) - origin)
+      const width = px((edges.get(to) ?? 0) - (edges.get(from) ?? 0))
+      if (copy.style.left !== left) copy.style.left = left
+      if (copy.style.width !== width) copy.style.width = width
+    }
+  }
+}
+
+/**
  * Phantom table rows (page-gap rows, repeated-header clones) occupy grid row
  * slots, so a vMerge cell spanning across them exhausts its rowspan early and
  * every later cell in the row shifts one column left. Bridge: grow each
@@ -1462,6 +1899,7 @@ export function syncPhantomRowspans(root: HTMLElement): void {
   const isPhantom = (tr: HTMLTableRowElement) =>
     tr.classList.contains('page-gap') || tr.classList.contains('page-repeat-header')
   const grown = new Set<HTMLTableCellElement>()
+  const withPhantoms: HTMLTableElement[] = []
   for (const table of Array.from(root.querySelectorAll('table'))) {
     const real: HTMLTableRowElement[] = []
     /** phantom rows between real[i-1] and real[i] */
@@ -1494,6 +1932,7 @@ export function syncPhantomRowspans(root: HTMLElement): void {
         grown.add(td)
       }
     })
+    withPhantoms.push(table)
   }
   for (const td of Array.from(
     root.querySelectorAll<HTMLTableCellElement>('td[data-base-rowspan], th[data-base-rowspan]'),
@@ -1502,6 +1941,8 @@ export function syncPhantomRowspans(root: HTMLElement): void {
     td.rowSpan = Number(td.getAttribute('data-base-rowspan')) || 1
     td.removeAttribute('data-base-rowspan')
   }
+  // after the restore: the occupancy below reads the final rowspans
+  for (const table of withPhantoms) fitPhantomRows(table, isPhantom)
 }
 
 const decoKey = (d: Decoration) => `${d.from}:${(d.spec as { key?: string }).key ?? ''}`

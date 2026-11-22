@@ -26,6 +26,7 @@ import { useDismissablePopover, useEscapeToClose } from '@genoffice/ui'
 import { fileCountLabel, visiblePageCount } from './counts'
 import { useI18n } from './locale'
 import type { I18n, StringKey } from './locale'
+import { ConfirmDialog } from './ConfirmDialog'
 import { SettingsModal } from './SettingsModal'
 import type { SettingsTarget } from './SettingsModal'
 import { onFilesChanged } from './file-events'
@@ -47,8 +48,7 @@ const PAGE_SIZE = 50
    width, so it ellipsizes and a hover ScreenTip carries the full list. Keep in
    sync with the main-process open-dialog filter (OPEN_DIALOG_EXTENSIONS). */
 const OPEN_LOCAL_EXTENSIONS =
-  '.docx / .docm / .dotx / .doc / .rtf / .odt / .hwp / .xlsx / .xlsm / .xlsb / .xltx / .xls / .csv / .vcf / .ods / .pptx / .pptm / .ppsx / .potx / .odp / .pdf / .md / .html'
-
+  '.docx / .docm / .dotx / .doc / .rtf / .odt / .hwp / .xlsx / .xlsm / .xlsb / .xltx / .xls / .csv / .vcf / .ods / .pptx / .ppt / .pptm / .ppsx / .potx / .odp / .pdf / .md / .html'
 /** drag payload of home file/folder rows (JSON array of absolute paths) */
 const DRAG_PATHS_MIME = 'application/x-genoffice-paths'
 /** hovering a collapsed folder this long while dragging expands it */

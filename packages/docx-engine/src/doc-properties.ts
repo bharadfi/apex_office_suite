@@ -108,6 +108,9 @@ export const APP_PROPERTY_KEYS = Object.keys(APP_PROPERTIES)
 /** a custom-property value of a set_properties op: text, or a typed number/boolean */
 export type PropertyValue = string | number | boolean
 
+/** the four types Word's Custom tab offers: Text, Number, Yes or no, Date */
+export type CustomPropertyKind = 'text' | 'number' | 'bool' | 'date'
+
 /** the document properties of a .docx, read from its three docProps parts */
 export interface DocumentProperties {
   /** docProps/core.xml by friendly key (title, creator, lastModifiedBy, …) */
@@ -130,6 +133,8 @@ export interface PropertyChanges {
   app?: Record<string, string | null>
   /** custom values: text stays lpwstr, a number/boolean takes a typed vt value */
   custom?: Record<string, PropertyValue | null>
+  /** the kind a custom value is to be stored as, by property name, instead of the one its value suggests */
+  customKinds?: Record<string, CustomPropertyKind>
   /** remove every property of all three parts (a full metadata scrub) */
   clear?: 'all'
 }
@@ -264,11 +269,12 @@ export const NEW_DOCUMENT_APPLICATION = 'Apex Office'
 /** Template a new Apex Office document records (Word's own default) */
 export const NEW_DOCUMENT_TEMPLATE = 'Normal.dotm'
 /**
- * AppVersion of a new document. The docx-engine package version at release
- * time; a blank-template test pins it to package.json so a version bump fails
- * loudly instead of shipping a stale stamp.
+ * OOXML AppVersion uses a two-component XX.YYYY value, not semver
+ * (ISO/IEC 29500-1, section 22.2.2.2). Record the docx-engine major/minor,
+ * right-padding the minor to four digits; the patch component is omitted.
+ * A blank-template test pins this stamp to the package major/minor.
  */
-export const NEW_DOCUMENT_APP_VERSION = '0.1.0'
+export const NEW_DOCUMENT_APP_VERSION = '0.1000'
 
 /** the W3CDTF stamp Word writes into core properties (seconds, Z) */
 export function w3cdtfStamp(date: Date): string {
@@ -277,8 +283,9 @@ export function w3cdtfStamp(date: Date): string {
 
 /**
  * Word-like core part of a freshly created document: no creator or other
- * people data, just the creation/modification stamp and revision 1, so later
- * property sets (and the save path's modified/revision update) have a home.
+ * people data, just the creation/modification stamp and revision 0 — the
+ * template has not been saved anywhere yet, and the first save bumps the
+ * revision to 1 the way Word's first Ctrl+S does (genoffice#2554).
  */
 export function newDocumentCorePropertiesXml(created: Date = new Date()): string {
   const stamp = w3cdtfStamp(created)
@@ -289,25 +296,35 @@ export function newDocumentCorePropertiesXml(created: Date = new Date()): string
     ' xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
     `<dcterms:created xsi:type="dcterms:W3CDTF">${stamp}</dcterms:created>` +
     `<dcterms:modified xsi:type="dcterms:W3CDTF">${stamp}</dcterms:modified>` +
-    '<cp:revision>1</cp:revision>' +
+    '<cp:revision>0</cp:revision>' +
     '</cp:coreProperties>'
   )
 }
 
-/** Word-like extended part of a freshly created document (no company/manager) */
+/** Word-like extended part of a freshly created document (no company/manager).
+ *  `omitGeneratorFields` drops Application and AppVersion — the fields that name
+ *  the generating tool — while the harmless Word-default Template stays
+ *  (genoffice#2554: consumers that must not look machine-generated then skip a
+ *  set_properties pass). */
 export function newDocumentAppPropertiesXml(
-  opts: { application?: string; appVersion?: string; template?: string } = {},
+  opts: {
+    application?: string
+    appVersion?: string
+    template?: string
+    omitGeneratorFields?: boolean
+  } = {},
 ): string {
-  const application = opts.application ?? NEW_DOCUMENT_APPLICATION
-  const appVersion = opts.appVersion ?? NEW_DOCUMENT_APP_VERSION
   const template = opts.template ?? NEW_DOCUMENT_TEMPLATE
+  const fields = opts.omitGeneratorFields
+    ? ''
+    : `<Application>${escapeXmlText(opts.application ?? NEW_DOCUMENT_APPLICATION)}</Application>` +
+      `<AppVersion>${escapeXmlText(opts.appVersion ?? NEW_DOCUMENT_APP_VERSION)}</AppVersion>`
   return (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
     '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"' +
     ' xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">' +
     `<Template>${escapeXmlText(template)}</Template>` +
-    `<Application>${escapeXmlText(application)}</Application>` +
-    `<AppVersion>${escapeXmlText(appVersion)}</AppVersion>` +
+    fields +
     '</Properties>'
   )
 }
@@ -424,6 +441,24 @@ const VT_FLOAT_TYPES = new Set(['r4', 'r8', 'decimal', 'cy'])
 const VT_TIME_TYPES = new Set(['filetime', 'date'])
 const VT_TEXT_TYPES = new Set(['lpwstr', 'lpstr', 'bstr'])
 
+/** the kind a stored vt type reads as; null for one Word's Custom tab has no type for (a vector, a blob, …) */
+export function customPropertyKind(type: string | undefined): CustomPropertyKind | null {
+  if (!type) return null
+  if (VT_TEXT_TYPES.has(type)) return 'text'
+  if (type === 'bool') return 'bool'
+  if (VT_TIME_TYPES.has(type)) return 'date'
+  if (type in VT_INT_RANGES || type === 'r4' || type === 'r8' || type === 'decimal') return 'number'
+  return null
+}
+
+/** the vt types a value of the kind is tried as, in order; Word writes a date as filetime */
+const KIND_TYPES: Record<CustomPropertyKind, readonly string[]> = {
+  text: ['lpwstr'],
+  number: ['i4', 'r8'],
+  bool: ['bool'],
+  date: ['filetime'],
+}
+
 /** the text form of a scalar op value (used for text fallbacks) */
 function scalarText(value: PropertyValue): string {
   if (typeof value === 'boolean') return value ? 'true' : 'false'
@@ -493,7 +528,17 @@ function typedCustomText(type: string, value: PropertyValue): string | null {
 function resolveCustomValue(
   existingType: string | null,
   value: PropertyValue,
+  kind?: CustomPropertyKind,
 ): { type: string; text: string } {
+  if (kind) {
+    // a stored type of the same kind stays (an i8 number, a date kept as vt:date)
+    const kept = existingType && customPropertyKind(existingType) === kind ? [existingType] : []
+    for (const type of [...kept, ...KIND_TYPES[kind]]) {
+      const text = typedCustomText(type, value)
+      if (text !== null) return { type, text }
+    }
+    return { type: CUSTOM_PROPERTY_DEFAULT_TYPE, text: scalarText(value) }
+  }
   if (existingType) {
     const text = typedCustomText(existingType, value)
     if (text !== null) return { type: existingType, text }
@@ -519,6 +564,7 @@ function vTypesPrefix(xml: string): string {
 export function patchCustomPropertiesXml(
   xml: string,
   changes: Record<string, PropertyValue | null>,
+  kinds: Record<string, CustomPropertyKind> = {},
 ): string {
   let out = xml
   let maxPid = 1
@@ -535,7 +581,7 @@ export function patchCustomPropertiesXml(
       )
       continue
     }
-    const { type, text } = resolveCustomValue(existingTypes[name] ?? null, value)
+    const { type, text } = resolveCustomValue(existingTypes[name] ?? null, value, kinds[name])
     const valueXml = `<${prefix}:${type}>${escapeXmlText(text)}</${prefix}:${type}>`
     let replaced = false
     out = out.replace(PROPERTY_RE, (property) => {
@@ -672,7 +718,11 @@ export async function applyPropertyChanges(zip: JSZip, changes: PropertyChanges)
     const values = changes.custom ?? {}
     if (entry || hasSetValue(values)) {
       const xml = entry ? await entry.async('string') : blankCustomPropertiesXml()
-      const out = patchCustomPropertiesXml(clearAll ? clearCustomPropertiesXml(xml) : xml, values)
+      const out = patchCustomPropertiesXml(
+        clearAll ? clearCustomPropertiesXml(xml) : xml,
+        values,
+        changes.customKinds,
+      )
       await writePropertiesPart(
         zip,
         CUSTOM_PROPERTIES_PATH,

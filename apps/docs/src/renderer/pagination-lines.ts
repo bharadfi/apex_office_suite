@@ -1,7 +1,7 @@
 // DOM line-box sampling for page-crossing blocks (cached per element), the
 // line-split re-slice, table row cut positions and line anchors.
 import { rangeSlot } from './dom-range'
-import { applyBlockMeta, lineLeadPx, unshiftRunRect } from './pagination-measure'
+import { applyBlockMeta, blockGapRects, lineLeadPx, unshiftRunRect } from './pagination-measure'
 import { CapacityWindows, SortedYs } from './pagination-index'
 import { blockInlineExtraPx } from './pagination-sections'
 import {
@@ -702,8 +702,17 @@ function replacedSoleLine(el: HTMLElement): boolean {
 }
 
 /** Boundary list (excluding 0) → line boxes tiling the block height (heights are adjacent-boundary diffs; the first box starts at 0) */
-function tileBoxes(boundaries: number[], blockHeight: number): LineBox[] {
-  const tops = [0, ...boundaries.filter((b) => b > 0.5 && b < blockHeight)]
+export function tileBoxes(boundaries: number[], blockHeight: number): LineBox[] {
+  let tops = [0, ...boundaries.filter((b) => b > 0.5 && b < blockHeight)]
+  // Blink floors the half-leading above each inline box, so rect-midpoint
+  // boundaries sit a fraction high: the first line measures short and the last
+  // long by the same amount. Recentre them (sub-pixel only, so a paragraph with
+  // genuinely unequal first/last lines is left alone) — the page-bottom text
+  // fit of a cut block otherwise over-counts its tail by that fraction.
+  if (tops.length > 1) {
+    const delta = (blockHeight - tops[tops.length - 1] - tops[1]) / 2
+    if (Math.abs(delta) <= 1) tops = tops.map((t, i) => (i === 0 ? 0 : t + delta))
+  }
   return tops.map((top, i) => ({
     offsetInBlock: top,
     height: (i + 1 < tops.length ? tops[i + 1] : blockHeight) - top,
@@ -820,9 +829,7 @@ export function indexedRowBoxes(rowTops: number[], blockHeight: number): LineBox
 }
 
 function domTableRows(el: HTMLElement, blockHeight: number, zoomFactor: number): TableRowBox[] {
-  const gaps = Array.from(el.querySelectorAll('.page-gap-inline')).map((g) =>
-    g.getBoundingClientRect(),
-  )
+  const gaps = blockGapRects(el)
   const gapAbove = (top: number) => gaps.reduce((s, g) => (g.top <= top ? s + g.height : s), 0)
   const elTop = el.getBoundingClientRect().top
   const trs = outerTableRows(el)
@@ -886,6 +893,16 @@ export function forcedCutYs(
   }
   return out
 }
+
+/**
+ * ProseMirror puts an empty `img.ProseMirror-separator` (with the trailing
+ * break) after an inline widget that ends a textblock, so an empty paragraph
+ * holding any widget (a bookmark, an editable-region mark) carries one. It is
+ * editor scaffolding, not a picture: an empty paragraph with only that stays a
+ * line of its own, as pagination-measure already reads it.
+ */
+const NOT_SEPARATOR = ':not(.ProseMirror-separator)'
+const CELL_PICTURE_SEL = `img${NOT_SEPARATOR}, svg, canvas`
 
 function rowCutYs(
   tr: Element,
@@ -982,7 +999,7 @@ function rowCutYs(
         }
       }
     }
-    for (const obj of cell.querySelectorAll('img, svg, canvas')) {
+    for (const obj of cell.querySelectorAll(CELL_PICTURE_SEL)) {
       // in-cell gap decorations may carry header/footer images: not row content
       if (obj.closest('.page-gap, .page-float-host')) continue
       const r = obj.getBoundingClientRect()
@@ -997,7 +1014,7 @@ function rowCutYs(
     const contentB = bands.reduce((m, [, b]) => Math.max(m, b), -Infinity)
     for (const para of cell.querySelectorAll(PARA_SELECTOR)) {
       if (byPara.has(para) || para.closest('.page-gap, .page-float-host')) continue
-      if (para.textContent?.trim() || para.querySelector('img, svg, canvas')) continue
+      if (para.textContent?.trim() || para.querySelector(CELL_PICTURE_SEL)) continue
       const r = para.getBoundingClientRect()
       if (r.height <= 0 || r.width <= 0) continue
       const band = toBand(r)
@@ -1269,6 +1286,16 @@ function domLineRects(el: HTMLElement, zoomFactor: number): DomLineRect[] {
     const r = im.getBoundingClientRect()
     if (r.height > 0 && r.width > 0) rects.push({ r, node: im })
   }
+  // a <br> is the only box on a text-less row; without it a run of soft breaks
+  // is one ink gap whose midpoint boundary cuts the page half empty
+  for (const br of roots.flatMap((root) => Array.from(root.querySelectorAll('br')))) {
+    // a page / column break has no line of its own (innerBreaks cuts there)
+    if (br.classList.contains('doc-page-br') || br.classList.contains('doc-col-br')) continue
+    if (br.closest('.page-gap, .page-float-host')) continue
+    if (!inFlowWithin(br, (br.closest(PARA_SELECTOR) as HTMLElement | null) ?? el)) continue
+    const r = br.getBoundingClientRect()
+    if (r.height > 0) rects.push({ r, node: br })
+  }
   rects.sort((a, b) => a.r.top - b.r.top)
   const elTop = el.getBoundingClientRect().top
   const lines: DomLineRect[] = []
@@ -1437,7 +1464,7 @@ function cellContentBottom(cell: Element): number {
     )
       continue
     if ((child.textContent ?? '').trim() === '' && !child.querySelector('table, svg')) {
-      const imgs = Array.from(child.querySelectorAll('img'))
+      const imgs = Array.from(child.querySelectorAll(`img${NOT_SEPARATOR}`))
       const isStrut = (im: Element) => {
         const r = im.getBoundingClientRect()
         return r.width <= 2.5 || r.height <= 2.5
@@ -1479,13 +1506,38 @@ function insideVerticalMerge(row: Element): boolean {
   return false
 }
 
+/**
+ * A middle/bottom-aligned *sibling* (non-host) cell is positioned against the
+ * whole row height, not against its own content. A band inside the host cell
+ * grows the row and re-places that sibling's text in the middle of the new
+ * blank, so the row's borders frame a page-tall empty area (the "long chin" of
+ * genoffice#2114, without a rowspan to trip the insideVerticalMerge guard).
+ * The previous pass's geometry (cellContentBottom) cannot catch this.
+ *
+ * Only a sibling that carries visible text shows the artefact: every unstyled
+ * <td> defaults to `vertical-align: middle` and html2docx writes that as
+ * `vAlign: 'center'`, so spacer-gif sliver cells (no text) and in-app tables
+ * must not lose their bands merely for being middle-aligned. The host cell is
+ * excluded too — a band inside the host is what we measure, so its own
+ * alignment is not the problem.
+ */
+function hasHeightCoupledCell(cells: readonly Element[], host: Element | null): boolean {
+  return cells.some((c) => {
+    if (c === host) return false
+    const va = (c as HTMLElement).style.verticalAlign
+    if (va !== 'middle' && va !== 'bottom') return false
+    return (c.textContent ?? '').trim() !== ''
+  })
+}
+
 /** In-row cut decoration policy: a single-cell row can host a real inline gap band
  *  (one cell spans the whole cut) — returns that cell. A multi-cell row can too when
  *  every other cell's content ends above the cut (nothing at the band's y to
  *  misalign — HTML→docx layout tables put whole articles in one cell next to
  *  spacer-gif sliver cells); otherwise the zero-height cut marker stays (same-y
  *  bands across cells are not modeled) — returns null. A row inside a vertical
- *  merge never hosts a band (see insideVerticalMerge). */
+ *  merge never hosts a band (see insideVerticalMerge), and neither does a row
+ *  with a middle/bottom-aligned cell (see hasHeightCoupledCell). */
 export function singleCutCell(
   row: Element | null,
   anchor?: LineAnchor | null,
@@ -1504,6 +1556,11 @@ export function singleCutCell(
   const anchorCell = anchorElement(anchor)?.closest('td, th')
   const host = anchorCell && cells.find((c) => c === anchorCell || c.contains(anchorCell))
   if (!host) return null
+  // A middle/bottom-aligned, text-bearing sibling is positioned against the
+  // whole row height; a band in the host would push its text into the blank.
+  // A cell whose own alignment (the host) or with no text (sliver cells) is
+  // unaffected, so it still hosts a band. See hasHeightCoupledCell / genoffice#2114.
+  if (hasHeightCoupledCell(cells, host)) return null
   const cutTop = anchorLineTop(anchor, zoomFactor)
   if (cutTop === null) return null
   for (const c of cells) {

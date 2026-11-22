@@ -6,6 +6,34 @@ import { pdfRectToCss, quadToRect } from './annotations'
 import type { LocalMarkup, PageGeom } from './annotations'
 import { pageRenderDpr } from './page-bitmap'
 
+function smoothPageImageUpscaling(context: CanvasRenderingContext2D): () => void {
+  const drawImage = context.drawImage
+  context.drawImage = (...args: [CanvasImageSource, ...number[]]) => {
+    const [, , , sourceWidth, sourceHeight, , , destWidth, destHeight] = args
+    // PDF.js disables interpolation at high zoom for images without /Interpolate.
+    // Smooth enlarged image draws on the viewer canvas, including scanned text.
+    if (!context.imageSmoothingEnabled && args.length === 9) {
+      const { a, b, c, d } = context.getTransform()
+      if (
+        Math.abs(destWidth) * Math.hypot(a, b) > Math.abs(sourceWidth) ||
+        Math.abs(destHeight) * Math.hypot(c, d) > Math.abs(sourceHeight)
+      ) {
+        context.imageSmoothingEnabled = true
+        try {
+          Reflect.apply(drawImage, context, args)
+        } finally {
+          context.imageSmoothingEnabled = false
+        }
+        return
+      }
+    }
+    Reflect.apply(drawImage, context, args)
+  }
+  return () => {
+    context.drawImage = drawImage
+  }
+}
+
 /** Which items in the container are within the (expanded) viewport — shared lazy-render basis
     for pages/thumbnails. Rebuild the observer when enabled flips (sidebar toggles unmount/remount the root) */
 export function useVisibleSet(
@@ -96,6 +124,8 @@ export function PdfPage({
         attemptCanvas.height = Math.max(1, Math.floor(viewport.height * dpr))
         attemptCanvas.style.width = `${Math.floor(viewport.width)}px`
         attemptCanvas.style.height = `${Math.floor(viewport.height)}px`
+        const context = attemptCanvas.getContext('2d', { alpha: false, willReadFrequently: true })
+        const restoreDrawImage = context && smoothPageImageUpscaling(context)
         renderTask = page.render({
           canvas: attemptCanvas,
           viewport,
@@ -111,6 +141,8 @@ export function PdfPage({
           if (cancelled || (error as Error)?.name === 'RenderingCancelledException') return
           // the browser could not give a bitmap this big: try a smaller one, never leave a blank page
           dpr /= 2
+        } finally {
+          restoreDrawImage?.()
         }
       }
       if (!canvas) {

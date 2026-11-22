@@ -178,7 +178,7 @@ describe('blank document template (new-document / AI generation base)', () => {
     expect(core).toContain(
       '<dcterms:modified xsi:type="dcterms:W3CDTF">2026-01-02T03:04:05Z</dcterms:modified>',
     )
-    expect(core).toContain('<cp:revision>1</cp:revision>')
+    expect(core).toContain('<cp:revision>0</cp:revision>')
     // no people data on a fresh document
     expect(core).not.toContain('<dc:creator')
     expect(core).not.toContain('lastModifiedBy')
@@ -187,6 +187,7 @@ describe('blank document template (new-document / AI generation base)', () => {
     expect(app).toContain(`<Template>${NEW_DOCUMENT_TEMPLATE}</Template>`)
     expect(app).toContain(`<Application>${NEW_DOCUMENT_APPLICATION}</Application>`)
     expect(app).toContain(`<AppVersion>${NEW_DOCUMENT_APP_VERSION}</AppVersion>`)
+    expect(app.match(/<AppVersion>([^<]+)<\/AppVersion>/)?.[1]).toMatch(/^\d+\.\d{4}$/)
     expect(app).not.toContain('Company')
     expect(app).not.toContain('Manager')
   })
@@ -209,13 +210,14 @@ describe('blank document template (new-document / AI generation base)', () => {
     )
   })
 
-  it('parses back as document properties, keeping the app version pinned to the package', async () => {
-    expect(NEW_DOCUMENT_APP_VERSION).toBe(enginePackage.version)
+  it('parses back as document properties, keeping the app version pinned to the package major/minor', async () => {
+    const [major, minor] = enginePackage.version.split('.')
+    expect(NEW_DOCUMENT_APP_VERSION).toBe(`${major}.${minor!.padEnd(4, '0')}`)
     const doc = await parseDocx(await buildBlankDocx({ createdAt: CREATED }))
     expect(doc.properties.core).toEqual({
       created: '2026-01-02T03:04:05Z',
       modified: '2026-01-02T03:04:05Z',
-      revision: '1',
+      revision: '0',
     })
     expect(doc.properties.app).toEqual({
       template: NEW_DOCUMENT_TEMPLATE,
@@ -241,8 +243,57 @@ describe('blank document template (new-document / AI generation base)', () => {
     expect(core).toContain(
       '<dcterms:created xsi:type="dcterms:W3CDTF">2026-01-02T03:04:05Z</dcterms:created>',
     )
-    expect(core).toContain('<cp:revision>2</cp:revision>')
+    expect(core).toContain('<cp:revision>1</cp:revision>')
     expect(zip.file('docProps/app.xml')).not.toBeNull()
+    expect((await parseDocx(saved)).properties.app.appVersion).toMatch(/^\d+\.\d{4}$/)
+  })
+
+  it('changes only the default AppVersion part compared with the legacy stamp', async () => {
+    const current = await JSZip.loadAsync(await buildBlankDocx({ createdAt: CREATED }))
+    const legacy = await JSZip.loadAsync(
+      await buildBlankDocx({ createdAt: CREATED, appVersion: '0.1.0' }),
+    )
+    expect(Object.keys(current.files).sort()).toEqual(Object.keys(legacy.files).sort())
+    for (const [name, file] of Object.entries(current.files)) {
+      if (file.dir) continue
+      if (name === 'docProps/app.xml') {
+        expect(await file.async('string')).toBe(
+          (await legacy.file(name)!.async('string')).replace(
+            '<AppVersion>0.1.0</AppVersion>',
+            `<AppVersion>${NEW_DOCUMENT_APP_VERSION}</AppVersion>`,
+          ),
+        )
+      } else {
+        expect(await file.async('uint8array'), name).toEqual(
+          await legacy.file(name)!.async('uint8array'),
+        )
+      }
+    }
+  })
+
+  it.each(['12.3456', '9.9.9', '', '1&2.3'])(
+    'preserves explicit AppVersion %j through a real save',
+    async (appVersion) => {
+      const doc = await parseDocx(await buildBlankDocx({ createdAt: CREATED, appVersion }))
+      expect(doc.properties.app.appVersion).toBe(appVersion)
+      const saved = await saveDocx(
+        doc,
+        [{ kind: 'generated', block: { type: 'paragraph', runs: [{ text: 'Saved content' }] } }],
+        { savedAt: '2026-07-28T08:30:00Z' },
+      )
+      expect((await parseDocx(saved)).properties.app.appVersion).toBe(appVersion)
+    },
+  )
+
+  it('omitGeneratorFields drops Application and AppVersion, keeping the Template', async () => {
+    const zip = await JSZip.loadAsync(await buildBlankDocx({ omitGeneratorFields: true }))
+    const app = await zip.file('docProps/app.xml')!.async('string')
+    expect(app).toContain(`<Template>${NEW_DOCUMENT_TEMPLATE}</Template>`)
+    expect(app).not.toContain('<Application>')
+    expect(app).not.toContain('<AppVersion>')
+    // the part stays registered and parses back with no generator fields
+    const doc = await parseDocx(await zip.generateAsync({ type: 'nodebuffer' }))
+    expect(doc.properties.app).toEqual({ template: NEW_DOCUMENT_TEMPLATE })
   })
 
   it('lets a caller override the application stamp', async () => {

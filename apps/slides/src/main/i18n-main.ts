@@ -20,6 +20,7 @@ export const tMain = createI18n({
     dlgPickExportDir: '选择导出目录',
     btnExport: '导出',
     dlgExportPdf: '导出为 PDF',
+    dlgExportVideo: '导出为视频 (MP4)',
     dlgSavePicture: '另存为图片',
     dlgAddAttachment: '添加附件',
     filterSupported: '支持的文件',
@@ -39,6 +40,10 @@ export const tMain = createI18n({
       '该视频的音轨编码（{codec}）不受内置播放器支持，在应用内播放时将没有声音。文件会原样嵌入，导出后在 PowerPoint 中播放不受影响。',
     mediaAviBody:
       'AVI 格式不受内置播放器支持，无法在应用内播放。文件会原样嵌入，导出后在 PowerPoint 中仍可播放。',
+    pptImportDetail:
+      'Apex Office 编辑的是 .pptx，不是 PowerPoint 97-2003 演示文稿。幻灯片、文字、形状、图片、表格和背景会保留；备注、动画、切换效果和超链接暂不保留。原文件不会被改动，转换出的 .pptx 是一个独立副本，之后的保存都写入它。',
+    pptImportFailedTitle: '无法转换这个 .ppt',
+    pptImportFailedBody: '文件可能已损坏，或不是有效的 PowerPoint 97-2003 演示文稿。',
     legacyPptTitle: '无法打开 .ppt 旧格式',
     odpImportMsg: '转换 .{ext} 演示文稿？',
     odpImportDetail:
@@ -106,6 +111,7 @@ export const tMain = createI18n({
     menuExportPdf: '导出为 PDF…',
     menuExportImages: '导出为 PNG…',
     menuExportImagesJpg: '导出为 JPG…',
+    menuExportVideo: '导出为视频 (MP4)…',
     menuPrint: '打印…',
     menuClose: '关闭',
     menuQuit: '退出',
@@ -138,6 +144,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'Choose Export Folder',
     btnExport: 'Export',
     dlgExportPdf: 'Export as PDF',
+    dlgExportVideo: 'Export as Video (MP4)',
     dlgSavePicture: 'Save as Picture',
     dlgAddAttachment: 'Add Attachments',
     filterSupported: 'Supported Files',
@@ -159,6 +166,10 @@ export const tMain = createI18n({
       'The video’s audio codec ({codec}) is not supported by the built-in player, so in-app playback will have no sound. The file is embedded as-is and plays normally in PowerPoint after export.',
     mediaAviBody:
       'The AVI format is not supported by the built-in player, so it cannot be played inside the app. The file is embedded as-is and still plays in PowerPoint after export.',
+    pptImportDetail:
+      'Apex Office edits .pptx, not PowerPoint 97-2003 presentations. Slides, text, shapes, pictures, tables and backgrounds carry over; speaker notes, animations, transitions and hyperlinks are not preserved yet. The original file is never changed; the converted .pptx is a separate copy that later saves write to.',
+    pptImportFailedTitle: 'Cannot convert this .ppt',
+    pptImportFailedBody: 'The file may be damaged or not a valid PowerPoint 97-2003 presentation.',
     legacyPptTitle: 'Cannot open legacy .ppt',
     odpImportMsg: 'Convert this .{ext} presentation?',
     odpImportDetail:
@@ -227,6 +238,7 @@ export const tMain = createI18n({
     menuExportPdf: 'Export as PDF…',
     menuExportImages: 'Export as PNG…',
     menuExportImagesJpg: 'Export as JPG…',
+    menuExportVideo: 'Export as Video (MP4)…',
     menuPrint: 'Print…',
     menuClose: 'Close',
     menuQuit: 'Quit',
@@ -259,6 +271,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'Chọn thư mục xuất',
     btnExport: 'Xuất',
     dlgExportPdf: 'Xuất dưới dạng PDF',
+    dlgExportVideo: 'Xuất dưới dạng video (MP4)',
     dlgSavePicture: 'Lưu dưới dạng hình ảnh',
     dlgAddAttachment: 'Thêm tệp đính kèm',
     filterSupported: 'Các tệp được hỗ trợ',
@@ -280,6 +293,11 @@ export const tMain = createI18n({
       'Bộ giải mã âm thanh của video ({codec}) không được trình phát tích hợp hỗ trợ, vì vậy khi phát trong ứng dụng sẽ không có âm thanh. Tệp được nhúng nguyên trạng và phát bình thường trong PowerPoint sau khi xuất.',
     mediaAviBody:
       'Định dạng AVI không được trình phát tích hợp hỗ trợ, vì vậy nó không thể phát bên trong ứng dụng. Tệp được nhúng nguyên trạng và vẫn phát được trong PowerPoint sau khi xuất.',
+    pptImportDetail:
+      'Apex Office chỉnh sửa .pptx, không phải bản trình bày PowerPoint 97-2003. Slide, văn bản, hình khối, hình ảnh, bảng và nền được giữ lại; ghi chú, hoạt ảnh, hiệu ứng chuyển tiếp và siêu liên kết chưa được giữ lại. Tệp gốc không bị thay đổi; tệp .pptx đã chuyển đổi là bản sao riêng mà các lần lưu sau ghi vào.',
+    pptImportFailedTitle: 'Không thể chuyển đổi tệp .ppt này',
+    pptImportFailedBody:
+      'Tệp có thể bị hỏng hoặc không phải bản trình bày PowerPoint 97-2003 hợp lệ.',
     legacyPptTitle: 'Không thể mở tệp .ppt phiên bản cũ',
     odpImportMsg: 'Chuyển đổi bản trình bày .{ext} này?',
     odpImportDetail:
@@ -353,6 +371,7 @@ export const tMain = createI18n({
     menuExportPdf: 'Xuất dưới dạng PDF…',
     menuExportImages: 'Xuất dưới dạng PNG…',
     menuExportImagesJpg: 'Xuất dưới dạng JPG…',
+    menuExportVideo: 'Xuất dưới dạng video (MP4)…',
     menuPrint: 'In…',
     menuClose: 'Đóng',
     menuQuit: 'Thoát',
@@ -385,6 +404,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'Dışa Aktarma Klasörünü Seçin',
     btnExport: 'Dışa Aktar',
     dlgExportPdf: 'PDF Olarak Dışa Aktar',
+    dlgExportVideo: 'Video Olarak Dışa Aktar (MP4)',
     dlgSavePicture: 'Resim Olarak Kaydet',
     dlgAddAttachment: 'Ek Dosya Ekle',
     filterSupported: 'Desteklenen Dosyalar',
@@ -406,6 +426,11 @@ export const tMain = createI18n({
       'Videonun ses codec’i ({codec}) yerleşik oynatıcı tarafından desteklenmiyor; bu nedenle uygulama içi oynatmada ses olmayacak. Dosya olduğu gibi gömülür ve dışa aktarıldıktan sonra PowerPoint’te normal şekilde oynatılır.',
     mediaAviBody:
       'AVI biçimi yerleşik oynatıcı tarafından desteklenmiyor; bu nedenle uygulama içinde oynatılamaz. Dosya olduğu gibi gömülür ve dışa aktarıldıktan sonra PowerPoint’te yine oynatılır.',
+    pptImportDetail:
+      'Apex Office, PowerPoint 97-2003 sunularını değil .pptx dosyalarını düzenler. Slaytlar, metin, şekiller, görseller, tablolar ve arka planlar aktarılır; konuşmacı notları, animasyonlar, geçişler ve köprüler henüz aktarılmaz. Özgün dosya değiştirilmez; dönüştürülen .pptx, sonraki kayıtların yazıldığı ayrı bir kopyadır.',
+    pptImportFailedTitle: 'Bu .ppt dosyası dönüştürülemiyor',
+    pptImportFailedBody:
+      'Dosya hasarlı olabilir veya geçerli bir PowerPoint 97-2003 sunumu olmayabilir.',
     legacyPptTitle: 'Eski .ppt dosyası açılamıyor',
     odpImportMsg: 'Bu .{ext} sunusu dönüştürülsün mü?',
     odpImportDetail:
@@ -474,6 +499,7 @@ export const tMain = createI18n({
     menuExportPdf: 'PDF Olarak Dışa Aktar…',
     menuExportImages: 'PNG Olarak Dışa Aktar…',
     menuExportImagesJpg: 'JPG Olarak Dışa Aktar…',
+    menuExportVideo: 'Video Olarak Dışa Aktar (MP4)…',
     menuPrint: 'Yazdır…',
     menuClose: 'Kapat',
     menuQuit: 'Çıkış',
@@ -487,6 +513,140 @@ export const tMain = createI18n({
     menuZoomIn: 'Yakınlaştır',
     menuZoomOut: 'Uzaklaştır',
     menuActualSize: 'Gerçek Boyut',
+  },
+  hu: {
+    dlgInsertImage: 'Kép beszúrása',
+    dlgReplacePicture: 'Kép cseréje',
+    freezeTitle: 'Az oldal nem válaszol',
+    freezeBody:
+      'A bemutató oldala nem válaszol. Várakozhatsz tovább, vagy kényszeríthetsz újratöltést (az aktuális munkamenetből állít vissza; legfeljebb az utolsó 30 másodperc módosításai veszhetnek el). A diagnosztikai adatok rögzítésre kerültek.',
+    freezeWait: 'Várakozás',
+    freezeReload: 'Újratöltés kényszerítése',
+    filterImages: 'Képek',
+    dlgInsertVideo: 'Videó beszúrása',
+    dlgInsertAudio: 'Hang beszúrása',
+    filterVideo: 'Videók',
+    filterAudio: 'Hangok',
+    dlgInsert3d: '3D-modell beszúrása',
+    filter3d: '3D-modellek',
+    dlgPickExportDir: 'Exportmappa kiválasztása',
+    btnExport: 'Exportálás',
+    dlgExportPdf: 'Exportálás PDF-ként',
+    dlgExportVideo: 'Exportálás videóként (MP4)',
+    dlgSavePicture: 'Mentés képként',
+    dlgAddAttachment: 'Mellékletek hozzáadása',
+    filterSupported: 'Támogatott fájlok',
+    filterAll: 'Minden fájl',
+    untitledDeck: 'Névtelen bemutató',
+    autosaveFoundTitle: 'Helyreállított verzió található',
+    autosaveDiskNewer:
+      'Megjegyzés: a lemezen lévő fájlt a helyreállítási másolat mentése után módosították. A visszaállítás felülírja ezeket az újabb módosításokat.',
+    autosaveFoundBody:
+      'Nem mentett módosítások vannak az előző munkamenetből. Visszaállítod az automatikusan mentett verziót?',
+    autosaveRestore: 'Visszaállítás',
+    autosaveDiscard: 'Elvetés',
+    closeUnsavedMsg: 'Ez a bemutató nem mentett módosításokat tartalmaz.',
+    closeUnsavedDetail: 'Bezárás előtt mented őket?',
+    btnDontSave: 'Mentés nélkül',
+    btnCancel: 'Mégse',
+    mediaUnsupportedTitle: 'Előfordulhat, hogy ez a videó nem játszható le az alkalmazásban',
+    mediaNoAudioBody:
+      'A videó hangkodekje ({codec}) nem támogatott a beépített lejátszóban, ezért az alkalmazáson belüli lejátszás hang nélkül történik. A fájl változatlan formában ágyazódik be, és exportálás után a PowerPointban normálisan lejátszható.',
+    mediaAviBody:
+      'Az AVI formátumot nem támogatja a beépített lejátszó, ezért az alkalmazáson belül nem játszható le. A fájl változatlan formában ágyazódik be, és exportálás után a PowerPointban továbbra is lejátszható.',
+    pptImportDetail:
+      'A Apex Office a bemutatót szerkeszthető szövegdobozokként építi újra, az eredeti diasorrendben és -méretben; az alakzatok geometriája, a képek és a szövegformázás egyelőre nem kerül át. Az eredeti fájl soha nem módosul; a konvertált .pptx külön másolat, amelybe a későbbi mentések íródnak.',
+    pptImportFailedTitle: 'Ez a .ppt nem konvertálható',
+    pptImportFailedBody:
+      'Lehet, hogy a fájl sérült, vagy nem érvényes PowerPoint 97-2003 bemutató.',
+    legacyPptTitle: 'A régi .ppt nem nyitható meg',
+    odpImportMsg: 'Átalakítjuk ezt a .{ext} bemutatót?',
+    odpImportDetail:
+      'A Apex Office .pptx fájlokat szerkeszt, nem ODF-et. Minden oldal diává alakul, a szövegdobozokkal és képekkel az eredeti helyükön; a diaminták, a helyőrzős elrendezések, a táblázatok és az alakzatstílusok nem maradnak meg. Az eredeti fájl soha nem módosul; a konvertált .pptx külön másolat, amelybe a későbbi mentések íródnak.',
+    odpImportConvertBtn: 'Átalakítás és megnyitás',
+    importSkipConfirm: 'Átalakítás a jövőben kérdés nélkül',
+    odpImportFailedTitle: 'Ez az .odp nem konvertálható',
+    odpImportFailedBody: 'Lehet, hogy a fájl sérült, vagy nem érvényes ODF-bemutató.',
+    legacyPptBody:
+      'Ez egy PowerPoint 97-2003 (.ppt) bináris fájl. Csak a .pptx támogatott. Nyisd meg PowerPointban/WPS-ben/Keynote-ban, és a „Mentés másként” paranccsal mentsd .pptx formátumban, majd próbáld újra.',
+    legacyPptOk: 'OK',
+    encryptedPptxTitle: 'A jelszóval védett fájl nem nyitható meg',
+    encryptedPptxBody:
+      'Ez a fájl titkosított Office-dokumentum. A jelszóval védett fájlok egyelőre nem támogatottak. Nyisd meg PowerPointban, távolítsd el a jelszót (Fájl → Információ → Bemutató védelme), mentsd el, majd próbáld újra.',
+    chartSimplifyTitle: 'A szerkesztés leegyszerűsíti ezt a diagramot',
+    chartSimplifyBody:
+      'Ez a diagram külső fájlból származik. A szerkesztés az alkalmazás saját modelljével építi újra; a részletes formázások, például a számformátumok, trendvonalak, hibakorlátok és pontonkénti stílusok elvesznek.',
+    chartSimplifyOk: 'Mégis szerkesztés',
+    untitledDraft: 'Névtelen bemutató',
+    labelTextBox: 'Szövegdoboz',
+    labelShape: 'Alakzat',
+    labelPicture: 'Kép',
+    labelGroup: 'Csoport',
+    labelTable: 'Táblázat',
+    labelChart: 'Diagram',
+    labelObject: 'Objektum',
+    schemeThemeDefault: 'Téma szerinti',
+    schemeColorful: 'Színes',
+    schemeColorful2: 'Színes 2',
+    schemeMono: 'Egyszínű {n}',
+    errUnsupportedExt: 'A .{ext} fájlok nem támogatottak',
+    errNotFile: 'nem fájl',
+    errTooLarge: 'túllépi a {mb} MB-os korlátot',
+    errImageTooLarge: 'a kép túllépi az 5 MB-os korlátot',
+    errUnreadable: 'nem olvasható',
+    errFileTooLarge: 'A fájl túllépi a méretkorlátot',
+    errParseFailed: 'Nem sikerült értelmezni a fájlt',
+    errImageNoText:
+      'A képmellékletek nem tartalmaznak szöveget; a kép a felhasználó üzenetével együtt kerül elküldésre',
+    errNotImage: 'nem támogatott képtípus',
+    errGskNotLoggedIn:
+      'Nem vagy bejelentkezve a Gensparkba: kattints alább a „Bejelentkezés a Gensparkba” gombra, jelentkezz be, majd próbáld újra',
+    errNoApiKey: 'Nincs API-kulcs beállítva a következőhöz: {provider}',
+    errNoModel: 'Nincs modellnév beállítva',
+    errGskCli:
+      'A gsk nincs bejelentkezve: futtasd a gsk login parancsot, hogy előbb bejelentkezz a Genspark-fiókodba',
+    errNoDeckAppend:
+      'Nincs bemutató, amihez hozzá lehetne adni (a munkamenet hiányzik). Az első oldalt a mode:"replace" móddal generáld, vagy adj hozzá oldalakat a natív eszközökkel.',
+    errAppendFailed: 'Hozzáadás sikertelen: {reason}',
+    errPartialAppend: 'Néhány oldal hozzáadása sikertelen: {reason}',
+    errMergeFailed:
+      'A dia egyesítése sikertelen (az egyoldalas forrás pptx nem tartalmaz érvényes diát)',
+    errNoDeckReplace:
+      'Nincs megnyitott bemutató (a munkamenet hiányzik); az oldalt nem lehet újragenerálni.',
+    errNoDeckInsert:
+      'Nincs megnyitott bemutató (a munkamenet hiányzik); az oldalt nem lehet beszúrni.',
+    errIndexRange: 'Az atIndex a tartományon kívül esik (0-{max})',
+    errReplaceNeedsOne: 'A replace_at mód pontosan egy HTML-oldalt igényel',
+    errInsertNeedsOne: 'Az insert_at mód pontosan egy HTML-oldalt igényel',
+    errReplaceFailed:
+      'Az oldal helyben cseréje nem sikerült (hiba a régi oldal áthelyezése/törlése során)',
+    errInsertFailed: 'Az oldal beszúrása nem sikerült (hiba az új oldal áthelyezése során)',
+    errUnknown: 'ismeretlen hiba',
+    errTplNameInvalid: 'Érvénytelen sablonnév',
+    errTplMissing: 'A „{name}” sablon nem létezik',
+    errTplNoSkill: 'A „{name}” sablon nem rendelkezik érvényes stílusképességgel',
+    menuFile: 'Fájl',
+    menuOpenNewWindow: 'Megnyitás új ablakban',
+    menuOpen: 'Megnyitás…',
+    menuSave: 'Mentés',
+    menuSaveAs: 'Mentés másként…',
+    menuExportPdf: 'Exportálás PDF-ként…',
+    menuExportImages: 'Exportálás PNG-ként…',
+    menuExportImagesJpg: 'Exportálás JPG-ként…',
+    menuExportVideo: 'Exportálás videóként (MP4)…',
+    menuPrint: 'Nyomtatás…',
+    menuClose: 'Bezárás',
+    menuQuit: 'Kilépés',
+    menuEdit: 'Szerkesztés',
+    menuUndo: 'Visszavonás',
+    menuRedo: 'Újra',
+    menuCut: 'Kivágás',
+    menuCopy: 'Másolás',
+    menuPaste: 'Beillesztés',
+    menuView: 'Nézet',
+    menuZoomIn: 'Nagyítás',
+    menuZoomOut: 'Kicsinyítés',
+    menuActualSize: 'Eredeti méret',
   },
   ja: {
     dlgInsertImage: '画像の挿入',
@@ -506,6 +666,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'エクスポート先フォルダーの選択',
     btnExport: 'エクスポート',
     dlgExportPdf: 'PDF としてエクスポート',
+    dlgExportVideo: 'ビデオとしてエクスポート (MP4)',
     dlgSavePicture: '図として保存',
     dlgAddAttachment: '添付ファイルの追加',
     filterSupported: 'サポートされているファイル',
@@ -526,6 +687,11 @@ export const tMain = createI18n({
       'このビデオの音声コーデック（{codec}）は内蔵プレーヤーでサポートされていないため、アプリ内での再生は無音になります。ファイルはそのまま埋め込まれ、エクスポート後は PowerPoint で正常に再生できます。',
     mediaAviBody:
       'AVI 形式は内蔵プレーヤーでサポートされていないため、アプリ内では再生できません。ファイルはそのまま埋め込まれ、エクスポート後は PowerPoint で再生できます。',
+    pptImportDetail:
+      'Apex Office が編集するのは .pptx で、PowerPoint 97-2003 プレゼンテーションではありません。スライド、テキスト、図形、画像、表、背景は引き継がれます。ノート、アニメーション、画面切り替え、ハイパーリンクはまだ反映されません。元のファイルは変更されず、変換された .pptx はそれ以降の保存先となる独立したコピーです。',
+    pptImportFailedTitle: 'この .ppt を変換できません',
+    pptImportFailedBody:
+      'ファイルが壊れているか、有効な PowerPoint 97-2003 プレゼンテーションではない可能性があります。',
     legacyPptTitle: '.ppt 形式は開けません',
     odpImportMsg: 'この .{ext} プレゼンテーションを変換しますか？',
     odpImportDetail:
@@ -600,6 +766,7 @@ export const tMain = createI18n({
     menuExportPdf: 'PDF としてエクスポート…',
     menuExportImages: 'PNG としてエクスポート…',
     menuExportImagesJpg: 'JPG としてエクスポート…',
+    menuExportVideo: 'ビデオとしてエクスポート (MP4)…',
     menuPrint: '印刷…',
     menuClose: '閉じる',
     menuQuit: '終了',
@@ -632,6 +799,7 @@ export const tMain = createI18n({
     dlgPickExportDir: '내보낼 폴더 선택',
     btnExport: '내보내기',
     dlgExportPdf: 'PDF로 내보내기',
+    dlgExportVideo: '비디오로 내보내기 (MP4)',
     dlgSavePicture: '그림으로 저장',
     dlgAddAttachment: '첨부 파일 추가',
     filterSupported: '지원되는 파일',
@@ -653,6 +821,11 @@ export const tMain = createI18n({
       '이 비디오의 오디오 코덱({codec})은 내장 플레이어에서 지원되지 않아 앱 내 재생 시 소리가 나지 않습니다. 파일은 원본 그대로 삽입되며 내보낸 후 PowerPoint에서는 정상적으로 재생됩니다.',
     mediaAviBody:
       'AVI 형식은 내장 플레이어에서 지원되지 않아 앱 내에서 재생할 수 없습니다. 파일은 원본 그대로 삽입되며 내보낸 후 PowerPoint에서는 재생할 수 있습니다.',
+    pptImportDetail:
+      'Apex Office는 PowerPoint 97-2003 프레젠테이션이 아닌 .pptx를 편집합니다. 슬라이드, 텍스트, 도형, 그림, 표, 배경은 그대로 옮겨집니다. 발표자 노트, 애니메이션, 전환 효과, 하이퍼링크는 아직 옮겨지지 않습니다. 원본 파일은 변경되지 않으며, 변환된 .pptx는 이후 저장이 기록되는 별도의 사본입니다.',
+    pptImportFailedTitle: '이 .ppt를 변환할 수 없습니다',
+    pptImportFailedBody:
+      '파일이 손상되었거나 유효한 PowerPoint 97-2003 프레젠테이션이 아닐 수 있습니다.',
     legacyPptTitle: '.ppt 형식을 열 수 없음',
     odpImportMsg: '이 .{ext} 프레젠테이션을 변환할까요?',
     odpImportDetail:
@@ -723,6 +896,7 @@ export const tMain = createI18n({
     menuExportPdf: 'PDF로 내보내기…',
     menuExportImages: 'PNG로 내보내기…',
     menuExportImagesJpg: 'JPG로 내보내기…',
+    menuExportVideo: '비디오로 내보내기 (MP4)…',
     menuPrint: '인쇄…',
     menuClose: '닫기',
     menuQuit: '끝내기',
@@ -755,6 +929,7 @@ export const tMain = createI18n({
     dlgPickExportDir: "Choisir le dossier d'exportation",
     btnExport: 'Exporter',
     dlgExportPdf: 'Exporter au format PDF',
+    dlgExportVideo: 'Exporter en vidéo (MP4)',
     dlgSavePicture: 'Enregistrer en tant qu’image',
     dlgAddAttachment: 'Ajouter des pièces jointes',
     filterSupported: 'Fichiers pris en charge',
@@ -776,6 +951,11 @@ export const tMain = createI18n({
       'Le codec audio de la vidéo ({codec}) n’est pas pris en charge par le lecteur intégré : la lecture dans l’application sera muette. Le fichier est incorporé tel quel et se lit normalement dans PowerPoint après export.',
     mediaAviBody:
       'Le format AVI n’est pas pris en charge par le lecteur intégré : lecture impossible dans l’application. Le fichier est incorporé tel quel et reste lisible dans PowerPoint après export.',
+    pptImportDetail:
+      'Apex Office modifie les .pptx, pas les présentations PowerPoint 97-2003. Les diapositives, le texte, les formes, les images, les tableaux et les arrière-plans sont conservés ; les notes, les animations, les transitions et les liens hypertexte ne le sont pas encore. Le fichier d’origine n’est jamais modifié ; le .pptx converti est une copie distincte sur laquelle les enregistrements suivants écrivent.',
+    pptImportFailedTitle: 'Impossible de convertir ce .ppt',
+    pptImportFailedBody:
+      'Le fichier est peut-être endommagé ou n’est pas une présentation PowerPoint 97-2003 valide.',
     legacyPptTitle: 'Impossible d’ouvrir le format .ppt',
     odpImportMsg: 'Convertir cette présentation .{ext} ?',
     odpImportDetail:
@@ -852,6 +1032,7 @@ export const tMain = createI18n({
     menuExportPdf: 'Exporter au format PDF…',
     menuExportImages: 'Exporter en PNG…',
     menuExportImagesJpg: 'Exporter en JPG…',
+    menuExportVideo: 'Exporter en vidéo (MP4)…',
     menuPrint: 'Imprimer…',
     menuClose: 'Fermer',
     menuQuit: 'Quitter',
@@ -884,6 +1065,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'Exportordner auswählen',
     btnExport: 'Exportieren',
     dlgExportPdf: 'Als PDF exportieren',
+    dlgExportVideo: 'Als Video exportieren (MP4)',
     dlgSavePicture: 'Als Grafik speichern',
     dlgAddAttachment: 'Anlagen hinzufügen',
     filterSupported: 'Unterstützte Dateien',
@@ -905,6 +1087,11 @@ export const tMain = createI18n({
       'Der Audio-Codec des Videos ({codec}) wird vom integrierten Player nicht unterstützt; die Wiedergabe in der App bleibt stumm. Die Datei wird unverändert eingebettet und spielt nach dem Export in PowerPoint normal ab.',
     mediaAviBody:
       'Das AVI-Format wird vom integrierten Player nicht unterstützt und kann in der App nicht wiedergegeben werden. Die Datei wird unverändert eingebettet und ist nach dem Export in PowerPoint weiterhin abspielbar.',
+    pptImportDetail:
+      'Apex Office bearbeitet .pptx, keine PowerPoint 97-2003-Präsentationen. Folien, Text, Formen, Bilder, Tabellen und Hintergründe werden übernommen; Notizen, Animationen, Übergänge und Hyperlinks werden noch nicht übernommen. Die Originaldatei wird nie verändert; die konvertierte .pptx ist eine separate Kopie, in die spätere Speicherungen schreiben.',
+    pptImportFailedTitle: 'Diese .ppt kann nicht konvertiert werden',
+    pptImportFailedBody:
+      'Die Datei ist möglicherweise beschädigt oder keine gültige PowerPoint-97-2003-Präsentation.',
     legacyPptTitle: '.ppt kann nicht geöffnet werden',
     odpImportMsg: 'Diese .{ext}-Präsentation konvertieren?',
     odpImportDetail:
@@ -980,6 +1167,7 @@ export const tMain = createI18n({
     menuExportPdf: 'Als PDF exportieren…',
     menuExportImages: 'Als PNG exportieren…',
     menuExportImagesJpg: 'Als JPG exportieren…',
+    menuExportVideo: 'Als Video exportieren (MP4)…',
     menuPrint: 'Drucken…',
     menuClose: 'Schließen',
     menuQuit: 'Beenden',
@@ -1012,6 +1200,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'Elegir carpeta de exportación',
     btnExport: 'Exportar',
     dlgExportPdf: 'Exportar como PDF',
+    dlgExportVideo: 'Exportar como video (MP4)',
     dlgSavePicture: 'Guardar como imagen',
     dlgAddAttachment: 'Agregar datos adjuntos',
     filterSupported: 'Archivos compatibles',
@@ -1033,6 +1222,11 @@ export const tMain = createI18n({
       'El códec de audio del video ({codec}) no es compatible con el reproductor integrado, por lo que la reproducción en la aplicación no tendrá sonido. El archivo se incrusta tal cual y se reproduce normalmente en PowerPoint tras exportar.',
     mediaAviBody:
       'El formato AVI no es compatible con el reproductor integrado y no se puede reproducir en la aplicación. El archivo se incrusta tal cual y sigue reproduciéndose en PowerPoint tras exportar.',
+    pptImportDetail:
+      'Apex Office edita .pptx, no presentaciones de PowerPoint 97-2003. Las diapositivas, el texto, las formas, las imágenes, las tablas y los fondos se conservan; las notas, las animaciones, las transiciones y los hipervínculos aún no se conservan. El archivo original nunca se modifica; el .pptx convertido es una copia aparte en la que se escriben los guardados posteriores.',
+    pptImportFailedTitle: 'No se puede convertir este .ppt',
+    pptImportFailedBody:
+      'El archivo puede estar dañado o no ser una presentación válida de PowerPoint 97-2003.',
     legacyPptTitle: 'No se puede abrir el formato .ppt',
     odpImportMsg: '¿Convertir esta presentación .{ext}?',
     odpImportDetail:
@@ -1107,6 +1301,7 @@ export const tMain = createI18n({
     menuExportPdf: 'Exportar como PDF…',
     menuExportImages: 'Exportar como PNG…',
     menuExportImagesJpg: 'Exportar como JPG…',
+    menuExportVideo: 'Exportar como video (MP4)…',
     menuPrint: 'Imprimir…',
     menuClose: 'Cerrar',
     menuQuit: 'Salir',
@@ -1139,6 +1334,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'เลือกโฟลเดอร์ส่งออก',
     btnExport: 'ส่งออก',
     dlgExportPdf: 'ส่งออกเป็น PDF',
+    dlgExportVideo: 'ส่งออกเป็นวิดีโอ (MP4)',
     dlgSavePicture: 'บันทึกเป็นรูปภาพ',
     dlgAddAttachment: 'เพิ่มสิ่งที่แนบ',
     filterSupported: 'ไฟล์ที่รองรับ',
@@ -1159,6 +1355,10 @@ export const tMain = createI18n({
       'ตัวแปลงรหัสเสียงของวิดีโอ ({codec}) ไม่รองรับโดยเครื่องเล่นในตัว การเล่นในแอปจะไม่มีเสียง ไฟล์จะถูกฝังตามต้นฉบับและเล่นได้ตามปกติใน PowerPoint หลังส่งออก',
     mediaAviBody:
       'รูปแบบ AVI ไม่รองรับโดยเครื่องเล่นในตัว จึงเล่นในแอปไม่ได้ ไฟล์จะถูกฝังตามต้นฉบับและยังเล่นได้ใน PowerPoint หลังส่งออก',
+    pptImportDetail:
+      'Apex Office แก้ไขไฟล์ .pptx ไม่ใช่งานนำเสนอ PowerPoint 97-2003 สไลด์ ข้อความ รูปทรง รูปภาพ ตาราง และพื้นหลังจะถูกนำมาด้วย; บันทึกย่อ ภาพเคลื่อนไหว การเปลี่ยนสไลด์ และไฮเปอร์ลิงก์ยังไม่ถูกนำมาด้วย ไฟล์ต้นฉบับจะไม่ถูกแก้ไข; ไฟล์ .pptx ที่แปลงแล้วเป็นสำเนาแยกต่างหากที่การบันทึกครั้งถัดไปจะเขียนลงไป',
+    pptImportFailedTitle: 'ไม่สามารถแปลงไฟล์ .ppt นี้',
+    pptImportFailedBody: 'ไฟล์อาจเสียหายหรือไม่ใช่งานนำเสนอ PowerPoint 97-2003 ที่ถูกต้อง',
     legacyPptTitle: 'ไม่สามารถเปิดไฟล์ .ppt',
     odpImportMsg: 'แปลงงานนำเสนอ .{ext} นี้ไหม?',
     odpImportDetail:
@@ -1228,6 +1428,7 @@ export const tMain = createI18n({
     menuExportPdf: 'ส่งออกเป็น PDF…',
     menuExportImages: 'ส่งออกเป็น PNG…',
     menuExportImagesJpg: 'ส่งออกเป็น JPG…',
+    menuExportVideo: 'ส่งออกเป็นวิดีโอ (MP4)…',
     menuPrint: 'พิมพ์…',
     menuClose: 'ปิด',
     menuQuit: 'ออก',
@@ -1260,6 +1461,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'Pilih Folder Ekspor',
     btnExport: 'Ekspor',
     dlgExportPdf: 'Ekspor sebagai PDF',
+    dlgExportVideo: 'Ekspor sebagai video (MP4)',
     dlgSavePicture: 'Simpan sebagai Gambar',
     dlgAddAttachment: 'Tambahkan Lampiran',
     filterSupported: 'File yang Didukung',
@@ -1281,6 +1483,10 @@ export const tMain = createI18n({
       'Codec audio video ({codec}) tidak didukung pemutar bawaan, sehingga pemutaran di aplikasi tidak akan bersuara. File disematkan apa adanya dan diputar normal di PowerPoint setelah diekspor.',
     mediaAviBody:
       'Format AVI tidak didukung pemutar bawaan sehingga tidak dapat diputar di aplikasi. File disematkan apa adanya dan tetap dapat diputar di PowerPoint setelah diekspor.',
+    pptImportDetail:
+      'Apex Office mengedit .pptx, bukan presentasi PowerPoint 97-2003. Slide, teks, bentuk, gambar, tabel, dan latar belakang dibawa; catatan, animasi, transisi, dan hyperlink belum dibawa. File asli tidak pernah diubah; .pptx yang dikonversi adalah salinan terpisah yang ditulis oleh penyimpanan berikutnya.',
+    pptImportFailedTitle: 'Tidak dapat mengonversi .ppt ini',
+    pptImportFailedBody: 'File mungkin rusak atau bukan presentasi PowerPoint 97-2003 yang valid.',
     legacyPptTitle: 'Tidak dapat membuka format .ppt',
     odpImportMsg: 'Konversi presentasi .{ext} ini?',
     odpImportDetail:
@@ -1353,6 +1559,7 @@ export const tMain = createI18n({
     menuExportPdf: 'Ekspor sebagai PDF…',
     menuExportImages: 'Ekspor sebagai PNG…',
     menuExportImagesJpg: 'Ekspor sebagai JPG…',
+    menuExportVideo: 'Ekspor sebagai video (MP4)…',
     menuPrint: 'Cetak…',
     menuClose: 'Tutup',
     menuQuit: 'Keluar',
@@ -1385,6 +1592,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'Выбор папки для экспорта',
     btnExport: 'Экспорт',
     dlgExportPdf: 'Экспорт в PDF',
+    dlgExportVideo: 'Экспорт в видео (MP4)',
     dlgSavePicture: 'Сохранить как рисунок',
     dlgAddAttachment: 'Добавление вложений',
     filterSupported: 'Поддерживаемые файлы',
@@ -1406,6 +1614,11 @@ export const tMain = createI18n({
       'Аудиокодек видео ({codec}) не поддерживается встроенным проигрывателем: воспроизведение в приложении будет без звука. Файл встраивается без изменений и нормально воспроизводится в PowerPoint после экспорта.',
     mediaAviBody:
       'Формат AVI не поддерживается встроенным проигрывателем, воспроизведение в приложении невозможно. Файл встраивается без изменений и по-прежнему воспроизводится в PowerPoint после экспорта.',
+    pptImportDetail:
+      'Apex Office редактирует .pptx, а не презентации PowerPoint 97-2003. Слайды, текст, фигуры, изображения, таблицы и фон переносятся; заметки, анимация, переходы и гиперссылки пока не переносятся. Исходный файл не меняется; преобразованный .pptx — отдельная копия, в которую пишутся последующие сохранения.',
+    pptImportFailedTitle: 'Не удалось преобразовать этот .ppt',
+    pptImportFailedBody:
+      'Возможно, файл повреждён или это не действительная презентация PowerPoint 97-2003.',
     legacyPptTitle: 'Не удаётся открыть формат .ppt',
     odpImportMsg: 'Преобразовать эту презентацию .{ext}?',
     odpImportDetail:
@@ -1479,6 +1692,7 @@ export const tMain = createI18n({
     menuExportPdf: 'Экспорт в PDF…',
     menuExportImages: 'Экспорт в PNG…',
     menuExportImagesJpg: 'Экспорт в JPG…',
+    menuExportVideo: 'Экспорт в видео (MP4)…',
     menuPrint: 'Печать…',
     menuClose: 'Закрыть',
     menuQuit: 'Выход',
@@ -1511,6 +1725,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'اختيار مجلد التصدير',
     btnExport: 'تصدير',
     dlgExportPdf: 'تصدير بتنسيق PDF',
+    dlgExportVideo: 'تصدير كفيديو (MP4)',
     dlgSavePicture: 'حفظ كصورة',
     dlgAddAttachment: 'إضافة مرفقات',
     filterSupported: 'الملفات المدعومة',
@@ -1532,6 +1747,11 @@ export const tMain = createI18n({
       'ترميز الصوت في الفيديو ({codec}) غير مدعوم في المشغّل المدمج، لذا سيكون التشغيل داخل التطبيق بلا صوت. يتم تضمين الملف كما هو ويعمل بشكل طبيعي في PowerPoint بعد التصدير.',
     mediaAviBody:
       'تنسيق AVI غير مدعوم في المشغّل المدمج ولا يمكن تشغيله داخل التطبيق. يتم تضمين الملف كما هو ويظل قابلاً للتشغيل في PowerPoint بعد التصدير.',
+    pptImportDetail:
+      'يحرّر Apex Office ملفات .pptx وليس عروض PowerPoint 97-2003. تُنقل الشرائح والنصوص والأشكال والصور والجداول والخلفيات؛ ولا تُنقل الملاحظات والحركات والانتقالات والارتباطات التشعبية بعد. الملف الأصلي لا يتغير أبداً؛ ملف .pptx المحوَّل نسخة منفصلة تُكتب فيها عمليات الحفظ اللاحقة.',
+    pptImportFailedTitle: 'لا يمكن تحويل ملف .ppt هذا',
+    pptImportFailedBody:
+      'قد يكون الملف تالفاً أو ليس عرضاً تقديمياً صالحاً بصيغة PowerPoint 97-2003.',
     legacyPptTitle: 'تعذّر فتح تنسيق .ppt',
     odpImportMsg: 'تحويل هذا العرض التقديمي ‎.{ext}؟',
     odpImportDetail:
@@ -1601,6 +1821,7 @@ export const tMain = createI18n({
     menuExportPdf: 'تصدير بتنسيق PDF…',
     menuExportImages: 'تصدير كصور PNG…',
     menuExportImagesJpg: 'تصدير كصور JPG…',
+    menuExportVideo: 'تصدير كفيديو (MP4)…',
     menuPrint: 'طباعة…',
     menuClose: 'إغلاق',
     menuQuit: 'إنهاء',
@@ -1633,6 +1854,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'Escolher Pasta de Exportação',
     btnExport: 'Exportar',
     dlgExportPdf: 'Exportar como PDF',
+    dlgExportVideo: 'Exportar como vídeo (MP4)',
     dlgSavePicture: 'Salvar como imagem',
     dlgAddAttachment: 'Adicionar Anexos',
     filterSupported: 'Arquivos Compatíveis',
@@ -1654,6 +1876,11 @@ export const tMain = createI18n({
       'O codec de áudio do vídeo ({codec}) não é suportado pelo player integrado; a reprodução no aplicativo ficará sem som. O arquivo é incorporado como está e é reproduzido normalmente no PowerPoint após a exportação.',
     mediaAviBody:
       'O formato AVI não é suportado pelo player integrado e não pode ser reproduzido no aplicativo. O arquivo é incorporado como está e continua reproduzível no PowerPoint após a exportação.',
+    pptImportDetail:
+      'O Apex Office edita .pptx, não apresentações do PowerPoint 97-2003. Slides, texto, formas, imagens, tabelas e planos de fundo são mantidos; anotações, animações, transições e hiperlinks ainda não são transportados. O arquivo original nunca é alterado; o .pptx convertido é uma cópia separada em que os salvamentos seguintes gravam.',
+    pptImportFailedTitle: 'Não é possível converter este .ppt',
+    pptImportFailedBody:
+      'O arquivo pode estar danificado ou não é uma apresentação válida do PowerPoint 97-2003.',
     legacyPptTitle: 'Não é possível abrir o formato .ppt antigo',
     odpImportMsg: 'Converter esta apresentação .{ext}?',
     odpImportDetail:
@@ -1727,6 +1954,7 @@ export const tMain = createI18n({
     menuExportPdf: 'Exportar como PDF…',
     menuExportImages: 'Exportar como PNG…',
     menuExportImagesJpg: 'Exportar como JPG…',
+    menuExportVideo: 'Exportar como vídeo (MP4)…',
     menuPrint: 'Imprimir…',
     menuClose: 'Fechar',
     menuQuit: 'Sair',
@@ -1759,6 +1987,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'Scegli la cartella di esportazione',
     btnExport: 'Esporta',
     dlgExportPdf: 'Esporta come PDF',
+    dlgExportVideo: 'Esporta come video (MP4)',
     dlgSavePicture: 'Salva come immagine',
     dlgAddAttachment: 'Aggiungi allegati',
     filterSupported: 'File supportati',
@@ -1780,6 +2009,11 @@ export const tMain = createI18n({
       'Il codec audio del video ({codec}) non è supportato dal lettore integrato: la riproduzione nell’app sarà senza audio. Il file viene incorporato così com’è e si riproduce normalmente in PowerPoint dopo l’esportazione.',
     mediaAviBody:
       'Il formato AVI non è supportato dal lettore integrato e non può essere riprodotto nell’app. Il file viene incorporato così com’è e resta riproducibile in PowerPoint dopo l’esportazione.',
+    pptImportDetail:
+      'Apex Office modifica i .pptx, non le presentazioni PowerPoint 97-2003. Diapositive, testo, forme, immagini, tabelle e sfondi vengono mantenuti; note, animazioni, transizioni e collegamenti ipertestuali non sono ancora trasferiti. Il file originale non viene mai modificato; il .pptx convertito è una copia separata su cui vengono scritti i salvataggi successivi.',
+    pptImportFailedTitle: 'Impossibile convertire questo .ppt',
+    pptImportFailedBody:
+      'Il file potrebbe essere danneggiato o non essere una presentazione PowerPoint 97-2003 valida.',
     legacyPptTitle: 'Impossibile aprire il vecchio formato .ppt',
     odpImportMsg: 'Convertire questa presentazione .{ext}?',
     odpImportDetail:
@@ -1856,6 +2090,7 @@ export const tMain = createI18n({
     menuExportPdf: 'Esporta come PDF…',
     menuExportImages: 'Esporta come PNG…',
     menuExportImagesJpg: 'Esporta come JPG…',
+    menuExportVideo: 'Esporta come video (MP4)…',
     menuPrint: 'Stampa…',
     menuClose: 'Chiudi',
     menuQuit: 'Esci',
@@ -1888,6 +2123,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'Wybierz folder eksportu',
     btnExport: 'Eksportuj',
     dlgExportPdf: 'Eksportuj jako PDF',
+    dlgExportVideo: 'Eksportuj jako wideo (MP4)',
     dlgSavePicture: 'Zapisz jako obraz',
     dlgAddAttachment: 'Dodaj załączniki',
     filterSupported: 'Obsługiwane pliki',
@@ -1909,6 +2145,11 @@ export const tMain = createI18n({
       'Kodek audio filmu ({codec}) nie jest obsługiwany przez wbudowany odtwarzacz — odtwarzanie w aplikacji będzie bez dźwięku. Plik jest osadzany bez zmian i po eksporcie odtwarza się normalnie w programie PowerPoint.',
     mediaAviBody:
       'Format AVI nie jest obsługiwany przez wbudowany odtwarzacz i nie można go odtworzyć w aplikacji. Plik jest osadzany bez zmian i po eksporcie nadal odtwarza się w programie PowerPoint.',
+    pptImportDetail:
+      'Apex Office edytuje pliki .pptx, a nie prezentacje PowerPoint 97-2003. Slajdy, tekst, kształty, obrazy, tabele i tła są przenoszone; notatki, animacje, przejścia i hiperłącza nie są jeszcze przenoszone. Oryginalny plik nigdy nie jest zmieniany; przekonwertowany .pptx to osobna kopia, do której zapisują się kolejne zapisy.',
+    pptImportFailedTitle: 'Nie można przekonwertować tego pliku .ppt',
+    pptImportFailedBody:
+      'Plik może być uszkodzony lub nie jest prawidłową prezentacją PowerPoint 97-2003.',
     legacyPptTitle: 'Nie można otworzyć starego formatu .ppt',
     odpImportMsg: 'Skonwertować tę prezentację .{ext}?',
     odpImportDetail:
@@ -1982,6 +2223,7 @@ export const tMain = createI18n({
     menuExportPdf: 'Eksportuj jako PDF…',
     menuExportImages: 'Eksportuj jako PNG…',
     menuExportImagesJpg: 'Eksportuj jako JPG…',
+    menuExportVideo: 'Eksportuj jako wideo (MP4)…',
     menuPrint: 'Drukuj…',
     menuClose: 'Zamknij',
     menuQuit: 'Zakończ',
@@ -2014,6 +2256,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'Zvolte složku pro export',
     btnExport: 'Exportovat',
     dlgExportPdf: 'Exportovat jako PDF',
+    dlgExportVideo: 'Exportovat jako video (MP4)',
     dlgSavePicture: 'Uložit jako obrázek',
     dlgAddAttachment: 'Přidat přílohy',
     filterSupported: 'Podporované soubory',
@@ -2035,6 +2278,11 @@ export const tMain = createI18n({
       'Zvukový kodek videa ({codec}) není vestavěným přehrávačem podporován, takže přehrávání v aplikaci bude bez zvuku. Soubor je vložen beze změny a po exportu se v PowerPointu přehrává normálně.',
     mediaAviBody:
       'Formát AVI není vestavěným přehrávačem podporován, takže ho v aplikaci nelze přehrát. Soubor je vložen beze změny a po exportu se v PowerPointu stále přehrává.',
+    pptImportDetail:
+      'Apex Office upravuje soubory .pptx, ne prezentace PowerPoint 97-2003. Snímky, text, tvary, obrázky, tabulky a pozadí se přenášejí; poznámky, animace, přechody a hypertextové odkazy se zatím nepřenášejí. Původní soubor se nikdy nemění; převedený .pptx je samostatná kopie, do které se zapisují další uložení.',
+    pptImportFailedTitle: 'Tento .ppt nelze převést',
+    pptImportFailedBody:
+      'Soubor může být poškozený nebo jde o neplatnou prezentaci PowerPoint 97-2003.',
     legacyPptTitle: 'Nelze otevřít starší formát .ppt',
     odpImportMsg: 'Převést tuto prezentaci .{ext}?',
     odpImportDetail:
@@ -2106,6 +2354,7 @@ export const tMain = createI18n({
     menuExportPdf: 'Exportovat jako PDF…',
     menuExportImages: 'Exportovat jako PNG…',
     menuExportImagesJpg: 'Exportovat jako JPG…',
+    menuExportVideo: 'Exportovat jako video (MP4)…',
     menuPrint: 'Tisk…',
     menuClose: 'Zavřít',
     menuQuit: 'Ukončit',
@@ -2138,6 +2387,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'Exportmap kiezen',
     btnExport: 'Exporteren',
     dlgExportPdf: 'Exporteren als PDF',
+    dlgExportVideo: 'Exporteren als video (MP4)',
     dlgSavePicture: 'Opslaan als afbeelding',
     dlgAddAttachment: 'Bijlagen toevoegen',
     filterSupported: 'Ondersteunde bestanden',
@@ -2159,6 +2409,11 @@ export const tMain = createI18n({
       'De audiocodec van de video ({codec}) wordt niet ondersteund door de ingebouwde speler; afspelen in de app is dan zonder geluid. Het bestand wordt ongewijzigd ingesloten en speelt na export normaal af in PowerPoint.',
     mediaAviBody:
       'Het AVI-formaat wordt niet ondersteund door de ingebouwde speler en kan niet in de app worden afgespeeld. Het bestand wordt ongewijzigd ingesloten en blijft na export afspeelbaar in PowerPoint.',
+    pptImportDetail:
+      'Apex Office bewerkt .pptx, geen PowerPoint 97-2003-presentaties. Dia’s, tekst, vormen, afbeeldingen, tabellen en achtergronden worden overgezet; notities, animaties, overgangen en hyperlinks worden nog niet overgezet. Het originele bestand wordt nooit gewijzigd; de geconverteerde .pptx is een aparte kopie waar latere opslagen naar schrijven.',
+    pptImportFailedTitle: 'Deze .ppt kan niet worden geconverteerd',
+    pptImportFailedBody:
+      'Het bestand is mogelijk beschadigd of geen geldige PowerPoint 97-2003-presentatie.',
     legacyPptTitle: 'Kan het oude .ppt-formaat niet openen',
     odpImportMsg: 'Deze .{ext}-presentatie converteren?',
     odpImportDetail:
@@ -2232,6 +2487,7 @@ export const tMain = createI18n({
     menuExportPdf: 'Exporteren als PDF…',
     menuExportImages: 'Exporteren als PNG…',
     menuExportImagesJpg: 'Exporteren als JPG…',
+    menuExportVideo: 'Exporteren als video (MP4)…',
     menuPrint: 'Afdrukken…',
     menuClose: 'Sluiten',
     menuQuit: 'Stoppen',
@@ -2264,6 +2520,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'Pilih Folder Eksport',
     btnExport: 'Eksport',
     dlgExportPdf: 'Eksport sebagai PDF',
+    dlgExportVideo: 'Eksport sebagai video (MP4)',
     dlgSavePicture: 'Simpan sebagai Gambar',
     dlgAddAttachment: 'Tambah Lampiran',
     filterSupported: 'Fail yang Disokong',
@@ -2285,6 +2542,10 @@ export const tMain = createI18n({
       'Codec audio video ({codec}) tidak disokong oleh pemain terbina dalam; main balik dalam aplikasi tiada bunyi. Fail dibenamkan seadanya dan dimainkan seperti biasa dalam PowerPoint selepas eksport.',
     mediaAviBody:
       'Format AVI tidak disokong oleh pemain terbina dalam dan tidak boleh dimainkan dalam aplikasi. Fail dibenamkan seadanya dan masih boleh dimainkan dalam PowerPoint selepas eksport.',
+    pptImportDetail:
+      'Apex Office menyunting .pptx, bukan pembentangan PowerPoint 97-2003. Slaid, teks, bentuk, imej, jadual dan latar belakang dibawa; nota, animasi, peralihan dan hiperpautan belum dibawa. Fail asal tidak pernah diubah; .pptx yang ditukar ialah salinan berasingan yang ditulis oleh simpanan berikutnya.',
+    pptImportFailedTitle: 'Tidak dapat menukar .ppt ini',
+    pptImportFailedBody: 'Fail mungkin rosak atau bukan pembentangan PowerPoint 97-2003 yang sah.',
     legacyPptTitle: 'Tidak dapat membuka format .ppt lama',
     odpImportMsg: 'Tukar pembentangan .{ext} ini?',
     odpImportDetail:
@@ -2357,6 +2618,7 @@ export const tMain = createI18n({
     menuExportPdf: 'Eksport sebagai PDF…',
     menuExportImages: 'Eksport sebagai PNG…',
     menuExportImagesJpg: 'Eksport sebagai JPG…',
+    menuExportVideo: 'Eksport sebagai video (MP4)…',
     menuPrint: 'Cetak…',
     menuClose: 'Tutup',
     menuQuit: 'Keluar',
@@ -2389,6 +2651,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'בחירת תיקיית ייצוא',
     btnExport: 'ייצוא',
     dlgExportPdf: 'ייצוא כ-PDF',
+    dlgExportVideo: 'ייצוא כווידאו (MP4)',
     dlgSavePicture: 'שמור כתמונה',
     dlgAddAttachment: 'הוספת קבצים מצורפים',
     filterSupported: 'קבצים נתמכים',
@@ -2409,6 +2672,10 @@ export const tMain = createI18n({
       'מקודד השמע של הסרטון ({codec}) אינו נתמך בנגן המובנה, ולכן ההפעלה באפליקציה תהיה ללא קול. הקובץ מוטמע כפי שהוא ומופעל כרגיל ב-PowerPoint לאחר הייצוא.',
     mediaAviBody:
       'פורמט AVI אינו נתמך בנגן המובנה ולא ניתן להפעילו באפליקציה. הקובץ מוטמע כפי שהוא ועדיין ניתן להפעלה ב-PowerPoint לאחר הייצוא.',
+    pptImportDetail:
+      'Apex Office עורך קובצי .pptx, לא מצגות PowerPoint 97-2003. שקופיות, טקסט, צורות, תמונות, טבלאות ורקעים מועברים; הערות, הנפשות, מעברים והיפר-קישורים עדיין לא מועברים. הקובץ המקורי לעולם אינו משתנה; ה-.pptx המומר הוא עותק נפרד שאליו נכתבות השמירות הבאות.',
+    pptImportFailedTitle: 'לא ניתן להמיר את קובץ ה-.ppt הזה',
+    pptImportFailedBody: 'ייתכן שהקובץ פגום או שאינו מצגת PowerPoint 97-2003 תקינה.',
     legacyPptTitle: 'לא ניתן לפתוח את הפורמט הישן .ppt',
     odpImportMsg: 'להמיר את מצגת ה‑.{ext} הזו?',
     odpImportDetail:
@@ -2476,6 +2743,7 @@ export const tMain = createI18n({
     menuExportPdf: 'ייצוא כ-PDF…',
     menuExportImages: 'ייצוא כ-PNG…',
     menuExportImagesJpg: 'ייצוא כ-JPG…',
+    menuExportVideo: 'ייצוא כווידאו (MP4)…',
     menuPrint: 'הדפסה…',
     menuClose: 'סגירה',
     menuQuit: 'יציאה',
@@ -2508,6 +2776,7 @@ export const tMain = createI18n({
     dlgPickExportDir: 'निर्यात फ़ोल्डर चुनें',
     btnExport: 'निर्यात करें',
     dlgExportPdf: 'PDF के रूप में निर्यात करें',
+    dlgExportVideo: 'वीडियो के रूप में निर्यात (MP4)',
     dlgSavePicture: 'चित्र के रूप में सहेजें',
     dlgAddAttachment: 'अनुलग्नक जोड़ें',
     filterSupported: 'समर्थित फ़ाइलें',
@@ -2529,6 +2798,11 @@ export const tMain = createI18n({
       'वीडियो का ऑडियो कोडेक ({codec}) अंतर्निहित प्लेयर द्वारा समर्थित नहीं है, इसलिए ऐप में प्लेबैक बिना आवाज़ के होगा। फ़ाइल यथावत एम्बेड की जाती है और निर्यात के बाद PowerPoint में सामान्य रूप से चलती है।',
     mediaAviBody:
       'AVI प्रारूप अंतर्निहित प्लेयर द्वारा समर्थित नहीं है और ऐप में नहीं चलाया जा सकता। फ़ाइल यथावत एम्बेड की जाती है और निर्यात के बाद PowerPoint में चलती रहती है।',
+    pptImportDetail:
+      'Apex Office .pptx संपादित करता है, PowerPoint 97-2003 प्रस्तुतियाँ नहीं। स्लाइड, टेक्स्ट, आकृतियाँ, चित्र, तालिकाएँ और पृष्ठभूमि साथ आते हैं; नोट्स, एनिमेशन, ट्रांज़िशन और हाइपरलिंक अभी नहीं लाए जाते। मूल फ़ाइल कभी नहीं बदलती; रूपांतरित .pptx एक अलग प्रति है जिसमें आगे के सेव लिखे जाते हैं।',
+    pptImportFailedTitle: 'इस .ppt को बदला नहीं जा सकता',
+    pptImportFailedBody:
+      'फ़ाइल क्षतिग्रस्त हो सकती है या मान्य PowerPoint 97-2003 प्रस्तुति नहीं है।',
     legacyPptTitle: 'पुराना .ppt प्रारूप नहीं खोला जा सकता',
     odpImportMsg: 'इस .{ext} प्रेजेंटेशन को बदलें?',
     odpImportDetail:
@@ -2600,6 +2874,7 @@ export const tMain = createI18n({
     menuExportPdf: 'PDF के रूप में निर्यात करें…',
     menuExportImages: 'PNG के रूप में निर्यात…',
     menuExportImagesJpg: 'JPG के रूप में निर्यात…',
+    menuExportVideo: 'वीडियो के रूप में निर्यात (MP4)…',
     menuPrint: 'प्रिंट करें…',
     menuClose: 'बंद करें',
     menuQuit: 'बाहर निकलें',
@@ -2632,6 +2907,7 @@ export const tMain = createI18n({
     dlgPickExportDir: '選擇匯出目錄',
     btnExport: '匯出',
     dlgExportPdf: '匯出為 PDF',
+    dlgExportVideo: '匯出為影片 (MP4)',
     dlgSavePicture: '另存為圖片',
     dlgAddAttachment: '新增附件',
     filterSupported: '支援的檔案',
@@ -2651,6 +2927,10 @@ export const tMain = createI18n({
       '該影片的音訊編碼（{codec}）不受內建播放器支援，在應用程式內播放時將沒有聲音。檔案會原樣嵌入，匯出後在 PowerPoint 中播放不受影響。',
     mediaAviBody:
       'AVI 格式不受內建播放器支援，無法在應用程式內播放。檔案會原樣嵌入，匯出後在 PowerPoint 中仍可播放。',
+    pptImportDetail:
+      'Apex Office 編輯的是 .pptx，不是 PowerPoint 97-2003 簡報。投影片、文字、圖形、圖片、表格和背景會保留；備忘稿、動畫、轉場效果和超連結暫不保留。原檔案不會被改動，轉換出的 .pptx 是一個獨立副本，之後的儲存都寫入它。',
+    pptImportFailedTitle: '無法轉換這個 .ppt',
+    pptImportFailedBody: '檔案可能已損毀，或不是有效的 PowerPoint 97-2003 簡報。',
     legacyPptTitle: '無法開啟 .ppt 舊格式',
     odpImportMsg: '轉換這個 .{ext} 簡報？',
     odpImportDetail:
@@ -2718,6 +2998,7 @@ export const tMain = createI18n({
     menuExportPdf: '匯出為 PDF…',
     menuExportImages: '匯出為 PNG…',
     menuExportImagesJpg: '匯出為 JPG…',
+    menuExportVideo: '匯出為影片 (MP4)…',
     menuPrint: '列印…',
     menuClose: '關閉',
     menuQuit: '結束',

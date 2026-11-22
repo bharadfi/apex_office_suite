@@ -5,8 +5,21 @@ import { t } from '../i18n/locale'
 import { textColorValue } from './text-color'
 import { textOutlineCssValue } from './text-outline'
 import { setDkColor } from './dark-page'
-import { cssFontFamily, noteLineHeightPx, type NoteStyleOpts } from '../line-metrics'
+import {
+  noteLineHeightPx,
+  noteSeparatorPx,
+  noteSeparatorRulePx,
+  type NoteStyleOpts,
+} from '../line-metrics'
+import { cssFontFamily } from '../text-layout/font-rules'
 import { fromNoteRuns, toStyleRecord } from './para-layout-spec'
+import {
+  STATIC_HYPH_CLASS,
+  appendPieces,
+  hyphenPieces,
+  scheduleStaticLineRules,
+  staticHyphenationOn,
+} from './hyphenation-static'
 
 /** classes and inline style of one note row: the first paragraph's line box
  *  (para-layout-spec) under the reservation model's line height, size and face */
@@ -50,15 +63,21 @@ export function appendNoteRuns(
 ): void {
   if (!it.noRefMark) {
     const sup = document.createElement('sup')
-    sup.textContent = noteMarkText(kind, it.no)
+    sup.textContent = noteMarkText(kind, it.no, it.fmt)
     row.append(sup)
+  }
+  if (staticHyphenationOn()) {
+    row.classList.add(STATIC_HYPH_CLASS)
+    scheduleStaticLineRules()
   }
   if (it.richParas) {
     it.richParas.forEach((para, pi) => {
       if (pi > 0) row.append(document.createElement('br'))
-      for (const run of para) {
+      const pieces = hyphenPieces(para.map((run) => run.text))
+      for (const [k, run] of para.entries()) {
         const span = document.createElement('span')
-        span.textContent = run.text
+        if (pieces && pieces[k].length > 1) appendPieces(span, pieces[k])
+        else span.textContent = run.text
         const revClass = noteRunClass(run)
         if (revClass) span.className = revClass
         if (run.bold) span.style.fontWeight = '600'
@@ -80,7 +99,9 @@ export function appendNoteRuns(
     })
   } else {
     const span = document.createElement('span')
-    span.textContent = it.text
+    const pieces = hyphenPieces([it.text])
+    if (pieces) appendPieces(span, pieces[0])
+    else span.textContent = it.text
     row.append(span)
   }
 }
@@ -92,7 +113,7 @@ export function appendNoteRuns(
  */
 let noteMeasureHost: HTMLDivElement | null = null
 export function measureNoteHeightDom(
-  entry: Pick<PageNoteItem, 'no' | 'text' | 'richParas' | 'noRefMark'>,
+  entry: Pick<PageNoteItem, 'no' | 'fmt' | 'text' | 'richParas' | 'noRefMark'>,
   kind: NoteKind,
   widthPx: number,
   lineHeightPx: number,
@@ -147,6 +168,8 @@ export function makeGapNotesEl(
   wrap.dataset.paperX = leftPx.toFixed(1)
   wrap.style.width = `${widthPx}px`
   wrap.style.height = `${heightPx}px`
+  wrap.style.setProperty('--note-sep-h', `${noteSeparatorPx('footnote')}px`)
+  wrap.style.setProperty('--note-sep-rule', `${noteSeparatorRulePx('footnote')}px`)
   // same line height as the reservation model; min-height keeps rows at the
   // reserved size while letting long entries overflow instead of clipping
   wrap.style.lineHeight = `${lineHeightPx}px`

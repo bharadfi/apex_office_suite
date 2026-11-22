@@ -2114,6 +2114,41 @@ export const externalLinkOpsSchema = z
   .strict()
 export type ExternalLinkOps = z.infer<typeof externalLinkOpsSchema>
 
+/// A copied range as the Windows clipboard helper consumes it: displayed text
+/// plus per-cell alignment, geometry in the grid's pixel units (genoffice#1985
+/// stage 1 — the helper turns this into an EMF so CAD paste dialogs offer a
+/// "Picture (Enhanced Metafile)" entry).
+export const copyEmfRequestSchema = z
+  .object({
+    colWidths: z.array(z.number().finite().min(0)).min(1).max(16_384),
+    rowHeights: z.array(z.number().finite().min(0)).min(1).max(1_048_576),
+    cells: z
+      .array(
+        z
+          .array(
+            z.object({
+              v: z.string().max(32_000),
+              a: z.enum(['l', 'r', 'c']),
+            }),
+          )
+          .max(16_384),
+      )
+      .min(1)
+      .max(1_048_576),
+    merges: z
+      .array(
+        z.object({
+          r: z.number().int().min(0),
+          c: z.number().int().min(0),
+          rs: z.number().int().min(1),
+          cs: z.number().int().min(1),
+        }),
+      )
+      .max(2_000),
+  })
+  .strict()
+export type CopyEmfRequest = z.infer<typeof copyEmfRequestSchema>
+
 export const workbookSaveRequestSchema = z
   .object({
     sessionId: z.string().uuid(),
@@ -2244,6 +2279,65 @@ export const workbookSaveRequestSchema = z
       )
       .max(50)
       .default([]),
+    /// Session slicer panels persisted as x14 slicer parts on this save
+    /// (created, edited, or deleted this session; null = nothing
+    /// slicer-related rides the save, leaving any file parts untouched).
+    slicerState: z
+      .object({
+        slicers: z
+          .array(
+            z
+              .object({
+                sheetId: z.string().min(1),
+                /// Package-absolute pivot part path (file.sheets[].pivotTables).
+                pivotPath: z.string().regex(/^xl\/[A-Za-z0-9._/-]+\.xml$/),
+                /// Cache field name (slicerCacheDefinition@sourceName).
+                sourceName: z.string().min(1).max(255),
+                caption: z.string().max(255),
+                /// File identity from the restore; present = update in place.
+                name: z.string().min(1).max(255).optional(),
+                partPath: z
+                  .string()
+                  .regex(/^xl\/[A-Za-z0-9._/-]+\.xml$/)
+                  .optional(),
+                cachePath: z
+                  .string()
+                  .regex(/^xl\/[A-Za-z0-9._/-]+\.xml$/)
+                  .optional(),
+                cacheName: z.string().min(1).max(255).optional(),
+                /// Every member with its selection (x = sharedItems index).
+                items: z
+                  .array(
+                    z
+                      .object({
+                        x: z.number().int().nonnegative(),
+                        selected: z.boolean(),
+                      })
+                      .strict(),
+                  )
+                  .min(1)
+                  .max(100_000),
+              })
+              .strict(),
+          )
+          .max(100),
+        /// Controls restored from the file and deleted this session: their
+        /// parts and references are removed; file slicers the session never
+        /// restored are never listed here (and never touched).
+        removals: z
+          .array(
+            z
+              .object({
+                partPath: z.string().regex(/^xl\/[A-Za-z0-9._/-]+\.xml$/),
+                cachePath: z.string().regex(/^xl\/[A-Za-z0-9._/-]+\.xml$/),
+              })
+              .strict(),
+          )
+          .max(200),
+      })
+      .strict()
+      .nullable()
+      .default(null),
     /// Declarative defined-names snapshot (null = untouched). `preserveNames`
     /// lists file names the editor could not model — they stay verbatim, as do
     /// _xlnm.* built-ins and hidden names.
@@ -2360,6 +2454,7 @@ export const workbookSaveRequestSchema = z
       (request.tableEdits?.length ?? 0) > 0 ||
       request.pivotAdditions.length > 0 ||
       request.sparklineAdditions.length > 0 ||
+      request.slicerState !== null ||
       (request.redactionStates?.length ?? 0) > 0 ||
       request.externalLinkOps !== null,
     { message: 'A save needs at least one edit.' },
@@ -2455,6 +2550,34 @@ export const workbookPivotRequestSchema = z
   })
   .strict()
 
+export const workbookSlicerStateRequestSchema = z.object({ sessionId: z.string().uuid() }).strict()
+
+/// One slicer control the file carries, as parsed by the gateway (see
+/// xlsx-slicer parseSlicerState). The renderer binds the pivot through
+/// pivotCacheDefinitionPath against the sheet metadata's pivotTables entries,
+/// then rebuilds the session panel (with file identity for update-in-place).
+export const workbookSlicerPartSchema = z
+  .object({
+    /// `sheet-<sheetId>` — matches WorkbookFile sheets[].id.
+    sheetId: z.string().min(1),
+    worksheetPath: z.string().regex(/^xl\/[A-Za-z0-9._/-]+\.xml$/),
+    partPath: z.string().regex(/^xl\/[A-Za-z0-9._/-]+\.xml$/),
+    cachePath: z.string().regex(/^xl\/[A-Za-z0-9._/-]+\.xml$/),
+    name: z.string().min(1).max(255),
+    cacheName: z.string().min(1).max(255),
+    sourceName: z.string().max(255),
+    caption: z.string().max(255),
+    pivotCacheDefinitionPath: z
+      .string()
+      .regex(/^xl\/[A-Za-z0-9._/-]+\.xml$/)
+      .nullable(),
+    /// sharedItems indices of the selected members; null = the cache carried
+    /// no item list (treat as unfiltered).
+    selectedItems: z.array(z.number().int().nonnegative()).max(100_000).nullable(),
+  })
+  .strict()
+
+export const workbookSlicerStateResultSchema = z.array(workbookSlicerPartSchema).max(1_000)
 export const workbookQueriesRequestSchema = z
   .object({
     sessionId: z.string().uuid(),
@@ -2835,6 +2958,9 @@ export type WorkbookMediaRequest = z.infer<typeof workbookMediaRequestSchema>
 export type WorkbookMediaResult = z.infer<typeof workbookMediaResultSchema>
 export type WorkbookPivotRequest = z.infer<typeof workbookPivotRequestSchema>
 export type WorkbookPivotDefinition = z.infer<typeof workbookPivotDefinitionSchema>
+export type WorkbookSlicerStateRequest = z.infer<typeof workbookSlicerStateRequestSchema>
+export type WorkbookSlicerPart = z.infer<typeof workbookSlicerPartSchema>
+export type WorkbookSlicerState = z.infer<typeof workbookSlicerStateResultSchema>
 export type WorkbookQueriesRequest = z.infer<typeof workbookQueriesRequestSchema>
 export type WorkbookQueriesResult = z.infer<typeof workbookQueriesResultSchema>
 export type WorkbookRedactionsRequest = z.infer<typeof workbookRedactionsRequestSchema>
@@ -3307,6 +3433,8 @@ export interface DesktopApi {
   onDocumentThemeChanged(handler: (theme: DocTheme) => void): () => void
   /** shell-wide AutoSave default (see useAutoSavePref) */
   getAutoSaveDefault(): Promise<AutoSaveDefault>
+  /** the ceiling a delimited import may reach, in MB (the user's setting) */
+  getCsvImportLimit(): Promise<number>
   onAutoSaveDefaultChanged(handler: (value: AutoSaveDefault) => void): () => void
   /** AI panel text size + chat-input spellcheck (Settings → General in the shell) */
   getAiPanelPrefs(): Promise<AiPanelPrefs>
@@ -3319,6 +3447,16 @@ export interface DesktopApi {
    */
   onChromePressed(handler: () => void): () => void
   selectWorkbook(): Promise<WorkbookFile | { passwordRequired: true; path: string } | null>
+  /** How far a delimited import is: 'read' parses the text, 'write' builds the
+   *  workbook. The fraction is 0..1 within the phase. `null` means the import
+   *  is over — the bar belongs to one import and must not outlive it. */
+  onImportProgress?: (
+    listener: (
+      progress: { readonly phase: 'read' | 'write'; readonly fraction: number } | null,
+    ) => void,
+  ) => (() => void) | undefined
+  /** Stop the delimited import that is running for this tab */
+  cancelImport?: () => Promise<void>
   openEncryptedWorkbook(path: string, password: string): Promise<WorkbookFile | null>
   updateWorkbookPassword(
     sessionId: string,
@@ -3366,6 +3504,10 @@ export interface DesktopApi {
   revealLinkSource(request: ExternalLinkRevealRequest): void
   readWorkbookMedia(request: WorkbookMediaRequest): Promise<WorkbookMediaResult>
   readPivotDefinition(request: WorkbookPivotRequest): Promise<WorkbookPivotDefinition>
+  /// Slicer controls the file carries; read once per open so the session can
+  /// restore the panels (and re-save them update-in-place). Timelines are not
+  /// read or restored: they stay session-only for now.
+  readSlicerState(request: WorkbookSlicerStateRequest): Promise<WorkbookSlicerState>
   /**
    * The cells the reader withheld from the model, read once per open. An
    * unreadable part is reported as such rather than as "nothing withheld" —
@@ -3464,6 +3606,8 @@ export interface DesktopApi {
   /// Opens the browser to sign in to Genspark (fire-and-forget; aiGskStatus
   /// becomes signed-in on completion)
   aiGskLogin(): Promise<void>
+  /// A browser-approved Genspark login landed (whichever surface started it)
+  onGskLoginLanded(handler: () => void): () => void
   /// Web search (main-process Serper/DuckDuckGo, shared with docs/slides)
   webSearch(query: string, maxResults?: number): Promise<WebSearchResult>
   /// Image search (same shared main-process channel as docs/slides)
@@ -3480,6 +3624,14 @@ export interface DesktopApi {
   /// Persists a clipboard-pasted image (no local path) to a temp file and adds it
   /// as an attachment
   addPastedImage(data: ArrayBuffer, ext: string): Promise<AttachmentAddResult>
+  /// Appends the copied range's EMF rendering to the Windows clipboard, so
+  /// CAD paste dialogs offer it as a picture. A no-op off Windows and a
+  /// silent failure without the helper: the EMF is an extra clipboard format,
+  /// never a required one.
+  appendCopyEmf(request: CopyEmfRequest): Promise<{ ok: boolean }>
+  /** Whether the copy EMF helper can run here; false everywhere but Windows
+   *  with the sidecar present, so the renderer skips building the payload. */
+  isCopyEmfAvailable(): Promise<boolean>
   /// Reads one chunk of an attachment's extracted text
   readAttachment(path: string, offset: number, maxChars: number): Promise<AttachmentReadResult>
   /// Reads an image attachment as base64 for multimodal input (≤5MB)

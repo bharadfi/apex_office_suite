@@ -65,6 +65,10 @@ export const IPC_CHANNELS = {
   /// Re-open an already-known path through the normal open path (the same
   /// pipeline selectWorkbook runs), for recovering from a sidecar crash.
   reopenWorkbook: 'workbook:reopen',
+  /// How far a delimited import (a .csv/.tsv opened as a workbook) is
+  importProgress: 'workbook:import-progress',
+  /// Stop the delimited import that is running for this tab
+  cancelImport: 'workbook:cancel-import',
   readWorkbookRowOutline: 'workbook:read-row-outline',
   recalcWorkbook: 'workbook:recalc',
   listExternalLinks: 'workbook:list-external-links',
@@ -84,6 +88,8 @@ export const IPC_CHANNELS = {
   revealLinkSource: 'shell:reveal-link-source',
   readWorkbookMedia: 'workbook:read-media',
   readPivotDefinition: 'workbook:read-pivot-definition',
+  /** Slicer/timeline controls the file carries (xl/slicers, xl/timelines) */
+  readSlicerState: 'workbook:read-slicer-state',
   /** The cells the reader withheld from the model (xl/gxRedactions.json) */
   readWorkbookRedactions: 'workbook:read-redactions',
   /** Data › Queries & Connections: the workbook's connections, read-only (xl/connections.xml) */
@@ -129,6 +135,7 @@ export const IPC_CHANNELS = {
   aiStreamChunk: 'ai:stream-chunk',
   aiGskStatus: 'ai:gsk-status',
   aiGskLogin: 'ai:gsk-login',
+  aiGskLoginLanded: 'ai:gsk-login-landed',
   aiImageSearch: 'ai:image-search',
   aiFetchImage: 'ai:fetch-image',
   // sheets: prefix — slides' ai:generate-image only registers once a slides view exists
@@ -147,4 +154,7 @@ export const IPC_CHANNELS = {
   filesAddPastedImage: 'sheets:files-add-pasted-image',
   filesRead: 'sheets:files-read',
   filesReadImage: 'sheets:files-read-image',
+  /** Windows clipboard helper: append the copied range's EMF rendering */
+  appendCopyEmf: 'sheets:append-copy-emf',
+  copyEmfAvailable: 'sheets:copy-emf-available',
 } as const

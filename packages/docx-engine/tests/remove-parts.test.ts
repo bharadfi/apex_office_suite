@@ -22,6 +22,7 @@ const CONTENT_TYPES_XML =
   '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
   '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
   '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' +
+  '<Override PartName="/docProps/custom.xml" ContentType="application/vnd.openxmlformats-officedocument.custom-properties+xml"/>' +
   '<Override PartName="/customXml/item1.xml" ContentType="application/xml"/>' +
   '<Override PartName="/customXml/itemProps1.xml" ContentType="application/vnd.openxmlformats-officedocument.customXmlProperties+xml"/>' +
   '<Override PartName="/word/webextensions/webextension1.xml" ContentType="application/vnd.ms-office.webextension+xml"/>' +
@@ -33,6 +34,7 @@ const ROOT_RELS_XML =
   '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
   '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
   '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>' +
+  '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXmlProps" Target="docProps/custom.xml"/>' +
   '</Relationships>'
 
 const DOCUMENT_RELS_XML =
@@ -91,6 +93,13 @@ const DATA_BINDING_SDT_XML =
   `w:xpath="/ns0:matter/ns0:client" w:storeItemID="${STORE_ITEM_ID}"/></w:sdtPr>` +
   '<w:sdtContent><w:p><w:r><w:t>Acme</w:t></w:r></w:p></w:sdtContent></w:sdt>'
 
+const CUSTOM_PROPS_XML =
+  XML_DECL +
+  '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" ' +
+  'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">' +
+  '<property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="2" name="MatterID">' +
+  '<vt:lpwstr>ACME-042</vt:lpwstr></property></Properties>'
+
 function documentXml(withDataBinding: boolean): string {
   return (
     XML_DECL +
@@ -117,6 +126,7 @@ async function fixtureDocx(opts: { dataBinding?: boolean } = {}): Promise<Uint8A
   zip.file('word/_rels/document.xml.rels', DOCUMENT_RELS_XML)
   zip.file('word/styles.xml', STYLES_XML)
   zip.file('docProps/core.xml', CORE_PROPS_XML)
+  zip.file('docProps/custom.xml', CUSTOM_PROPS_XML)
   zip.file('customXml/item1.xml', CUSTOM_XML_ITEM_XML)
   zip.file('customXml/itemProps1.xml', CUSTOM_XML_ITEM_PROPS_XML)
   zip.file('customXml/_rels/item1.xml.rels', CUSTOM_XML_RELS_XML)
@@ -233,14 +243,11 @@ describe('remove_parts package scrub', () => {
     ]) {
       expect(after.has(name), name).toBe(false)
     }
-    // the removed families' folder entries are gone; folders with remaining parts stay
+    // the save writes no folder entries at all (Word does not write them;
+    // genoffice#2554), removed families or not
     const zip = await JSZip.loadAsync(saved)
     const folders = Object.keys(zip.files).filter((name) => name.endsWith('/'))
-    expect(folders).not.toContain('customXml/')
-    expect(folders).not.toContain('customXml/_rels/')
-    expect(folders).not.toContain('word/webextensions/')
-    expect(folders).not.toContain('word/webextensions/_rels/')
-    expect(folders).toContain('word/')
+    expect(folders).toEqual([])
     // untouched parts keep their exact bytes
     for (const name of ['word/styles.xml', 'docProps/core.xml', '_rels/.rels']) {
       expect(Buffer.from(after.get(name)!)).toEqual(Buffer.from(before.get(name)!))
@@ -257,36 +264,68 @@ describe('remove_parts package scrub', () => {
     expect(contentTypes).not.toContain('webextension')
   })
 
+  it('lets a scrub remove docProps/custom.xml with its root rel and content-type entry', async () => {
+    const bytes = await fixtureDocx()
+    // optional in OPC (Word opens a package without it) and what a pre-filing
+    // scrub exists to remove: matter IDs and DMS tags live there
+    const plan = await planRemoveParts(bytes, { paths: ['docProps/custom.xml'] })
+    expect(plan.refusedPaths).toEqual([])
+    const saved = await saveFixture(bytes, { paths: ['docProps/custom.xml'] })
+    const parts = await bytesOf(saved)
+    expect(parts.has('docProps/custom.xml')).toBe(false)
+    // core stays: it is the package's required identity
+    expect(parts.has('docProps/core.xml')).toBe(true)
+    const rootRels = await textOf(saved, '_rels/.rels')
+    expect(rootRels).not.toContain('docProps/custom.xml')
+    expect(rootRels).toContain('docProps/core.xml')
+    const contentTypes = await textOf(saved, '[Content_Types].xml')
+    expect(contentTypes).not.toContain('/docProps/custom.xml')
+    expect(contentTypes).toContain('/docProps/core.xml')
+  })
+
   it('refuses the main document part, its rels and the story parts', async () => {
     const bytes = await fixtureDocx()
     const plan = await planRemoveParts(bytes, {
       paths: ['word/document.xml', '/word/_rels/document.xml.rels', 'word/footnotes.xml'],
     })
     expect(plan.removedPaths).toEqual([])
-    expect(plan.unknownPaths).toEqual([
-      'word/document.xml',
-      '/word/_rels/document.xml.rels',
-      'word/footnotes.xml',
-    ])
+    // the story parts in the fixture are the main document only: footnotes.xml
+    // is not in the package, so it misses rather than refuses
+    expect(plan.refusedPaths).toEqual(['word/document.xml', '/word/_rels/document.xml.rels'])
+    expect(plan.unknownPaths).toEqual(['word/footnotes.xml'])
   })
 
-  it('reports unknown explicit paths and still applies the kinds', async () => {
+  it('reports unknown explicit paths and refuses structural ones, still applying the kinds', async () => {
     const bytes = await fixtureDocx()
     const plan = await planRemoveParts(bytes, {
       kinds: ['customXml'],
       paths: ['customXml/missing.xml', '[Content_Types].xml', 'docProps/core.xml'],
     })
-    expect(plan.unknownPaths).toEqual(['customXml/missing.xml', '[Content_Types].xml'])
+    expect(plan.unknownPaths).toEqual(['customXml/missing.xml'])
+    expect(plan.refusedPaths).toEqual(['[Content_Types].xml', 'docProps/core.xml'])
     expect(plan.removedPaths).toContain('customXml/item1.xml')
-    const saved = await saveFixture(bytes, {
-      kinds: ['customXml'],
-      paths: ['docProps/core.xml'],
-    })
-    const entries = await bytesOf(saved)
-    expect(entries.has('docProps/core.xml')).toBe(false)
-    const rootRels = await textOf(saved, '_rels/.rels')
-    expect(rootRels).not.toContain('core-properties')
-    expect(rootRels).toContain('word/document.xml')
+    // a save that names a structural part refuses outright: the package would
+    // be damaged (genoffice#2554 — core.xml used to be removed on request)
+    await expect(
+      saveFixture(bytes, {
+        kinds: ['customXml'],
+        paths: ['docProps/core.xml'],
+      }),
+    ).rejects.toThrow(/refuses parts the package depends on/)
+  })
+
+  it('removing a customXml item by path takes its itemProps along and runs the binding check', async () => {
+    const bytes = await fixtureDocx({ dataBinding: true })
+    // the bound control would be orphaned by item1.xml alone (genoffice#2554)
+    await expect(saveFixture(bytes, { paths: ['customXml/item1.xml'] })).rejects.toThrow(
+      /would orphan content controls/,
+    )
+    // with the binding question settled the plan carries both parts
+    const plan = await planRemoveParts(bytes, { paths: ['customXml/item1.xml'] })
+    expect(plan.removedPaths).toEqual(
+      expect.arrayContaining(['customXml/item1.xml', 'customXml/itemProps1.xml']),
+    )
+    expect(plan.dataBindings.length).toBeGreaterThan(0)
   })
 
   it('is idempotent: a second pass over scrubbed output returns the input bytes', async () => {
@@ -298,18 +337,20 @@ describe('remove_parts package scrub', () => {
     expect(await saveFixture(saved, options)).toEqual(saved)
   })
 
-  it('keeps folder entries on the source date so unchanged saves stay byte-identical', async () => {
+  it('writes no folder entries and keeps every part entry on the source date', async () => {
     const bytes = await fixtureDocx()
-    // a real removal sends the save through the writer, which must carry the
-    // source date over to the surviving folder entries instead of stamping
-    // them with the current time (that made two saves differ whenever they
-    // straddled a 2-second DOS-time tick)
+    // the fixture carries folder entries (the test builds them) but Word does
+    // not write folder entries, so the save drops them and keeps each part
+    // entry's source date — that date carry-over is what made two saves
+    // byte-identical even when they straddled a 2-second DOS-time tick
+    // (genoffice#2343/#2443); genoffice#2554 adds the folder-entry drop
     const saved = await saveFixture(bytes, { kinds: ['customXml'] })
     const zip = await JSZip.loadAsync(saved)
-    const folder = zip.files['word/webextensions/']
-    expect(folder).toBeTruthy()
-    expect(folder!.dir).toBe(true)
-    expect(folder!.date.getTime()).toBe(Date.UTC(2026, 0, 1))
+    const folders = Object.keys(zip.files).filter((name) => zip.files[name]!.dir)
+    expect(folders).toEqual([])
+    const part = zip.files['word/document.xml']!
+    expect(part.dir).toBe(false)
+    expect(part.date.getTime()).toBe(Date.UTC(2026, 0, 1))
     const resaved = await saveFixture(saved, { kinds: ['customXml'] })
     expect(Buffer.from(resaved).equals(Buffer.from(saved))).toBe(true)
   })

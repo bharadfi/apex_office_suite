@@ -39,7 +39,7 @@ const realStat = (p: string): Entry | undefined => {
   const raw = real?.fsStat(p)
   if (!raw) return undefined
   const s = JSON.parse(raw) as RealStat
-  return { kind: s.dir ? 'dir' : 'file', data: s.dir ? undefined : new Uint8Array(s.size), mtimeMs: s.mtime }
+  return s.dir ? { kind: 'dir', mtimeMs: s.mtime } : { kind: 'file', data: new Uint8Array(s.size), mtimeMs: s.mtime }
 }
 const files = new Map<string, Entry>([['/', { kind: 'dir', mtimeMs: Date.now() }]])
 let writeHook: ((path: string, data: Bytes) => void) | undefined

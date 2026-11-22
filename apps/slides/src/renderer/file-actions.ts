@@ -4,6 +4,7 @@
  * (Printing lives in components/PrintDialog.tsx — preview + options dialog.)
  */
 import type { RenderSlide } from '@genoffice/pptx-render'
+import { shortFileError } from '@genoffice/ui'
 import type { ExportPdfLink } from '../shared/ipc'
 import { baseName } from '../shared/base-name'
 import { modelSaveAsName } from './file-naming'
@@ -11,6 +12,11 @@ import type { ActionCtx } from './action-context'
 import { collectExportPdfLinks } from './export-links'
 import { renderSlidesToPdfPages } from './export-pages'
 import { renderSlidesToImageBase64 } from './export-render'
+import {
+  exportVideo,
+  type VideoExportOptions,
+  type VideoExportResult,
+} from './video-export/export-video'
 import { t } from './i18n/locale'
 import { showToast } from './components/toast-bus'
 
@@ -106,7 +112,10 @@ export async function save(getCtx: () => ActionCtx, quiet = false): Promise<bool
       ctx.setStatus(saved)
       if (!quiet) showToast(saved)
     } else {
-      const failed = t('appStatusSaveFailed', { error: r.error ?? t('appErrorCanceled') })
+      if (r.error) console.error('[slides] save failed', r.error)
+      const failed = t('appStatusSaveFailed', {
+        error: shortFileError(r.error ?? t('appErrorCanceled')),
+      })
       ctx.setStatus(failed)
       // quiet suppresses the success toast only — a failed save (incl. the 30s
       // auto-save) must surface, or edits silently stop reaching disk
@@ -168,7 +177,8 @@ export async function saveAsWithName(getCtx: () => ActionCtx, name: string | nul
     } else if (r.error) {
       // a canceled dialog returns ok:false without error — only real write
       // failures surface, matching the docs/sheets save-as feedback
-      const failed = t('appStatusSaveFailed', { error: r.error })
+      console.error('[slides] save failed', r.error)
+      const failed = t('appStatusSaveFailed', { error: shortFileError(r.error) })
       ctx.setStatus(failed)
       showToast(failed, 'error')
     }
@@ -206,6 +216,38 @@ export async function exportImages(ctx: ActionCtx, format: 'png' | 'jpg' = 'png'
   } catch (err) {
     ctx.setStatus(t('appExportImagesFailed', { error: String(err) }))
   }
+}
+
+/** Export as video: save dialog, then the offline show encoded to MP4; the dialog shows progress and cancels */
+export async function exportVideoFile(
+  ctx: ActionCtx,
+  opts: VideoExportOptions,
+  onProgress: (fraction: number) => void,
+  signal: AbortSignal,
+): Promise<VideoExportResult> {
+  if (!ctx.slides.some((s) => !s.hidden)) {
+    ctx.setStatus(t('appExportNoSlides'))
+    return { ok: false, cancelled: true }
+  }
+  const path = await window.slidesApi.pickExportVideoPath(`${exportBaseName(ctx)}.mp4`)
+  if (!path) return { ok: false, cancelled: true }
+  const r = await exportVideo(
+    { slides: ctx.slides, images: ctx.images, path },
+    opts,
+    onProgress,
+    signal,
+  )
+  if (r.ok) {
+    ctx.setStatus(t('appExportVideoDone', { path: r.path }))
+    showToast(t('appExportVideoDone', { path: r.path }))
+  } else if (!r.cancelled) {
+    const msg = r.unsupported
+      ? t('appExportVideoUnsupported')
+      : t('appExportVideoFailed', { error: r.error })
+    ctx.setStatus(msg)
+    showToast(msg, 'error')
+  }
+  return r
 }
 
 /**

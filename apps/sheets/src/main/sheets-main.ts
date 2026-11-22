@@ -23,7 +23,9 @@ import {
   stat,
   writeFile,
 } from 'node:fs/promises'
+import { runCopyEmfHelper } from './copy-emf-helper'
 import { refreshCsvDigest } from './csv-digest'
+import { ImportRegistry } from './import-registry'
 import { createServer } from 'node:http'
 import { basename, dirname, isAbsolute, join } from 'node:path'
 
@@ -77,6 +79,7 @@ import {
   registerRendererScheme,
   rendererUrl,
   writeJsonAtomic,
+  restrictFileToOwner,
   recoveryCopyDiskNewer,
   configuredAuthorName,
   readLegacyImportSkip,
@@ -109,11 +112,13 @@ import {
   type LegacyAiSettings,
 } from '@genoffice/ai-provider'
 import { shutdownCodexAppServers } from '@genoffice/ai-provider/codex-app-server'
+import { decodeCsvBuffer } from '@genoffice/xlsx-gateway/gateway/csv-import'
+import type { CsvImportProgress } from '@genoffice/xlsx-gateway/gateway/csv-import'
+import { delimitedImportLimit } from './csv-import-limit'
 import {
   csvToXlsxBufferForOpen,
-  decodeCsvBuffer,
   sheetCsvToXlsxBuffer,
-} from '@genoffice/xlsx-gateway/gateway/csv-import'
+} from '@genoffice/xlsx-gateway/gateway/csv-import-xlsx'
 import {
   ensureGenofficeLogin,
   noteGskCallFailure,
@@ -141,9 +146,10 @@ import {
 } from '@genoffice/xlsx-gateway/gateway/xlsx-connection-refresh'
 import type { PartReader } from '@genoffice/xlsx-gateway/gateway/xlsx-connections'
 import { parsePivotDefinition } from '@genoffice/xlsx-gateway/gateway/xlsx-pivot'
+import { parseSlicerState } from '@genoffice/xlsx-gateway/gateway/xlsx-slicer'
 import { listWorkbookQueries } from '@genoffice/xlsx-gateway/gateway/xlsx-connections'
 import type { SheetEditPlan } from '@genoffice/xlsx-gateway/gateway/xlsx-sheets'
-import { readWorkbookRedactionPart } from './workbook-redactions'
+import { manifestNamesSchema, readWorkbookRedactionPart } from './workbook-redactions'
 import type {
   AttachmentAddResult,
   AttachmentImageResult,
@@ -197,6 +203,9 @@ import {
   saveEditsChunkArraySchema,
   workbookSaveEditsChunkSchema,
   workbookSaveRequestSchema,
+  copyEmfRequestSchema,
+  workbookSlicerStateRequestSchema,
+  workbookSlicerStateResultSchema,
   type WorkbookCreateDocumentResult,
   type WorkbookSaveRequest,
 } from '../shared/desktop-api'
@@ -501,6 +510,79 @@ const tMain = createI18n({
     csvKeepFormatMsg: 'CSV biçiminde kaydetmeye devam edilsin mi?',
     csvKeepFormatDetail:
       'CSV yalnızca tek bir sayfanın düz değerlerini korur — formüller, biçimlendirme ve ek sayfalar .csv dosyasına kaydedilmez.',
+  },
+  hu: {
+    filterSpreadsheets: 'Táblázatok',
+    filterXlsx: 'Excel-munkafüzetek',
+    filterXlsm: 'Makróbarát Excel-munkafüzetek',
+    odsImportMsg: 'Átalakítsuk ezt a .{ext} munkafüzetet?',
+    odsImportDetail:
+      'A Apex Office .xlsx fájlokat szerkeszt, az ODF-et nem. Az értékek, képletek és dátumok átjönnek (a képletek Excel-szintaxisra íródnak át, és ami nem alakítható át biztonságosan, az megtartja jelenlegi eredményét). A képek, az egyesített cellák, az oszlopszélességek és a sormagasságok szintén átjönnek; más formázások, például a szegélyek, valamint a diagramok nem kerülnek át. Az eredeti fájl soha nem módosul; az átalakított másolat első mentéskor .xlsx formátumban kerül mentésre.',
+    odsImportConvertBtn: 'Átalakítás és megnyitás',
+    importSkipConfirm: 'Átalakítás a jövőben kérdezés nélkül',
+    dlgAddAttachment: 'Mellékletek hozzáadása',
+    filterSupported: 'Támogatott fájlok',
+    filterAll: 'Minden fájl',
+    errUnsupportedExt: 'Nem támogatott fájltípus: .{ext}',
+    errNotFile: 'nem fájl',
+    errTooLarge: 'túllépi a megengedett {mb} MB-os korlátot',
+    errImageTooLarge: 'a kép túllépi az 5 MB-os korlátot',
+    errUnreadable: 'nem olvasható',
+    errFileTooLarge: 'A fájl túllépi a méretkorlátot',
+    errParseFailed: 'Nem sikerült feldolgozni a fájlt',
+    errImageNoText:
+      'A képmellékletek nem tartalmaznak szöveget; a kép a felhasználó üzenetével együtt lesz elküldve',
+    errNotImage: 'nem támogatott képtípus',
+    errGskNotLoggedIn:
+      'Nem vagy bejelentkezve a Gensparkba: kattints alább a „Bejelentkezés a Gensparkba” gombra, jelentkezz be, majd próbáld újra',
+    errNoApiKey: 'Nincs API-kulcs beállítva a következő szolgáltatóhoz: {provider}',
+    errAiRegion:
+      'Ennek a modellnek a szolgáltatója nem érhető el az aktuális régiódban — válassz egy másik modellt, vagy módosítsd a hálózatot',
+    errAiBusy: 'Az AI-szolgáltatás jelenleg túlterhelt — próbáld újra egy pillanat múlva',
+    errNoModel: 'Nincs modellnév beállítva',
+    errImgAbsPath: 'A kép elérési útjának abszolútnak kell lennie.',
+    errImgNotFound: 'A képfájl nem található: {path}',
+    errImgTooLarge20: 'A kép túllépi a 20 MB-os korlátot, ezért nem szúrható be.',
+    errImgBadType: 'A fájl nem PNG/JPEG/GIF kép.',
+    errDiskChanged:
+      'A munkafüzet a megnyitása után megváltozott a lemezen — ehelyett használd a Mentés másként parancsot.',
+    autosaveFoundTitle: 'Helyreállított verzió található',
+    autosaveDiskNewer:
+      'Megjegyzés: a lemezen lévő fájl a helyreállítási másolat mentése után módosult. A visszaállítás felülírja ezeket az újabb módosításokat.',
+    autosaveFoundBody:
+      'Az előző munkamenetből elmentetlen módosítások maradtak. Visszaállítod az automatikusan mentett verziót? A visszaállítás utáni mentés felülírja az eredeti fájlt.',
+    autosaveRestore: 'Visszaállítás',
+    autosaveDiscard: 'Elvetés',
+    menuFile: 'Fájl',
+    menuOpenWorkbook: 'Munkafüzet megnyitása…',
+    menuSave: 'Mentés',
+    menuSaveAs: 'Mentés másként…',
+    menuExportPdf: 'PDF exportálása…',
+    menuPrint: 'Nyomtatás…',
+    menuClose: 'Bezárás',
+    menuQuit: 'Kilépés',
+    menuEdit: 'Szerkesztés',
+    menuUndo: 'Visszavonás',
+    menuRedo: 'Újra',
+    closeUnsavedMsg: '{count} elmentetlen módosítás',
+    closeUnsavedDetail: 'Ha mentés nélkül zárod be, a módosítások elvesznek.',
+    btnDontSave: 'Mentés nélkül',
+    btnCancel: 'Mégse',
+    csvSaveAsNotice:
+      'A CSV-fájlok nem őrzik meg a formázást — .xlsx formátumban mentve minden módosításod megmarad.',
+    menuExportCsv: 'CSV exportálása…',
+    filterCsv: 'CSV (vesszővel tagolt)',
+    csvFormulaLossMsg:
+      'Ez a munkalap olyan képleteket tartalmaz, amelyeket a CSV nem tud megtartani.',
+    csvFormulaLossDetail:
+      'A CSV csak a sima értékeket őrzi meg — a képletek az aktuális eredményükre egyszerűsödnek, és a formázás elvész.',
+    csvKeepXlsxBtn: 'Mentés .xlsx formátumban',
+    csvContinueBtn: 'Folytatás CSV formátumban',
+    csvActiveSheetOnlyNotice:
+      'A CSV-fájlok egyetlen munkalapot tárolnak — csak az aktív munkalap („{name}”) lesz exportálva.',
+    csvKeepFormatMsg: 'Folytatod a mentést CSV formátumban?',
+    csvKeepFormatDetail:
+      'A CSV csak egyetlen munkalap sima értékeit tartja meg — a képletek, a formázás és az esetleges további munkalapok nem kerülnek elmentésre a .csv fájlba.',
   },
   ja: {
     filterSpreadsheets: 'スプレッドシート',
@@ -1975,8 +2057,15 @@ interface SheetsTabSession {
  * tab (or a closed-then-reopened tab) registered and overwrote the previous closure. */
 /// Same ceiling as local add_image (readLocalImage's 20MB check)
 const MAX_REMOTE_IMAGE_BYTES = 20 * 1024 * 1024
-/** Max .csv/.tsv bytes converted on open: stops a 500MB text file OOMing main before sidecar limits. */
-const MAX_DELIMITED_IMPORT_BYTES = 32 * 1024 * 1024
+// the .csv/.tsv ceiling lives with the numbers it describes (the gateway's
+// csv-limits, exposed through csv-import-limit)
+
+/**
+ * The delimited import (a .csv/.tsv opened as a workbook) that is running for
+ * a tab, so the renderer can cancel it: a 250 MB file takes a while, and the
+ * user should not have to wait it out.
+ */
+const pendingImports = new ImportRegistry()
 
 const sheetsTabs = new Map<number, SheetsTabSession>()
 let activeSheetsWebContents: WebContents | null = null
@@ -2948,6 +3037,25 @@ export async function requestSheetsClose(
 
 let coreIpcRegistered = false
 
+/**
+ * CSV export targets a view's user approved through a save dialog, keyed by
+ * webContents id. exportCsv honors a renderer-supplied targetPath only when
+ * it is in this set — the Save-As CSV hand-off is the one flow where the
+ * renderer carries a path back to a write, and the grant is what keeps that
+ * from being a "renderer names any file, the main process writes it" channel.
+ */
+const csvExportGrantsByWc = new Map<number, Set<string>>()
+
+function grantCsvExportTarget(wcId: number, path: string): void {
+  let grants = csvExportGrantsByWc.get(wcId)
+  if (!grants) {
+    grants = new Set()
+    csvExportGrantsByWc.set(wcId, grants)
+    webContents.fromId(wcId)?.once('destroyed', () => csvExportGrantsByWc.delete(wcId))
+  }
+  grants.add(path)
+}
+
 export function registerSheetsIpc(): void {
   if (coreIpcRegistered) return
   coreIpcRegistered = true
@@ -3073,12 +3181,56 @@ export function registerSheetsIpc(): void {
         await decryptOoxml(bytes, password)
       }
     }
-    const prepared = await prepareWorkbookForOpen(
-      entry.client,
-      path,
-      event.sender,
-      dialogParent(event),
-    )
+    // A delimited import can take a while on a big file, so the renderer
+    // watches its progress and can cancel it.
+    const owner = event.sender.id
+    // a superseded import may have left its bar standing; this open owns the
+    // tab now, whether or not it will report anything itself
+    const superseded = pendingImports.controllerFor(owner) !== undefined
+    const importController = pendingImports.start(owner)
+    if (superseded && !event.sender.isDestroyed())
+      event.sender.send(IPC_CHANNELS.importProgress, null)
+    // only a delimited import reports progress; a plain .xlsx never does,
+    // and there is no bar to take down for it
+    let reported = false
+    const reportProgress = (progress: CsvImportProgress | null): void => {
+      if (event.sender.isDestroyed()) return
+      // an import that was replaced no longer owns the bar
+      if (pendingImports.controllerFor(owner) !== importController) return
+      if (progress === null) {
+        if (!reported) return
+        reported = false
+      } else {
+        reported = true
+      }
+      event.sender.send(IPC_CHANNELS.importProgress, progress)
+    }
+    let prepared: Awaited<ReturnType<typeof prepareWorkbookForOpen>>
+    try {
+      prepared = await prepareWorkbookForOpen(
+        entry.client,
+        path,
+        event.sender,
+        dialogParent(event),
+        {
+          import: {
+            onProgress: reportProgress,
+            signal: importController.signal,
+          },
+        },
+      )
+    } catch (error) {
+      // The user stopped the import: nothing opens, and it is not a failure
+      // to report. The renderer already knows it asked for this.
+      if (pendingImports.wasCancelled(importController)) return null
+      throw error
+    } finally {
+      // the import is over (done, failed or cancelled): the bar must not
+      // stand into the next open; reportProgress drops this for a
+      // superseded import, so finish comes after
+      reportProgress(null)
+      pendingImports.finish(owner, importController)
+    }
     // a declined import (an .ods the user chose not to convert) opens nothing
     if (!prepared) return null
     // The recovery prompt (or the file dialog / import conversion) can outlive
@@ -3132,6 +3284,12 @@ export function registerSheetsIpc(): void {
     if (!prepared.unsavedNew) workbookOpenedHook?.(event.sender, path)
     return result
   }
+
+  // The renderer cancels a delimited import that is taking too long; the
+  // conversion throws and nothing opens.
+  ipcMain.handle(IPC_CHANNELS.cancelImport, (event) => {
+    pendingImports.cancel(event.sender.id)
+  })
 
   ipcMain.handle(IPC_CHANNELS.selectWorkbook, async (event) => {
     try {
@@ -3637,6 +3795,47 @@ export function registerSheetsIpc(): void {
     return workbookPivotDefinitionSchema.parse(parsePivotDefinition(pivotXml, cacheXml))
   })
 
+  ipcMain.handle(IPC_CHANNELS.readSlicerState, async (event, input: unknown) => {
+    const entry = sessionFor(event)
+    const request = workbookSlicerStateRequestSchema.parse(input)
+    const session = entry.sessions.get(request.sessionId)
+    if (!session) throw new Error('Unknown workbook session.')
+    // The slicer parts are read from the session snapshot in one sidecar
+    // extraction; the gateway parser does the rest.
+    const manifest = manifestNamesSchema.parse(
+      await entry.client.archiveManifest(session.snapshotPath),
+    )
+    const names = manifest.entries.map((archiveEntry) => archiveEntry.name)
+    const hasSlicerParts = names.some((name) =>
+      /^xl\/(?:slicers|timelines)\/[^/]+\.xml$/.test(name),
+    )
+    if (!hasSlicerParts) return []
+    // Worksheet parts and their rels are keys/lookups for the parser (host
+    // sheets, pivot binding), so both ride the paths() view; only the XML
+    // texts below are actually extracted.
+    const wanted = names.filter(
+      (name) =>
+        name === 'xl/workbook.xml' ||
+        name === 'xl/_rels/workbook.xml.rels' ||
+        /^xl\/(?:slicers|timelines|slicerCaches|timelineCaches|pivotTables)\/[^/]+\.xml$/.test(
+          name,
+        ) ||
+        /^xl\/pivotCache\/pivotCacheDefinition\d*\.xml$/.test(name) ||
+        /^xl\/worksheets\/(?:_rels\/)?[^/]+\.xml(?:\.rels)?$/.test(name),
+    )
+    const texts = await readArchiveEntriesText(entry.client, session.snapshotPath, wanted)
+    return workbookSlicerStateResultSchema.parse(
+      await parseSlicerState({
+        paths: async () => names,
+        readText: async (path) => {
+          const text = texts.get(path)
+          if (text === undefined) throw new Error(`Workbook is missing ${path}.`)
+          return text
+        },
+      }),
+    )
+  })
+
   // The workbook's refreshable web queries: the walk follows both shapes Excel
   // writes (a table part's relationship, or a legacy ExternalData_N name) and
   // returns the sheet and range each query fills. Read from the session
@@ -3754,7 +3953,16 @@ export function registerSheetsIpc(): void {
       if (response === 0) return { canceled: true, saveAsXlsxInstead: true }
       if (response === 2) return { canceled: true }
     }
+    // A renderer-supplied targetPath is honored only when this view's user
+    // picked exactly that path in a save dialog (the Save-As CSV hand-off).
+    // Without the grant check this channel was the suite's one "renderer
+    // names the file, the main process writes it" primitive: any renderer
+    // could overwrite any .csv on disk — or plant one anywhere — with
+    // attacker-chosen content, no dialog, no confirmation.
     let pickedPath = request.targetPath
+    if (pickedPath !== undefined && !csvExportGrantsByWc.get(event.sender.id)?.has(pickedPath)) {
+      pickedPath = undefined
+    }
     if (pickedPath === undefined) {
       const selection = await saveFileDialog(event, {
         defaultPath: request.fileName,
@@ -3869,6 +4077,18 @@ export function registerSheetsIpc(): void {
     return response === 0 ? 'csv' : response === 1 ? 'xlsx' : 'cancel'
   })
 
+  ipcMain.handle(IPC_CHANNELS.appendCopyEmf, (_event, input: unknown) =>
+    appendCopyEmfToClipboard(input),
+  )
+
+  // one cheap lookup per call: the renderer caches the answer and only then
+  // builds the O(cells) copy payload (an unanswered call would walk the
+  // selection and ship a multi-MB matrix for nothing off Windows)
+  ipcMain.handle(IPC_CHANNELS.copyEmfAvailable, () => {
+    const helper = resolveClipboardHelperPath()
+    return !!helper && existsSync(helper)
+  })
+
   ipcMain.handle(IPC_CHANNELS.saveWorkbook, async (event, input: unknown) => {
     const entry = sessionFor(event)
     const client = entry.client
@@ -3936,6 +4156,7 @@ export function registerSheetsIpc(): void {
       // A CSV pick can't ride the xlsx pipeline: hand the path back so the
       // renderer serializes the active sheet through the CSV export channel.
       if (!macroEnabled && selection.filePath.toLowerCase().endsWith('.csv')) {
+        grantCsvExportTarget(event.sender.id, selection.filePath)
         return { canceled: true, csvSaveAsPath: selection.filePath }
       }
       targetPath = selection.filePath.toLowerCase().endsWith(`.${ext}`)
@@ -4300,6 +4521,9 @@ export function registerSheetsAiIpc(): void {
   ipcMain.handle(IPC_CHANNELS.aiGetSettings, (event): AiSettings => {
     sessionFor(event)
     const stored = readJson<Partial<AiSettings> & LegacyAiSettings>(SETTINGS_PATH(), {})
+    // heal the file mode of a settings file saved by an older build: BYOK keys
+    // are credentials and must not stay readable by other local accounts
+    restrictFileToOwner(SETTINGS_PATH())
     const settings = resolveAiSettings(stored, defaultAiSettings())
     // a stored BYOK provider is honored when usable; half-filled configs fall back to genspark
     settings.provider = activeProvider(settings)
@@ -4328,7 +4552,7 @@ export function registerSheetsAiIpc(): void {
   ipcMain.handle(IPC_CHANNELS.aiSetSettings, async (event, input: unknown) => {
     sessionFor(event)
     const settings = aiSettingsInputSchema.parse(input)
-    writeJsonAtomic(SETTINGS_PATH(), settings)
+    writeJsonAtomic(SETTINGS_PATH(), settings, 0o600)
     for (const wc of webContents.getAllWebContents())
       if (!wc.isDestroyed()) wc.send(IPC_CHANNELS.aiSettingsChanged)
   })
@@ -4894,6 +5118,18 @@ async function writeWorkbookTo(
     sheetName: resolveSheetName(sheetId),
     ...group,
   }))
+  // Slicer panels: same sheetId → sheet name mapping as the other
+  // additions; part paths stay package-absolute.
+  const slicerState =
+    request.slicerState === null
+      ? null
+      : {
+          slicers: request.slicerState.slicers.map(({ sheetId, ...control }) => ({
+            ...control,
+            sheetName: resolveSheetName(sheetId),
+          })),
+          removals: [...request.slicerState.removals],
+        }
   // Recalculated formula values: sheetId → file sheet name, the same
   // resolution the cell edits use.
   const formulaValuesBySheet = new Map<
@@ -4971,6 +5207,7 @@ async function writeWorkbookTo(
       tableEdits,
       pivotAdditions,
       sparklineAdditions,
+      slicerState,
       formulaValues,
       pivotCacheRefreshPaths: request.pivotCacheRefreshPaths,
       // Output-area expansion from layout growth: sheetId → sheet name; the part
@@ -5167,7 +5404,11 @@ async function openWorkbookSession(
       ...opened,
       // The renderer-facing path is what the user opened: for a restored
       // recovery copy that is the original file, not the copy under userData.
+      // The name mirrors it: the sidecar names the session after the private
+      // snapshot (a uuid under the session directory), which must not reach
+      // the status line, export base names or the skeleton header.
       path: restoreTarget ?? path,
+      name: basename(restoreTarget ?? path),
       sha256: digest,
       fileBytes,
       readOnly: false,
@@ -5260,12 +5501,24 @@ async function promptOdsImport(
 /// .xls, .tsv and the ODF imports (.ods/.ots) open as a converted copy in the temp dir; the session
 /// remembers the original's .xlsx sibling as the Save As default. .csv converts
 /// the same way but keeps its file identity, so Save writes values back to it.
+/** Legacy imports (.xls/.ods/.ots) hand the whole file to the sidecar's
+ *  calamine reader with no zip-gate in between; this file cap is the one
+ *  guard on the app side. Aligned with docs' MAX_OPEN_BYTES. */
+const MAX_LEGACY_IMPORT_BYTES = 512 * 1024 * 1024
+
 async function prepareWorkbookForOpen(
   client: XlsxSidecarClient,
   path: string,
   contents?: WebContents | undefined,
   parent?: BrowserWindow | undefined,
-  options?: { skipRecoveryPrompt?: boolean },
+  options?: {
+    skipRecoveryPrompt?: boolean
+    /** progress and cancellation for a delimited import */
+    import?: {
+      readonly onProgress?: (progress: CsvImportProgress) => void
+      readonly signal?: AbortSignal
+    }
+  },
 ): Promise<{
   openPath: string
   suggestSaveAs?: string
@@ -5354,7 +5607,12 @@ async function prepareWorkbookForOpen(
   try {
     if (extension === 'csv' || extension === 'tsv') {
       const csvStat = await stat(path)
-      if (csvStat.size > MAX_DELIMITED_IMPORT_BYTES) throw new Error(tm('errFileTooLarge'))
+      const limitBytes = delimitedImportLimit()
+      if (csvStat.size > limitBytes) {
+        const limitMb = Math.round(limitBytes / 1024 / 1024)
+        const sizeMb = (csvStat.size / 1024 / 1024).toFixed(1)
+        throw new Error(`${tm('errTooLarge', { mb: limitMb })} (${sizeMb} MB)`)
+      }
       const converted = await csvToXlsxBufferForOpen(
         decodeCsvBuffer(await readFile(path), legacyCsvCharset()),
         'Sheet1',
@@ -5365,6 +5623,7 @@ async function prepareWorkbookForOpen(
         // every row shatters on the comma. A .csv keeps the sniff — the prose
         // guard in resolveImportDelimiter is what that path needs.
         extension === 'tsv' ? '\t' : undefined,
+        options?.import,
       )
       emptyCsv = converted.empty
       await writeFile(openPath, converted.buffer)
@@ -5387,6 +5646,16 @@ async function prepareWorkbookForOpen(
         await normalizeOoxmlVariant(new Uint8Array(await readFile(path)), 'excel'),
       )
     } else {
+      // The sidecar's legacy import (calamine, for .xls/.ods/.ots) manages
+      // its own memory on the far side of the stdin protocol, and unlike
+      // .xlsx there is no zip-gate between the file and it — the file cap is
+      // the guard. Aligned with the app's 512 MB docx open cap.
+      const legacyStat = await stat(path)
+      if (legacyStat.size > MAX_LEGACY_IMPORT_BYTES) {
+        throw new Error(
+          `${tm('errTooLarge', { mb: MAX_LEGACY_IMPORT_BYTES / 1024 / 1024 })} (${(legacyStat.size / 1024 / 1024).toFixed(1)} MB)`,
+        )
+      }
       await client.convertWorkbook({ path, targetPath: openPath })
     }
   } catch (error) {
@@ -5615,6 +5884,31 @@ function resolveSidecarPath(): string {
   if (process.env.XLSX_SIDECAR_PATH) return process.env.XLSX_SIDECAR_PATH
   if (app.isPackaged) return join(process.resourcesPath, 'native', executable)
   return join(app.getAppPath(), 'native', 'xlsx-engine', 'target', 'release', executable)
+}
+
+function resolveClipboardHelperPath(): string | null {
+  if (process.platform !== 'win32') return null
+  if (process.env.WIN_CLIPBOARD_HELPER_PATH) return process.env.WIN_CLIPBOARD_HELPER_PATH
+  if (app.isPackaged) return join(process.resourcesPath, 'native', 'win-clipboard-helper.exe')
+  return join(
+    app.getAppPath(),
+    'native',
+    'win-clipboard-helper',
+    'target',
+    'release',
+    'win-clipboard-helper.exe',
+  )
+}
+
+/// Spawns the clipboard helper with the copied range's description. The EMF
+/// it appends is an extra clipboard format beside the text the grid already
+/// wrote, so every failure here — missing helper, busy clipboard, a crash —
+/// degrades to the plain copy instead of surfacing an error.
+async function appendCopyEmfToClipboard(request: unknown): Promise<{ ok: boolean }> {
+  const helper = resolveClipboardHelperPath()
+  if (!helper || !existsSync(helper)) return { ok: false }
+  const payload = JSON.stringify(copyEmfRequestSchema.parse(request))
+  return await runCopyEmfHelper(helper, payload)
 }
 
 async function sha256File(path: string): Promise<string> {

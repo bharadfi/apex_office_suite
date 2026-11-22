@@ -1,13 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Dropdown } from '@genoffice/ui'
-import type { DecisionEndpoint, DefaultAppStatus, FileSearchSettings } from '../../shared/home-api'
-import { AUTHOR_NAME_MAX, isCloudflareEndpoint } from '../../shared/home-api'
+import type {
+  DecisionEndpoint,
+  DefaultAppStatus,
+  FileSearchSettings,
+  PdfDefaultZoom,
+} from '../../shared/home-api'
+import {
+  AUTHOR_NAME_MAX,
+  CSV_IMPORT_DEFAULT_LIMIT_MB,
+  CSV_IMPORT_LIMIT_CHOICES_MB,
+  isCloudflareEndpoint,
+} from '../../shared/home-api'
 import type { UpdateUiState } from '../../shared/update-api'
 import { useI18n } from './locale'
 import type { StringKey, TFunc } from './locale'
 import type { AuthorNameSetting, DocTheme, UiTheme } from '../../shared/home-api'
 import './settings.css'
+import './settings-skin.css'
+import './settings-fx.css'
 
 // ── Settings modal (opened from the account menu) ─────────
 // Genspark-style two-pane dialog: section nav on the left, fields on the right.
@@ -23,6 +35,7 @@ const LANG_OPTIONS = [
   { value: 'es', label: 'Español' },
   { value: 'fr', label: 'Français' },
   { value: 'he', label: 'עברית' },
+  { value: 'hu', label: 'Magyar' },
   { value: 'hi', label: 'हिन्दी' },
   { value: 'id', label: 'Bahasa Indonesia' },
   { value: 'it', label: 'Italiano' },
@@ -99,7 +112,7 @@ function Field({
   action,
 }: {
   label: string
-  value: string
+  value: ReactNode
   valueTitle?: string
   action?: ReactNode
 }) {
@@ -139,10 +152,11 @@ export function SettingsModal({ onClose, target }: SettingsModalProps) {
   }, [target])
   const [theme, setTheme] = useState<UiTheme>('system')
   const [docTheme, setDocTheme] = useState<DocTheme>('follow')
+  const [csvLimitMb, setCsvLimitMb] = useState(CSV_IMPORT_DEFAULT_LIMIT_MB)
   const [saveDir, setSaveDir] = useState('')
   const [autoSaveOn, setAutoSaveOn] = useState(false)
   const [tabSleepOn, setTabSleepOn] = useState(true)
-  const [restoreSessionOn, setRestoreSessionOn] = useState(false)
+  const [restoreSessionOn, setRestoreSessionOn] = useState(true)
   const [autoUpdateCheckOn, setAutoUpdateCheckOn] = useState(true)
   const [silentInstallOn, setSilentInstallOn] = useState(false)
   const [defaultApp, setDefaultApp] = useState<DefaultAppStatus | null>(null)
@@ -150,6 +164,7 @@ export function SettingsModal({ onClose, target }: SettingsModalProps) {
   const [defaultAppFailed, setDefaultAppFailed] = useState(false)
   const [authorName, setAuthorName] = useState<AuthorNameSetting>({ value: '', fallback: '' })
   const [legacyImportPrompt, setLegacyImportPrompt] = useState(true)
+  const [pdfDefaultZoom, setPdfDefaultZoom] = useState<PdfDefaultZoom>('width')
   const [channel, setChannel] = useState<'stable' | 'beta'>('stable')
   const [appVersion, setAppVersion] = useState('')
   const [updateState, setUpdateState] = useState<UpdateUiState | null>(null)
@@ -171,6 +186,9 @@ export function SettingsModal({ onClose, target }: SettingsModalProps) {
     void window.aiOffice.getTabSleepEnabled?.().then((on) => {
       if (alive) setTabSleepOn(on)
     })
+    void window.aiOffice.getCsvImportLimit?.().then((mb) => {
+      if (alive && mb > 0) setCsvLimitMb(mb)
+    })
     void window.aiOffice.getRestoreLastSession?.().then((on) => {
       if (alive) setRestoreSessionOn(on)
     })
@@ -179,6 +197,9 @@ export function SettingsModal({ onClose, target }: SettingsModalProps) {
     })
     void window.aiOffice.getLegacyImportPrompt?.().then((v) => {
       if (alive) setLegacyImportPrompt(v)
+    })
+    void window.aiOffice.getPdfDefaultZoom?.().then((v) => {
+      if (alive) setPdfDefaultZoom(v)
     })
     void window.aiOffice.getAuthorName?.().then((v) => {
       if (alive) setAuthorName(v)
@@ -300,6 +321,9 @@ export function SettingsModal({ onClose, target }: SettingsModalProps) {
         </div>
         <div className="set-body">
           <nav className="set-nav" aria-label={t('settings')}>
+            <div className="set-nav-label" aria-hidden="true">
+              {t('settings')}
+            </div>
             {SECTIONS.map((s) => (
               <button
                 key={s.id}
@@ -316,6 +340,8 @@ export function SettingsModal({ onClose, target }: SettingsModalProps) {
             {section === 'general' && (
               <>
                 <h3 className="set-pane-title">{t('setSecGeneral')}</h3>
+                <p className="set-pane-desc">{t('setGeneralSub')}</p>
+                <h4 className="set-pane-subtitle">{t('setGrpInterface')}</h4>
                 <div className="set-field">
                   <div className="set-field-text">
                     <label className="set-field-label">{t('language')}</label>
@@ -358,6 +384,7 @@ export function SettingsModal({ onClose, target }: SettingsModalProps) {
                     onPick={(v) => applyDocumentTheme(v as DocTheme)}
                   />
                 </div>
+                <h4 className="set-pane-subtitle">{t('setGrpFiles')}</h4>
                 <div className="set-field">
                   <div className="set-field-text">
                     <div className="set-field-stack">
@@ -383,44 +410,6 @@ export function SettingsModal({ onClose, target }: SettingsModalProps) {
                     }}
                   />
                 </div>
-                <div className="set-field">
-                  <div className="set-field-text">
-                    <div className="set-field-stack">
-                      <div className="set-field-label">{t('setLegacyImportPrompt')}</div>
-                      <div className="set-field-desc">{t('setLegacyImportPromptDesc')}</div>
-                    </div>
-                  </div>
-                  <button
-                    className="set-switch"
-                    role="switch"
-                    aria-checked={legacyImportPrompt}
-                    aria-label={t('setLegacyImportPrompt')}
-                    onClick={() => {
-                      const next = !legacyImportPrompt
-                      setLegacyImportPrompt(next)
-                      void window.aiOffice.setLegacyImportPrompt?.(next).then(setLegacyImportPrompt)
-                    }}
-                  />
-                </div>
-                {defaultApp && defaultApp.state !== 'unsupported' && (
-                  <div className="set-field">
-                    <div className="set-field-text">
-                      <div className="set-field-stack">
-                        <div className="set-field-label">{t('setDefaultApp')}</div>
-                        <div className="set-field-desc">{defaultAppDesc}</div>
-                      </div>
-                    </div>
-                    <button
-                      className="set-btn"
-                      disabled={defaultAppBusy || defaultApp.state === 'default'}
-                      onClick={claimDefaultApp}
-                    >
-                      {defaultApp.manualOnly
-                        ? t('setDefaultAppOpenSettings')
-                        : t('setDefaultAppSet')}
-                    </button>
-                  </div>
-                )}
                 <Field
                   label={t('saveLocation')}
                   value={saveDir || '—'}
@@ -450,6 +439,89 @@ export function SettingsModal({ onClose, target }: SettingsModalProps) {
                     }}
                   />
                 </div>
+                <div className="set-field">
+                  <div className="set-field-text">
+                    <div className="set-field-stack">
+                      <label className="set-field-label" htmlFor="set-pdf-default-zoom">
+                        {t('setPdfDefaultZoom')}
+                      </label>
+                      <div className="set-field-desc">{t('setPdfDefaultZoomDesc')}</div>
+                    </div>
+                  </div>
+                  <select
+                    id="set-pdf-default-zoom"
+                    className="set-input"
+                    value={pdfDefaultZoom}
+                    onChange={(e) => {
+                      const next = e.target.value as PdfDefaultZoom
+                      setPdfDefaultZoom(next)
+                      void window.aiOffice.setPdfDefaultZoom?.(next).then(setPdfDefaultZoom)
+                    }}
+                  >
+                    <option value="width">{t('setPdfDefaultZoomWidth')}</option>
+                    <option value="page">{t('setPdfDefaultZoomPage')}</option>
+                    <option value="last">{t('setPdfDefaultZoomLast')}</option>
+                  </select>
+                </div>
+                <div className="set-field">
+                  <div className="set-field-text">
+                    <div className="set-field-stack">
+                      <div className="set-field-label">{t('setLegacyImportPrompt')}</div>
+                      <div className="set-field-desc">{t('setLegacyImportPromptDesc')}</div>
+                    </div>
+                  </div>
+                  <button
+                    className="set-switch"
+                    role="switch"
+                    aria-checked={legacyImportPrompt}
+                    aria-label={t('setLegacyImportPrompt')}
+                    onClick={() => {
+                      const next = !legacyImportPrompt
+                      setLegacyImportPrompt(next)
+                      void window.aiOffice.setLegacyImportPrompt?.(next).then(setLegacyImportPrompt)
+                    }}
+                  />
+                </div>
+                <div className="set-field">
+                  <div className="set-field-text">
+                    <label className="set-field-label">{t('csvImportLimit')}</label>
+                  </div>
+                  <Dropdown
+                    className="set-dd"
+                    value={String(csvLimitMb)}
+                    ariaLabel={t('csvImportLimit')}
+                    options={CSV_IMPORT_LIMIT_CHOICES_MB.map((mb) => ({
+                      value: String(mb),
+                      label: `${mb} MB`,
+                    }))}
+                    onPick={(v) => {
+                      const mb = Number(v)
+                      if (!Number.isInteger(mb)) return
+                      setCsvLimitMb(mb)
+                      void window.aiOffice.setCsvImportLimit?.(mb)
+                    }}
+                  />
+                </div>
+                {defaultApp && defaultApp.state !== 'unsupported' && (
+                  <div className="set-field">
+                    <div className="set-field-text">
+                      <div className="set-field-stack">
+                        <div className="set-field-label">{t('setDefaultApp')}</div>
+                        <div className="set-field-desc">{defaultAppDesc}</div>
+                      </div>
+                    </div>
+                    <button
+                      className="set-btn"
+                      disabled={defaultAppBusy || defaultApp.state === 'default'}
+                      onClick={claimDefaultApp}
+                    >
+                      {defaultApp.manualOnly
+                        ? t('setDefaultAppOpenSettings')
+                        : t('setDefaultAppSet')}
+                    </button>
+                  </div>
+                )}
+                <h4 className="set-pane-subtitle">{t('setGrpStartup')}</h4>
                 <div className="set-field">
                   <div className="set-field-text">
                     <div className="set-field-stack">
@@ -493,6 +565,7 @@ export function SettingsModal({ onClose, target }: SettingsModalProps) {
             {section === 'about' && (
               <>
                 <h3 className="set-pane-title">{t('setSecAbout')}</h3>
+                <p className="set-pane-desc">{t('setAboutSub')}</p>
                 <Field label={t('versionLabel')} value={appVersion || '—'} />
                 {updateState && (
                   <div className="set-field">

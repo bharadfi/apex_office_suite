@@ -29,8 +29,9 @@ import {
   shell,
   webContents,
 } from 'electron'
-import type { MenuItemConstructorOptions, NativeImage, WebContents } from 'electron'
+import type { MenuItemConstructorOptions, NativeImage, Rectangle, WebContents } from 'electron'
 import { atomicCopyFile, atomicWriteFile } from './atomic-write'
+import { openTrash } from './trash'
 import { registerAiNamingIpc } from './ai-naming-service'
 import { tabStripOverlay } from './title-bar-overlay'
 import { shellWindowBackground } from './window-background'
@@ -88,6 +89,10 @@ import {
   systemAuthorName,
   readLegacyImportPrompt,
   writeLegacyImportPrompt,
+  readPdfDefaultZoom,
+  sanitizePdfDefaultZoom,
+  writePdfDefaultZoom,
+  tileWindows,
 } from '@genoffice/electron-utils'
 import { createMainProcessProxyDispatcher } from '@genoffice/electron-utils/main-proxy'
 import {
@@ -139,6 +144,7 @@ import {
   genofficeLogout,
   gskLoginInfo,
   loadGenofficeAuth,
+  setGenofficeLoginSuccessListener,
   setGskProxyUrl,
   startGenofficeLogin,
   watchGskApiKey,
@@ -177,7 +183,7 @@ import {
   uniquePathIn,
   authorizeMcpDocWrite,
 } from '../../../docs/src/main/docs-main'
-import { blankXlsxBuffer } from '@genoffice/xlsx-gateway/gateway/csv-import'
+import { blankXlsxBuffer } from '@genoffice/xlsx-gateway/gateway/csv-import-xlsx'
 import { blankPdfBuffer } from '../../../pdf/src/main/blank-pdf'
 import {
   applyMcpSettings,
@@ -221,6 +227,7 @@ import {
   startSheetsCaptureServer,
   stopSheetsSidecar,
 } from '../../../sheets/src/main/sheets-main'
+import { setDelimitedImportLimit } from '../../../sheets/src/main/csv-import-limit'
 import {
   configureSlidesRuntime,
   discardSlidesRecovery,
@@ -303,7 +310,8 @@ import type {
   FileSearchRerank,
   FileSearchSettings,
 } from '../shared/home-api'
-import { HOME_CHANNELS } from '../shared/home-api'
+import { CSV_IMPORT_LIMIT_CHOICES_MB, HOME_CHANNELS } from '../shared/home-api'
+import { csvImportLimitMb } from './csv-import-limit'
 import {
   normalizeAiPanelPrefs,
   sameAiPanelPrefs,
@@ -318,7 +326,7 @@ import {
   matchesExtFamily,
   normalizeRecentQuery,
   pageRecentPaths,
-  statPathEntries,
+  statPathEntriesAsync,
 } from './recent-files'
 import { isMoveSource, isUserVisibleFile, type FileTargetSources } from './file-targets'
 import {
@@ -392,7 +400,10 @@ import {
   detachedWebContentsFor,
   detachedSetTitleFor,
   detachedWindowForWebContents,
+  detachedWindowsOf,
+  holdDocking,
   dockBandFor,
+  releaseDetachedOf,
   dragTornWindow,
   endTornDrag,
   findDetachedTabByPath,
@@ -582,7 +593,13 @@ const publishOpenDocumentsIfOwner = (paths: readonly string[]) => {
 function publishAllOpenDocuments(): void {
   publishOpenDocumentsIfOwner([...(tabManager?.openFilePaths() ?? []), ...detachedFilePaths()])
 }
-setDetachedChangedListener(publishAllOpenDocuments)
+setDetachedChangedListener(() => {
+  publishAllOpenDocuments()
+  // Docs greys Merge All Windows while no window of its own stands outside the strip
+  const count = detachedWindowsOf('docs').length
+  for (const wc of webContents.getAllWebContents())
+    if (!wc.isDestroyed()) wc.send('win:detached-changed', count)
+})
 
 let uiLang: Lang | null = null
 
@@ -650,6 +667,15 @@ function currentDocTheme(): DocTheme {
   return cachedDocTheme
 }
 
+/**
+ * The ceiling a delimited import (a .csv/.tsv opened as a workbook) may reach,
+ * in MB. The editors take it through setDelimitedImportLimit, so the value the
+ * user picks applies to the next file they open.
+ */
+function currentCsvImportLimitMb(): number {
+  return csvImportLimitMb(readAppSettings(APP_SETTINGS_PATH()))
+}
+
 let cachedAutoSaveDefault: AutoSaveDefault | null = null
 
 function currentAutoSaveDefault(): AutoSaveDefault {
@@ -696,6 +722,7 @@ function currentAiPanelPrefs(): AiPanelPrefs {
     spellcheck: saved.aiPanelSpellcheck,
     openInNewDocs: saved.aiPanelOpenInNewDocs,
     showAiSidebar: saved.aiPanelShowSidebar,
+    showAiAskTrigger: saved.aiPanelShowAskTrigger,
   })
   return cachedAiPanelPrefs
 }
@@ -1340,6 +1367,137 @@ const tMain = createI18n({
     dlgPickSaveDir: 'Varsayılan Kayıt Konumunu Seçin',
     errSaveDirUnusable:
       'Seçilen klasör yazılabilir değil ve varsayılan kayıt konumu olarak kullanılamaz',
+  },
+  hu: {
+    menuTabSave: 'Mentés',
+    menuTabSaveAs: 'Mentés másként…',
+    menuTabPrint: 'Nyomtatás…',
+    menuTabRename: 'Átnevezés',
+    menuTabDuplicate: 'Duplikálás (a mentett fájl másolása)',
+    menuTabSplitBeside: 'Felosztás egymás mellett',
+    menuTabCopyPath: 'Elérési út másolása',
+    menuTabCopyName: 'Fájlnév másolása',
+    menuTabReveal: 'Megjelenítés a mappában',
+    menuTabOpenDefault: 'Megnyitás az alapértelmezett alkalmazással',
+    menuTabMoveLeft: 'Mozgatás balra',
+    menuTabMoveRight: 'Mozgatás jobbra',
+    menuTabCloseOthers: 'Többi lap bezárása',
+    menuTabCloseRight: 'Jobbra lévő lapok bezárása',
+    menuTabCloseAll: 'Az összes lap bezárása',
+    menuTabReopen: 'Bezárt lap újranyitása',
+    menuTabPin: 'Lap rögzítése (betöltve marad)',
+    menuTabUnpin: 'Lap rögzítésének feloldása',
+    dlgAddFolderRoot: 'Mappa hozzáadása a kezdőképernyőhöz',
+    watchdogTitle: 'A dokumentum túl sok erőforrást használ',
+    watchdogBody:
+      'A(z) „{title}” már több perce jelentős memória- vagy CPU-használatot mutat ({memory} MB, {cpu}% CPU). Várhatsz tovább, vagy bezárhatod a dokumentumot (a bezárás előtt megkérdezzük az elmentetlen módosítások mentését). A diagnosztikai adatok rögzítésre kerültek.',
+    watchdogWait: 'Várakozás folytatása',
+    watchdogClose: 'Dokumentum bezárása',
+    watchdogIgnore: 'Ne emlékeztessen többé',
+    errFolderRootUnusable: 'A kijelölt mappa nem olvasható',
+    menuFile: 'Fájl',
+    menuSectionNew: 'Új',
+    menuView: 'Nézet',
+    menuUiZoomIn: 'Felület nagyítása',
+    menuUiZoomOut: 'Felület kicsinyítése',
+    menuUiZoomReset: 'Felületi nagyítás visszaállítása',
+    menuOpenInNewWindow: 'Megnyitás új ablakban',
+    menuNewDoc: 'AI Docs',
+    menuNewSheet: 'AI Sheets',
+    untitledSheet: 'Névtelen táblázat',
+    untitledDoc: 'Névtelen dokumentum',
+    untitledDeck: 'Névtelen bemutató',
+    untitledMarkdown: 'Névtelen Markdown',
+    untitledHtml: 'Névtelen HTML',
+    untitledPdf: 'Névtelen PDF',
+    menuNewSlide: 'AI Slides',
+    menuNewMarkdown: 'AI Markdown',
+    menuNewHtml: 'AI HTML',
+    menuNewPdf: 'AI PDF',
+    menuExportPdf: 'Exportálás PDF-ként…',
+    menuExportImages: 'Exportálás képként…',
+    menuExportHtml: 'Exportálás egyetlen HTML-fájlként…',
+    menuOpenInDocs: 'Átalakítás és megnyitás a Docsban',
+    menuPrint: 'Nyomtatás…',
+    menuOpen: 'Megnyitás…',
+    menuSave: 'Mentés',
+    menuSaveAs: 'Mentés másként…',
+    menuClose: 'Bezárás',
+    menuEdit: 'Szerkesztés',
+    menuWindow: 'Ablak',
+    menuHome: 'Kezdőképernyő',
+    backToHome: 'Vissza a kezdőképernyőre',
+    dlgOpenTitle: 'Fájl megnyitása',
+    filterSupported: 'Támogatott fájlok',
+    filterWord: 'Word-dokumentumok',
+    filterExcel: 'Excel-munkafüzetek',
+    filterPpt: 'PowerPoint-bemutatók',
+    filterMarkdown: 'Szöveges fájlok (Markdown, TXT, JSON)',
+    filterHtml: 'HTML-dokumentumok',
+    filterPdf: 'PDF-dokumentumok',
+    errBadArgs: 'Érvénytelen argumentumok',
+    errBadName: 'Érvénytelen fájlnév',
+    errBadExtension: 'Ez a kiterjesztés nem támogatott, és a fájl a továbbiakban nem nyílna meg',
+    errMissing: 'A fájl nem található',
+    errExists: 'Már létezik ilyen nevű fájl',
+    errRenameFailed: 'Az átnevezés nem sikerült',
+    errPdfSaveAsFailed: 'Nem sikerült menteni a PDF-másolatot',
+    errNewTabFailed: 'Nem sikerült létrehozni az új dokumentumot',
+    errDuplicateFailed: 'Nem sikerült másolatot készíteni a fájlról',
+    errUnsupportedExt: 'A .{ext} kiterjesztésű fájlok nem támogatottak',
+    copySuffix: 'másolat',
+    menuHelp: 'Súgó',
+    menuUserGuide: 'Felhasználói útmutató',
+    thirdPartyNotices: 'Harmadik felek közleményei',
+    menuExportDocx: 'Exportálás Word formátumba…',
+    btnCancel: 'Mégse',
+    pdfDocxFailedMsg: 'Nem sikerült az exportálás Word formátumba',
+    pdfConvertFailedMsg: 'Nem sikerült az exportálás Markdown / HTML formátumba',
+    pdfDocxBusyMsg: 'Már folyamatban van egy Word-exportálás. Várj, amíg befejeződik.',
+    menuExportPptx: 'Exportálás PowerPoint formátumba…',
+    pdfPptxFailedMsg: 'Nem sikerült az exportálás PowerPoint formátumba',
+    pdfPptxBusyMsg: 'Már folyamatban van egy exportálás. Várj, amíg befejeződik.',
+    pdfPptxLocalScannedDetail:
+      'Minden oldal teljes oldalas képként lett exportálva; a diákon lévő szöveg nem szerkeszthető.',
+    menuExportXlsx: 'Exportálás Excel formátumba…',
+    pdfXlsxFailedMsg: 'Nem sikerült az exportálás Excel formátumba',
+    pdfXlsxBusyMsg: 'Már folyamatban van egy exportálás. Várj, amíg befejeződik.',
+    pdfXlsxLocalScannedDetail:
+      'A beolvasott oldalak nem alakíthatók cellákká; helyettük minden oldal munkalapján egy figyelmeztető sor szerepel.',
+    pdfXlsxLocalSkippedMsg: 'Néhány oldalt nem sikerült cellákká alakítani',
+    pdfXlsxLocalSkippedDetail:
+      'Ezeket az oldalakat nem sikerült cellákká alakítani: {pages}; helyettük a munkalapjaikon egy figyelmeztető sor szerepel.',
+    pdfDocxLocalScannedMsg: 'Beolvasott dokumentum észlelve',
+    pdfMdLocalMissingMsg: 'A Markdownból hiányzik néhány tartalomrész',
+    pdfMdLocalScannedDetail:
+      'Nem volt felismerhető szerkeszthető szöveg, ezért a Markdown-fájl nem tartalmaz használható tartalmat.',
+    pdfMdLocalDroppedDetail:
+      'Ezeket az oldalakat nem sikerült megbízhatóan rekonstruálni: {pages}; a Markdown nem tud képeket tárolni, így a tartalmuk hiányzik.',
+    pdfDocxLocalScannedDetail:
+      'Az oldalakat a megjelenésük megőrzése érdekében képként exportáltuk; szerkeszthető szöveg nem volt felismerhető.',
+    pdfDocxLocalDegradedMsg: 'Néhány oldal képként lett exportálva',
+    pdfDocxLocalDegradedDetail:
+      'Ezeket az oldalakat nem sikerült megbízhatóan rekonstruálni: {pages}; teljes oldalas képként lettek exportálva.',
+    pdfDocxLocalOcrMsg: 'Beolvasott oldalak szerkeszthető szöveggé alakítva',
+    pdfDocxLocalOcrDetail:
+      'Ezek az oldalak beolvasottak voltak: {pages}; a szövegüket az eszközön végzett OCR-rel sikerült helyreállítani. Ellenőrizd az eredményt.',
+    pdfDocxLocalEncryptedDetail:
+      'Ez a PDF titkosított, és a helyes jelszó nélkül nem nyitható meg.',
+    pdfDocxLocalUnsupportedEncDetail:
+      'Ez a PDF tanúsítványalapú vagy más módon nem támogatott titkosítást használ, ezért nem alakítható át.',
+    pdfPwdTitle: 'Jelszó megadása',
+    pdfPwdPrompt: 'Ez a PDF titkosított. A megnyitáshoz add meg a jelszót:',
+    pdfPwdRetryPrompt: 'Hibás jelszó. Próbáld újra.',
+    pdfPwdOk: 'OK',
+    pdfPwdVerifying: 'Jelszó ellenőrzése…',
+    pdfPwdLabel: 'Jelszó',
+    pdfPwdPlaceholder: 'Add meg a megnyitási jelszót',
+    pdfPwdShow: 'Jelszó megjelenítése',
+    pdfPwdHide: 'Jelszó elrejtése',
+    pdfDocxLocalCorruptDetail: 'A fájl sérült, vagy nem érvényes PDF, ezért nem alakítható át.',
+    dlgPickSaveDir: 'Alapértelmezett mentési hely kiválasztása',
+    errSaveDirUnusable:
+      'A kiválasztott mappa nem írható, ezért nem használható alapértelmezett mentési helyként',
   },
   ja: {
     menuTabSave: '保存',
@@ -2536,13 +2694,13 @@ const tMain = createI18n({
     menuTabCloseRight: 'Fechar abas à direita',
     menuTabCloseAll: 'Fechar todas as abas',
     menuTabReopen: 'Reabrir aba fechada',
-    menuTabPin: 'Fixar separador (manter carregado)',
-    menuTabUnpin: 'Desafixar separador',
+    menuTabPin: 'Fixar guia (manter carregado)',
+    menuTabUnpin: 'Desafixar guia',
     dlgAddFolderRoot: 'Adicionar pasta à página inicial',
-    watchdogTitle: 'O documento está a consumir demasiados recursos',
+    watchdogTitle: 'O documento está consumindo muitos recursos',
     watchdogBody:
-      '"{title}" está a usar muita memória ou CPU há vários minutos ({memory} MB, {cpu}% de CPU). Pode continuar a aguardar ou fechar o documento (será pedido para guardar alterações não guardadas primeiro). O diagnóstico foi registado.',
-    watchdogWait: 'Continuar a aguardar',
+      '"{title}" está usando muita memória ou CPU há vários minutos ({memory} MB, {cpu}% de CPU). Você pode aguardar ou fechar o documento (será solicitado que salve as alterações pendentes primeiro). O diagnóstico foi registrado.',
+    watchdogWait: 'Continuar aguardando',
     watchdogClose: 'Fechar documento',
     watchdogIgnore: 'Não lembrar novamente',
     errFolderRootUnusable: 'Não é possível ler a pasta selecionada',
@@ -3720,6 +3878,16 @@ function insideAnyRoot(path: string): boolean {
   return folderRootPaths().some((root) => isInsideRoot(root, path))
 }
 
+/** Whether the home UI can legitimately be showing this path: the folder
+ *  tree's roots (save folder + added roots) plus the exact recent and starred
+ *  files, which may live anywhere. The reveal channel opens Finder at the
+ *  path a renderer names, so it stays limited to that set. */
+function isRevealablePath(path: string): boolean {
+  if (insideAnyRoot(path)) return true
+  const key = resolve(path)
+  return [...readRecentFiles(), ...readStarredFiles()].some((p) => resolve(p) === key)
+}
+
 function isAnyRoot(path: string): boolean {
   const key = resolve(path)
   return folderRootPaths().some((root) => resolve(root) === key)
@@ -3991,23 +4159,32 @@ function applyMenuFor(kind: TabKind): void {
  * tab. CmdOrCtrl+Alt (not Shift): Shift+= is Sheets insert-cells and Docs
  * superscript, and the View menu now exists on editor tabs too, where those
  * accelerators are taken.
+ *
+ * On macOS it is Cmd+Ctrl instead: Sheets binds Cmd+Opt+- / Cmd+Opt+0 to the
+ * Excel-for-Mac border chords and the sheet swallows Cmd+Opt+= as well, so the
+ * Option chords never reached this menu on the one tab the scale applies to.
  */
+const UI_ZOOM_ACCEL =
+  process.platform === 'darwin'
+    ? { in: 'Cmd+Ctrl+=', out: 'Cmd+Ctrl+-', reset: 'Cmd+Ctrl+0' }
+    : { in: 'CmdOrCtrl+Alt+=', out: 'CmdOrCtrl+Alt+-', reset: 'CmdOrCtrl+Alt+0' }
+
 function uiScaleMenuItems(): MenuItemConstructorOptions[] {
   return [
     {
       label: tm('menuUiZoomIn'),
-      accelerator: 'CmdOrCtrl+Alt+=',
+      accelerator: UI_ZOOM_ACCEL.in,
       click: () => changeUiScale(APP_SETTINGS_PATH(), 1),
     },
     {
       label: tm('menuUiZoomOut'),
-      accelerator: 'CmdOrCtrl+Alt+-',
+      accelerator: UI_ZOOM_ACCEL.out,
       click: () => changeUiScale(APP_SETTINGS_PATH(), -1),
     },
     { type: 'separator' },
     {
       label: tm('menuUiZoomReset'),
-      accelerator: 'CmdOrCtrl+Alt+0',
+      accelerator: UI_ZOOM_ACCEL.reset,
       click: () => changeUiScale(APP_SETTINGS_PATH(), 0),
     },
   ]
@@ -4030,7 +4207,7 @@ function withViewMenu(): void {
   const menu = Menu.getApplicationMenu()
   if (!menu) return
   const hasScale = menu.items.some((item) =>
-    item.submenu?.items.some((i) => i.accelerator === 'CmdOrCtrl+Alt+='),
+    item.submenu?.items.some((i) => i.accelerator === UI_ZOOM_ACCEL.in),
   )
   if (hasScale) return
   const view = menu.items.find((item) => item.label === tm('menuView'))
@@ -4041,12 +4218,18 @@ function withViewMenu(): void {
       .items) {
       view.submenu.append(item)
     }
+    // Items appended to the live application menu stay in the Electron model
+    // but never reach the native macOS bar (Sheets: View showed only the system
+    // "Full Screen"). Setting the menu again rebuilds the bar from the model.
+    Menu.setApplicationMenu(menu)
     return
   }
   const viewItem = Menu.buildFromTemplate([viewMenuTemplate()]).items[0]!
   const helpIdx = menu.items.findIndex((item) => item.role === 'help')
   if (helpIdx === -1) menu.append(viewItem)
   else menu.insert(helpIdx, viewItem)
+  // Same as above: rebuild the native bar from the updated model.
+  Menu.setApplicationMenu(menu)
 }
 
 /// Interface scale (genoffice#1913). Read once at boot, then replaced by the View menu.
@@ -4231,11 +4414,15 @@ function createShellWindow(): void {
     openTab: (openPath, options) => ensureTabManager().openDocsTab(openPath, options),
     openAiDocTab: (content) =>
       ensureTabManager().openDocsTab(undefined, { newBlank: true, aiContent: content }),
+    openResultDocTab: (doc) => ensureTabManager().openDocsTab(undefined, { resultDoc: doc }),
     listTabs: () =>
       (tabManager?.list() ?? [])
         .filter((t) => t.kind === 'docs')
         .map((t) => ({ id: t.id, title: t.title, focused: t.active })),
     focusTab: (id) => tabManager?.activateTab(id),
+    arrangeAll: arrangeDocsWindows,
+    gatherWindows: gatherDocsWindows,
+    detachedWindowCount: () => detachedWindowsOf('docs').length,
     // ⌘W in a detached docs window closes that window (its own close guard runs)
     closeActiveTab: () => {
       const focused = BrowserWindow.getFocusedWindow()
@@ -4243,6 +4430,7 @@ function createShellWindow(): void {
       else tabManager?.closeActiveTab()
     },
     openGeneratedPath: (path) => openGeneratedDocument(path),
+    fileMoved: afterFileMoved,
   })
   setSheetsCloseTabHook(() => {
     const focused = BrowserWindow.getFocusedWindow()
@@ -4369,10 +4557,8 @@ function createShellWindow(): void {
 // ---- routing: one dispatch function for every open path ----
 
 /**
- * Single source of truth for the open-dialog filter. Includes the still-legacy
- * .ppt binary so it is selectable and surfaces the explicit "not supported"
- * dialog via openDocumentPath instead of being grayed out; .doc/.dot route into
- * the docs import filter.
+ * Single source of truth for the open-dialog filter. .doc/.dot and .ppt route
+ * into the docs/slides import filters (converted copies).
  */
 const OPEN_DIALOG_EXTENSIONS = [
   'docx',
@@ -4808,8 +4994,8 @@ function startQueuedWorkbookNudge(): void {
 
 // ---- home IPC ----
 
-function statEntries(paths: string[]): RecentEntry[] {
-  return statPathEntries(paths, new Set(readStarredFiles()))
+function statEntries(paths: string[]): Promise<RecentEntry[]> {
+  return statPathEntriesAsync(paths, new Set(readStarredFiles()))
 }
 
 function registerHomeIpc(): void {
@@ -4864,7 +5050,7 @@ function registerHomeIpc(): void {
 
   ipcMain.handle(HOME_CHANNELS.getAppVersion, (): string => app.getVersion())
 
-  ipcMain.handle(HOME_CHANNELS.recents, (_event, query: unknown): RecentPage =>
+  ipcMain.handle(HOME_CHANNELS.recents, (_event, query: unknown): Promise<RecentPage> =>
     pageRecentPaths(readRecentFiles(), query, new Set(readStarredFiles())),
   )
 
@@ -5021,7 +5207,7 @@ function registerHomeIpc(): void {
   )
 
   // Starred files sort by mtime, which requires stat-ing them all first; they are hand-picked and few, so this is fine
-  ipcMain.handle(HOME_CHANNELS.starred, (_event, query: unknown): RecentPage => {
+  ipcMain.handle(HOME_CHANNELS.starred, async (_event, query: unknown): Promise<RecentPage> => {
     const { offset, limit, ext } = normalizeRecentQuery(query)
     // the Starred view's group pills scope the whole query (totals included)
     const raw = (query && typeof query === 'object' ? query : {}) as { group?: unknown }
@@ -5029,7 +5215,7 @@ function registerHomeIpc(): void {
     const groupOf = readStarredGroupMap()
     const paths = readStarredFiles()
     const scoped = group ? paths.filter((p) => groupOf.get(p) === group) : paths
-    const all = statEntries(scoped)
+    const all = (await statEntries(scoped))
       .sort((a, b) => b.mtimeMs - a.mtimeMs)
       .map((entry) => {
         const g = groupOf.get(entry.path)
@@ -5049,7 +5235,7 @@ function registerHomeIpc(): void {
     setStarredGroup(stringPaths(paths), typeof group === 'string' && group ? group : null)
   })
 
-  ipcMain.handle(HOME_CHANNELS.statPaths, (_event, paths: unknown): RecentEntry[] =>
+  ipcMain.handle(HOME_CHANNELS.statPaths, (_event, paths: unknown): Promise<RecentEntry[]> =>
     statEntries(capStatPaths(stringPaths(paths))),
   )
 
@@ -5132,7 +5318,8 @@ function registerHomeIpc(): void {
   })
 
   ipcMain.handle(HOME_CHANNELS.revealPath, (_event, path: unknown) => {
-    if (typeof path === 'string' && existsSync(path)) shell.showItemInFolder(path)
+    if (typeof path === 'string' && isRevealablePath(path) && existsSync(path))
+      shell.showItemInFolder(path)
   })
 
   ipcMain.handle(
@@ -5193,14 +5380,8 @@ function registerHomeIpc(): void {
     removeStarredFiles(list)
   })
 
-  ipcMain.handle(HOME_CHANNELS.openTrash, () => {
-    if (process.platform === 'darwin') {
-      void shell.openPath(join(app.getPath('home'), '.Trash'))
-    } else if (process.platform === 'win32') {
-      spawn('explorer.exe', ['shell:RecycleBin'], { detached: true }).unref()
-    } else {
-      void shell.openPath(join(app.getPath('home'), '.local', 'share', 'Trash', 'files'))
-    }
+  ipcMain.handle(HOME_CHANNELS.openTrash, async () => {
+    await openTrash()
   })
 
   ipcMain.handle(HOME_CHANNELS.openHelp, () => {
@@ -5313,6 +5494,11 @@ function registerHomeIpc(): void {
     writeLegacyImportPrompt(APP_SETTINGS_PATH(), prompt !== false)
     return readLegacyImportPrompt(APP_SETTINGS_PATH())
   })
+  ipcMain.handle(HOME_CHANNELS.getPdfDefaultZoom, () => readPdfDefaultZoom(APP_SETTINGS_PATH()))
+  ipcMain.handle(HOME_CHANNELS.setPdfDefaultZoom, (_event, zoom: unknown) => {
+    writePdfDefaultZoom(APP_SETTINGS_PATH(), sanitizePdfDefaultZoom(zoom))
+    return readPdfDefaultZoom(APP_SETTINGS_PATH())
+  })
 
   ipcMain.handle(HOME_CHANNELS.getAutoSaveDefault, (): AutoSaveDefault => currentAutoSaveDefault())
   ipcMain.handle('app:get-auto-save-default', (): AutoSaveDefault => currentAutoSaveDefault())
@@ -5327,6 +5513,18 @@ function registerHomeIpc(): void {
       autoSaveDefaultUpdatedAt: next.updatedAt,
     })
     for (const wc of webContents.getAllWebContents()) wc.send('app:auto-save-default-changed', next)
+  })
+
+  ipcMain.handle(HOME_CHANNELS.getCsvImportLimit, (): number => currentCsvImportLimitMb())
+  ipcMain.handle('app:get-csv-import-limit', (): number => currentCsvImportLimitMb())
+  ipcMain.handle(HOME_CHANNELS.setCsvImportLimit, (_event, mb: unknown) => {
+    if (typeof mb !== 'number' || !Number.isInteger(mb)) return
+    if (!CSV_IMPORT_LIMIT_CHOICES_MB.includes(mb as (typeof CSV_IMPORT_LIMIT_CHOICES_MB)[number])) {
+      return
+    }
+    if (mb === currentCsvImportLimitMb()) return
+    writeAppSettings(APP_SETTINGS_PATH(), { csvImportLimitMb: mb })
+    setDelimitedImportLimit(mb * 1024 * 1024)
   })
 
   ipcMain.handle(HOME_CHANNELS.getTabSleepEnabled, () => tabSleepEnabled())
@@ -5418,6 +5616,7 @@ function registerHomeIpc(): void {
       spellcheck: 'spellcheck' in raw ? raw.spellcheck : prev.spellcheck,
       openInNewDocs: 'openInNewDocs' in raw ? raw.openInNewDocs : prev.openInNewDocs,
       showAiSidebar: 'showAiSidebar' in raw ? raw.showAiSidebar : prev.showAiSidebar,
+      showAiAskTrigger: 'showAiAskTrigger' in raw ? raw.showAiAskTrigger : prev.showAiAskTrigger,
     })
     if (sameAiPanelPrefs(next, prev)) return prev
     cachedAiPanelPrefs = next
@@ -5428,6 +5627,7 @@ function registerHomeIpc(): void {
       aiPanelSpellcheck: next.spellcheck,
       aiPanelOpenInNewDocs: next.openInNewDocs,
       aiPanelShowSidebar: next.showAiSidebar,
+      aiPanelShowAskTrigger: next.showAiAskTrigger,
     })
     for (const wc of webContents.getAllWebContents()) wc.send('app:ai-panel-prefs-changed', next)
     return next
@@ -5772,6 +5972,57 @@ function detachTabToWindow(id: string): void {
   if (!record) return
   const win = createDetachedEditorWindow({ ...record, applyMenuFor })
   win.focus()
+}
+
+/** Docs' Arrange All: the shell window is a tile only while its active tab is a Docs document */
+function arrangeDocsWindows(from: WebContents): void {
+  const fromWindow = detachedWindowForWebContents(from.id) ?? shellWindow
+  if (!fromWindow || fromWindow.isDestroyed()) return
+  let shellShowsDocs = false
+  if (tabManager && shellWindow && !shellWindow.isDestroyed()) {
+    for (const tab of tabManager.list()) {
+      if (tab.kind !== 'docs') continue
+      if (tab.active) {
+        shellShowsDocs = true
+        continue
+      }
+      tabManager.webContentsForTab(tab.id)
+      const record = tabManager.detachTab(tab.id)
+      if (record) createDetachedEditorWindow({ ...record, applyMenuFor })
+    }
+  }
+  const windows = [
+    ...(shellShowsDocs && shellWindow ? [shellWindow] : []),
+    ...detachedWindowsOf('docs'),
+  ]
+  const ordered = [fromWindow, ...windows.filter((w) => w !== fromWindow)].filter((w) =>
+    windows.includes(w),
+  )
+  if (shellShowsDocs && shellWindow && windows.length > 1)
+    shellBoundsBeforeArrange ??= shellWindow.getBounds()
+  tileWindows(ordered, screen.getDisplayMatching(fromWindow.getBounds()).workArea, holdDocking)
+  fromWindow.focus()
+  if (!from.isDestroyed()) from.focus()
+}
+
+/** the shell window's place before Arrange All made a tile of it */
+let shellBoundsBeforeArrange: Rectangle | null = null
+
+/** the inverse of Arrange All: every detached Docs window becomes a tab of the shell window again */
+function gatherDocsWindows(from: WebContents): void {
+  const tabs = releaseDetachedOf('docs')
+  const manager = ensureTabManager()
+  for (const tab of tabs) manager.attachTab(tab)
+  const win = shellWindow
+  if (!win || win.isDestroyed()) return
+  if (shellBoundsBeforeArrange && tabs.length > 0) win.setBounds(shellBoundsBeforeArrange)
+  shellBoundsBeforeArrange = null
+  const fromTab = from.isDestroyed() ? undefined : manager.tabIdForWebContents(from.id)
+  if (fromTab) manager.activateTab(fromTab)
+  if (win.isMinimized()) win.restore()
+  win.show()
+  win.focus()
+  if (!from.isDestroyed()) from.focus()
 }
 
 /** Tear-off: the tab leaves the strip for a window created under the held
@@ -7088,6 +7339,9 @@ async function runHeadlessExportEntry(
 }
 
 app.whenReady().then(async () => {
+  // the editors take the ceiling before anything can be opened: the headless
+  // export opens documents too
+  setDelimitedImportLimit(currentCsvImportLimitMb() * 1024 * 1024)
   // first scan waits for the windows to come up; later ones follow folder changes
   setTimeout(() => ensureFileIndexer()?.refresh(), 4000)
   installRendererProtocol({
@@ -7101,6 +7355,8 @@ app.whenReady().then(async () => {
     help: join(__dirname, '../renderer'),
   })
   if (headlessArgv.kind !== 'none') {
+    // Headless renderers use the same shared language as editor tabs.
+    currentLang()
     await runHeadlessExportEntry(headlessArgv)
     return
   }
@@ -7143,6 +7399,21 @@ app.whenReady().then(async () => {
     if (!loadGenofficeAuth()) return
     for (const w of BrowserWindow.getAllWindows())
       w.webContents.send(HOME_CHANNELS.accountLoginEvent, { phase: 'success' })
+  })
+  // A browser-approved login is otherwise invisible from the app: the approval
+  // happens in the system browser and nothing navigates back. Pull the window
+  // the user left back to the front and tell every view, so the surface they
+  // logged in from — an editor AI panel included — confirms the login at once.
+  setGenofficeLoginSuccessListener(() => {
+    if (shellWindow && !shellWindow.isDestroyed()) {
+      if (shellWindow.isMinimized()) shellWindow.restore()
+      shellWindow.show()
+      shellWindow.moveTop()
+      shellWindow.focus()
+    }
+    app.focus({ steal: true })
+    for (const wc of webContents.getAllWebContents())
+      if (!wc.isDestroyed()) wc.send('ai:gsk-login-landed')
   })
   // a registry left by a crashed instance must not block apexoffice writes
   ownsOpenDocumentsRegistry = true
@@ -7306,18 +7577,7 @@ app.whenReady().then(async () => {
     })
   }
 
-  const launchSettings = readAppSettings(APP_SETTINGS_PATH())
-  const launchPaths = launchPathsWithLastSession(launchSettings, pendingLaunchPaths)
-  if (launchSettings[LAST_SESSION_DOCUMENTS_KEY] !== undefined) {
-    // consumed before opening: a document that crashes the app during restore
-    // must not be restored again at the next launch
-    try {
-      writeAppSettings(APP_SETTINGS_PATH(), { [LAST_SESSION_DOCUMENTS_KEY]: undefined })
-    } catch (err) {
-      console.warn('[shell] could not clear the session documents:', err)
-    }
-  }
-  openLaunchPaths(launchPaths)
+  openLaunchPaths(consumeLastSessionPaths(pendingLaunchPaths))
   pendingLaunchPaths = []
   for (const recoverAs of pendingUnsavedNewRecoveries()) void newSheetTab(recoverAs)
 
@@ -7339,9 +7599,27 @@ app.whenReady().then(async () => {
   )
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createShellWindow()
+    if (BrowserWindow.getAllWindows().length > 0) return
+    createShellWindow()
+    openLaunchPaths(consumeLastSessionPaths([]))
   })
 })
+
+/** the last session's documents ahead of the launch paths, forgotten as they are read */
+function consumeLastSessionPaths(launchPaths: readonly string[]): string[] {
+  const settings = readAppSettings(APP_SETTINGS_PATH())
+  const paths = launchPathsWithLastSession(settings, launchPaths)
+  if (settings[LAST_SESSION_DOCUMENTS_KEY] !== undefined) {
+    // consumed before opening: a document that crashes the app during restore
+    // must not be restored again at the next launch
+    try {
+      writeAppSettings(APP_SETTINGS_PATH(), { [LAST_SESSION_DOCUMENTS_KEY]: undefined })
+    } catch (err) {
+      console.warn('[shell] could not clear the session documents:', err)
+    }
+  }
+  return paths
+}
 
 app.on('window-all-closed', () => {
   // A headless export destroys its hidden window between documents; only

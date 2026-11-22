@@ -22,6 +22,7 @@ export const LAUNCHABLE_EXTS = [
   'ods',
   'ots',
   'pptx',
+  'ppt',
   'odp',
   'otp',
   'ppsx',
@@ -45,7 +46,7 @@ export const LAUNCHABLE_EXTS = [
 ] as const
 
 const SUPPORTED_LAUNCH_RE = new RegExp(`\\.(${LAUNCHABLE_EXTS.join('|')})$`, 'i')
-const UNSUPPORTED_LAUNCH_RE = /\.(ppt|pps|pages|key|numbers)$/i
+const UNSUPPORTED_LAUNCH_RE = /\.(pps|pages|key|numbers)$/i
 
 interface LaunchPayload {
   launchPaths?: unknown

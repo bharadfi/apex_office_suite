@@ -1418,6 +1418,77 @@ html.genoffice-popover-open .ribbon-tabs {
   color: inherit;
 }
 
+/* Tight band (ribbon-fit.ts): set only while the band would otherwise scroll,
+ * before any group drops its labels. Where everything fits none of this
+ * applies, so the band keeps the metrics it shares with Docs and Slides. The
+ * compact density (⌥⌘K) keeps its own tuned metrics. Only horizontal values
+ * change, so the 80px band height is untouched. */
+.excel-header:not(.ribbon-compact) .ribbon.ribbon-tight {
+  gap: 0;
+  padding-inline: 6px;
+}
+
+.excel-header:not(.ribbon-compact) .ribbon-tight > .ribbon-group:not(:has(.ai-entry)) {
+  padding-inline: 5px;
+}
+
+.excel-header:not(.ribbon-compact) .ribbon-tight .ribbon-tool.large,
+.excel-header:not(.ribbon-compact) .ribbon-tight .ribbon-tool.accent {
+  min-width: 0;
+  padding-inline: 5px;
+}
+
+.excel-header:not(.ribbon-compact) .ribbon-tight .select-like:not(.compact) {
+  min-width: 88px;
+}
+
+.excel-header:not(.ribbon-compact) .ribbon-tight .inline-tools {
+  gap: 2px;
+}
+
+.excel-header:not(.ribbon-compact) .ribbon-tight .inline-tools > button:not(.labeled) {
+  width: 24px;
+  min-width: 24px;
+}
+
+.excel-header:not(.ribbon-compact) .ribbon-tight .inline-tools button.labeled {
+  gap: 4px;
+  padding-inline: 5px;
+}
+
+.excel-header:not(.ribbon-compact) .ribbon-tight .menu-select > .select-like.compact {
+  gap: 3px;
+  padding-inline: 5px;
+}
+
+/* Adaptive fit, second step: a group that still does not fit shows its small
+ * labeled buttons and menu triggers as icons only. font-size 0 takes the
+ * label text out without touching the markup; the glyphs are px-sized SVGs,
+ * and text glyphs get their size back below. data-tip keeps every name on
+ * hover.
+ *
+ * Only controls that carry an icon are compressed: the icon is what is left
+ * to recognise them by. A trigger that shows a value instead of a command
+ * name (Scale to Fit Width / Height: "Automatic", "1 page") has no icon and
+ * keeps its text, and so does a styles row that holds such a dropdown (an
+ * invisible cover dropdown, as on Format as Table, does not count). */
+.ribbon-group.icons-only .inline-tools button.labeled:has(.tool-symbol),
+.ribbon-group.icons-only .menu-select > .select-like.compact:has(.tool-symbol) .menu-select-value,
+.ribbon-group.icons-only
+  .styles-row:has(.tool-symbol):not(:has(.menu-select:not(.menu-select-cover))) {
+  gap: 0;
+  font-size: 0;
+}
+
+.ribbon-group.icons-only
+  .styles-row:has(.tool-symbol):not(:has(.menu-select:not(.menu-select-cover))) {
+  gap: 2px;
+}
+
+.ribbon-group.icons-only .tool-symbol {
+  font-size: 15px;
+}
+
 .menu-select .menu-select-value {
   display: inline;
   min-width: 0;
@@ -1723,6 +1794,37 @@ button.check-item:hover {
   background: var(--surface);
   color: var(--text-primary);
   font-size: 14px;
+}
+
+.workbook-opening-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 240px;
+}
+
+.workbook-opening-bar {
+  width: 240px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+
+.workbook-opening-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 120ms linear;
+}
+
+.workbook-opening-percent {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.workbook-opening-cancel {
+  margin-top: 4px;
 }
 
 .csv-empty-notice {
@@ -4192,6 +4294,16 @@ textarea:focus {
   width: 560px;
 }
 
+/* nine categories are wider than the card: they wrap instead of widening
+   the single grid column (and with it the grid and the actions) past it */
+.icons-dialog .dialog-tabs {
+  flex-wrap: wrap;
+}
+
+.icons-dialog .dialog-tabs button {
+  white-space: nowrap;
+}
+
 .icons-toolbar {
   display: flex;
   gap: 10px;
@@ -5801,6 +5913,22 @@ textarea:focus {
   color-scheme: dark;
 }
 
+/* The right-click menu must never be taller than the window (genoffice#2603).
+ * Univer caps its panel with an inline `max-height` that React writes once,
+ * and a second hook (`useScrollYOverContainer`) erases that inline value the
+ * first time any menu fits — a row/column header menu, or the cell menu in a
+ * tall window. React never writes it back, so the next long cell menu renders
+ * at full height: pinned to the top edge, running off the bottom, with nothing
+ * to scroll. Holding the cap in the stylesheet makes it independent of that
+ * inline value; `!important` also outranks the hook's own fallback, which
+ * measures against the workbook area instead of the window the popup is
+ * positioned in. The panel already scrolls (`overflow-y: auto`) once capped,
+ * and Univer places the popup from the capped height, so it stays on screen.
+ * 16px matches Univer's own 8px viewport padding on each side. */
+.univer-popup > section > .univer-overflow-y-auto {
+  max-height: calc(100vh - 16px) !important;
+}
+
 .ai-msg-undelivered {
   margin-top: 6px;
   display: flex;
@@ -5884,6 +6012,10 @@ textarea:focus {
 
 .app-toast.success .app-toast-icon {
   color: var(--sheets-toast-ok);
+}
+
+.app-toast.info .app-toast-icon {
+  color: var(--accent);
 }
 
 /* Shape gallery dropdown (slides/docs parity: grouped, outline-icon grid) */

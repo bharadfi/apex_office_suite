@@ -19,9 +19,9 @@ export {
   type ContentControlShell,
   type ContentControlSpec,
 } from './content-control'
+export { reconcileGridColumns } from './table-widths'
 export {
   parseDocx,
-  reconcileGridColumns,
   paraCsFormat,
   styleRunFormat,
   type ParseExtras,
@@ -51,9 +51,26 @@ export {
 } from './mail-merge'
 export { assertZipInflatesWithinLimits, assertZipWithinLimits, DOCX_ZIP_LIMITS } from './zip-load'
 export { LAZY_MEDIA_SCHEME, isLazyMediaPart, lazyMediaUrl, parseLazyMediaUrl } from './lazy-media'
+export {
+  croppedPixelRect,
+  planMediaReduction,
+  rasterInfo,
+  reducedPixelSize,
+  replaceDocxParts,
+  type MediaCrop,
+  type MediaKeepReason,
+  type MediaReductionPlan,
+  type MediaReductionTarget,
+  type RasterInfo,
+} from './media-reduce'
 export { setAltChunkHtmlConverter, type AltChunkHtmlConverter } from './alt-chunk'
 export { tocLevelOf } from './parse-fields'
-export { EMPTY_EA_THEME_FONT, mergeStyleBorders, themeLangEaSlotFont } from './parse-props'
+export {
+  EMPTY_EA_THEME_FONT,
+  mergeStyleBorders,
+  shdPatternDisplay,
+  themeLangEaSlotFont,
+} from './parse-props'
 export {
   APP_PROPERTIES_PATH,
   APP_PROPERTY_KEYS,
@@ -63,6 +80,7 @@ export {
   NEW_DOCUMENT_APP_VERSION,
   NEW_DOCUMENT_TEMPLATE,
   applyPropertyChanges,
+  customPropertyKind,
   emptyDocumentProperties,
   newDocumentAppPropertiesXml,
   newDocumentCorePropertiesXml,
@@ -76,6 +94,7 @@ export {
   patchCustomPropertiesXml,
   readDocumentProperties,
   w3cdtfStamp,
+  type CustomPropertyKind,
   type DocumentProperties,
   type PropertyChanges,
   type PropertyValue,
@@ -84,6 +103,7 @@ export {
   saveDocx,
   findChartWorkbookPath,
   missingHeadingLevels,
+  nextBookmarkIdAllocator,
   readDocxPartBase64,
   type SaveBlock,
   type SaveOptions,
@@ -95,11 +115,21 @@ export {
   applyRemoveParts,
   planRemoveParts,
   removePartsRefusalMessage,
+  removePartsRefusalMessageFor,
   type RemovePartsKind,
   type RemovePartsOptions,
   type RemovePartsPlan,
   type RemovedPartBinding,
 } from './remove-parts'
+export {
+  seqFieldsOfXml,
+  parseSeqInstruction,
+  rewriteSeqResultsXml,
+  unreliableSeqLabels,
+  SeqCounter,
+  type SeqInstruction,
+  type XmlSeqField,
+} from './seq-fields'
 export {
   TABLE_HEADER_FILL,
   applyImageWrap,
@@ -114,12 +144,28 @@ export {
   type AnchoredTextboxOptions,
   type TextboxContentParagraph,
   generateCaptionXml,
+  formatSeqNumber,
+  SEQ_NUMBER_FORMATS,
+  type SeqNumberFormat,
+  type CaptionOptions,
   generateIndexFieldXml,
   generateParagraphXml,
   mergeRPrModel,
   generateTableModelXml,
   generateTableXml,
   generateTocFieldXml,
+  generateTableOfFiguresFieldXml,
+  generateTableOfAuthoritiesFieldXml,
+  generateRubyXml,
+  setRubyReadingXml,
+  setRubyBaseXml,
+  setRubyAlignXml,
+  rubyAlignOf,
+  rubyReadingStyleOf,
+  setRubyReadingStyleXml,
+  type RubyReadingStyle,
+  RUBY_ALIGNS,
+  type RubyAlign,
   mergePPrFormat,
   setPPrChange,
   stripPPrChange,
@@ -130,6 +176,12 @@ export {
   paraMarkColor,
   stripParaMarkColor,
   patchFieldParagraphXml,
+  patchFieldTablePageXml,
+  generateFieldTableXml,
+  type FieldTableLayout,
+  type FieldTableLeader,
+  type FieldTableLine,
+  type FieldTablePageRun,
   patchImageParagraphXml,
   patchMathTokens,
   patchTableCellTexts,
@@ -151,13 +203,36 @@ export {
   type TextboxParasPatchSet,
   inlinePictureDrawingXml,
   resizeInlinePictureXml,
+  NEW_PICTURE_SVG_SUFFIX,
   NEW_PICTURE_TOKEN_PREFIX,
   type InlinePictureXmlOptions,
   type TableGenOptions,
   type TocEntry,
 } from './generate'
+export { ENCLOSURES, eqLayoutOf } from './eq-field'
+export {
+  fieldInstructionOfXml,
+  fieldSwitchArg,
+  formatFieldInstruction,
+  parseFieldInstruction,
+  withFieldSwitch,
+  type FieldInstruction,
+  type FieldSwitch,
+} from './field-switches'
+export {
+  groupAnchoredDrawings,
+  maxDrawingId,
+  regroupDrawings,
+  splitGroupParagraph,
+  ungroupAnchoredDrawing,
+  type DrawingGroup,
+  type GroupMember,
+  type SplitGroupParagraph,
+  type UngroupedMember,
+} from './group-drawings'
 export {
   buildChartPartXml,
+  scatterXValues,
   buildChartWorkbookXlsxBase64,
   patchChartWorkbookXlsxBase64,
   parseChartPartXml,
@@ -176,7 +251,23 @@ export {
   ommlToLatex,
   ommlToMathML,
 } from './math'
-export { patchHfPicturesXml, patchRunPictureXml, type RunPictureGeometry } from './run-picture'
+export {
+  DEFAULT_MATH_BREAKS,
+  DEFAULT_MATH_PR,
+  readMathPr,
+  type MathJc,
+  type MathLimLoc,
+  type MathLimits,
+  type MathPr,
+  type MathPrEdit,
+} from './math-pr'
+export {
+  patchHfPicturesXml,
+  patchRunPictureXml,
+  runPictureAltOf,
+  setRunPictureAlt,
+  type RunPictureGeometry,
+} from './run-picture'
 export { scanBody, type BodyElement, type BodyScan } from './scan'
 export {
   BLANK_BULLET_NUM_ID,
@@ -195,6 +286,7 @@ export {
 export {
   DEFAULT_SECTION,
   applySectionSettings,
+  DEFAULT_LINE_PITCH_TWIPS,
   applyPageNumType,
   applySectionStartType,
   applyTitlePg,
@@ -208,7 +300,7 @@ export {
   notePropsFromXml,
   xmlFlagOn,
 } from './section'
-export { nextNoteId, parseNotesXml, type NoteKind } from './notes'
+export { nextNoteId, parseNoteSeparator, parseNotesXml, type NoteKind } from './notes'
 export {
   isPictureWatermark,
   pictureWatermarkPreviewImage,
@@ -230,7 +322,15 @@ export {
   type StyleHeadingInfo,
   type StyleParaProps,
   type StyleRunProps,
+  upsertStyleXml,
 } from './style-upsert'
+export {
+  listStylesXml,
+  readDocxStylesXml,
+  styleCopyUpserts,
+  writeDocxStyles,
+  type OrganizerStyle,
+} from './style-organizer'
 export {
   INK_NAME_PREFIX,
   anchoredInkRunXml,
@@ -238,7 +338,20 @@ export {
   injectInkRunsIntoParagraph,
   stripInkRuns,
 } from './ink'
-export { bibliographyLine, citationText, parseSourcesXml } from './sources'
+export {
+  bibliographyEntries,
+  bibliographyFieldXml,
+  citationFieldOf,
+  citationInstruction,
+  citationStyleOfXml,
+  citationText,
+  CITATION_STYLES,
+  formatCitation,
+  parseSourcesXml,
+  sourceAuthors,
+  type CitationSegment,
+  type CitationStyleId,
+} from './sources'
 export { parseZoteroDocumentDataXml, patchZoteroDocumentDataXml } from './zotero-doc-props'
 export { readThemeColors, readThemeFonts } from './theme'
 export {
@@ -273,6 +386,12 @@ export {
 
 export { previewFontSettings } from './font-settings'
 export {
+  replaceFontsInDocx,
+  replaceFontsXml,
+  writeFontConversions,
+  type WrittenFontConversion,
+} from './font-replace'
+export {
   applyRevisionResolutions,
   applyTrackedChangesXml,
   cleanMoveRangeMarkers,
@@ -301,14 +420,23 @@ export {
   type TableCond,
 } from './resolve-props'
 export {
+  alignTexts,
   compareBlocks,
   compareDocuments,
   DEFAULT_COMPARE_AUTHOR,
+  DEFAULT_COMPARE_SETTINGS,
+  diffText,
+  diffTrackedText,
+  type TextAlignment,
+  type TextChunk,
+  type TrackedState,
   type CompareGranularity,
   type CompareIgnore,
   type CompareOptions,
   type CompareResult,
+  type CompareSettings,
   type CompareSummary,
+  type TextCompareIgnore,
 } from './compare'
 export { keepsHangulKanaSingle } from './parse-block-passes'
 export {
@@ -323,3 +451,13 @@ export {
   textHasHangulChars,
   type CharClass,
 } from './char-class'
+export * from './table-width-thresholds'
+export {
+  docxAsTemplate,
+  templateAsDocx,
+  templateThumbnail,
+  withTemplateThumbnail,
+} from './template'
+export { carriableBlockXml, docxRootNamespaces } from './carry-block'
+export { docxBookmarkNames, docxBookmarkRange, type BookmarkRange } from './bookmark-range'
+export { buildChartexPartXml } from './chartex-build'

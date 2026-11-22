@@ -12,22 +12,18 @@ import { textParaLineBox } from '../text-layout/para-line-box'
 import {
   asciiOnlyCjkFace,
   autoSpacingPt,
-  cjkDeclaredLineFactor,
   cjkScriptRanges,
-  cssCsFontFamily,
   cssExactLineCap,
-  cssFontFamily,
   cssGridSpacingPt,
   cssLeadTop,
   cssLineHeight,
-  cssRunFontFamily,
-  cutAdjustedAlias,
   emptyEaSlotHangulFactor,
   facesDiffer,
   fontBoxCss,
   isCjkFontName,
-  isEaLayoutFace,
-  lineHeightFactor,
+  isWhitespaceRun,
+  scaledLatinLineFactor,
+  textInkIsEmoji,
   nonCjkInkRanges,
   paraLineFactorCss,
   runLatinFactorFaces,
@@ -37,11 +33,20 @@ import {
   textHasComplexScript,
   textHasHangul,
   textHasLatinInk,
+} from '../line-metrics'
+import {
+  cjkDeclaredLineFactor,
+  cssCsFontFamily,
+  cssFontFamily,
+  cssRunFontFamily,
+  cutAdjustedAlias,
+  isEaLayoutFace,
+  lineHeightFactor,
   inheritedMarkFace,
   inheritedSlotFace,
   latinViaEastAsiaSlotOn,
   runSlotFaces,
-} from '../line-metrics'
+} from '../text-layout/font-rules'
 import type {
   NoteRun,
   ParaFormat,
@@ -57,13 +62,17 @@ import {
   PARA_BORDER_SHADOW,
   paraBorderCss,
   paraBorderLinesWithPad,
+  paraBorderOutset,
+  paraBorderOutsetDecls,
   paraBorderPadding,
   paraBorderPaddingDecls,
   paraBorderShadowDecls,
+  type ParaBorderSideLines,
 } from './para-border-css'
 import { paraFrameCss } from './para-frame'
-import { DK_SIDE, dkBackground, dkBorder } from './dark-page'
+import { DK_SIDE, dkBackground, dkBackgroundImage, dkBorder } from './dark-page'
 import { fillInk } from './shading-ink'
+import { shadingHatchCss } from './shading-hatch'
 import { quarterTurnInsetPx } from './image-rotation'
 
 export type LayoutRunAttrs = {
@@ -76,6 +85,8 @@ export type LayoutRunAttrs = {
   csSize?: number | null
   eaSlotEmpty?: boolean | null
   rawRPr?: string | null
+  /** w:w character scaling, percent */
+  charScalePct?: number | null
 }
 
 /** one inline leaf of a paragraph, in document order */
@@ -179,10 +190,13 @@ export function markSizeHalfPoints(
 export function strutHalfPoints(para: LayoutPara): { halfPoints: number; mixed: boolean } | null {
   let min: number | null = null
   let mixed = false
-  for (const r of para.runs) {
-    if (r.kind !== 'text') continue
-    // space-only runs never size a line (Word probe 2026-09-11)
-    if (SPACE_ONLY_RE.test(r.text)) continue
+  // whitespace never sizes a line beside ink; a tab-only paragraph is content
+  // (a space-only one takes the mark rules)
+  const ink = inkRuns(para)
+  const sizing = ink.length
+    ? ink
+    : para.runs.filter((r) => r.kind === 'text' && !SPACE_ONLY_RE.test(r.text))
+  for (const r of sizing) {
     const sz = markSizeHalfPoints(r.attrs)
     if (sz != null) min = Math.min(min ?? Infinity, sz)
     else if (!r.bare) mixed = true
@@ -210,9 +224,24 @@ export function declaredCjkStrutClass(para: LayoutPara): string | undefined {
   return twoFaces ? 'doc-grid-strut' : undefined
 }
 
-/** text runs that size a line (space-only runs never do, Word probe 2026-09-11) */
+/** the East Asian face the CJK runs of a .doc-grid-strut paragraph declare (its strut
+ *  face): the first run pairing it with another ascii face, else the first declared one
+ *  (a declared-plus-inheriting paragraph has no pair) */
+export function paraStrutEaFace(para: LayoutPara): string | undefined {
+  let declared: string | undefined
+  for (const r of para.runs) {
+    if (r.kind !== 'text' || !textHasCjk(r.text)) continue
+    const ea = r.attrs?.font
+    if (!ea) continue
+    if (facesDiffer(r.attrs?.fontAscii, ea)) return ea
+    if (!declared && isEaLayoutFace(ea)) declared = ea
+  }
+  return declared
+}
+
+/** text runs that size a line (space / tab runs never do, Word probes 2026-09-11, 2026-11-08) */
 function inkRuns(para: LayoutPara): LayoutRun[] {
-  return para.runs.filter((r) => r.kind === 'text' && !SPACE_ONLY_RE.test(r.text))
+  return para.runs.filter((r) => r.kind === 'text' && !isWhitespaceRun(r.text))
 }
 
 /** true when every ink run paints one size (uniform or all inherited) */
@@ -293,14 +322,30 @@ export function paraCutAdjustedClass(para: LayoutPara): string | undefined {
  * Cambria-themed doc whose runs all say Calibri lays out at 1.22, not 1.17);
  * runs inheriting the body face keep the doc var via max().
  */
+const LATIN_SCRIPT_VAR = 'var(--doc-line-factor-latin,1.2)'
+const SCALED_LATIN_SCRIPT_VAR =
+  'var(--doc-line-factor-latin-scaled,var(--doc-line-factor-latin,1.2))'
+const runIsScaled = (r: LayoutRun) => {
+  const pct = r.attrs?.charScalePct
+  return typeof pct === 'number' && pct > 0 && pct !== 100
+}
+
 export function latinParaFactor(para: LayoutPara, scriptVar: string, latinInkOnly = false): string {
   let declaredMax = 0
   let undeclared = false
+  // every inked run carries w:w != 100: the inherited Times face lays out at its
+  // scaled box (scaledLatinLineFactor); a declared face is resolved per run
+  let allScaled = true
   for (const r of para.runs) {
-    if (r.kind !== 'text') continue
+    if (r.kind !== 'text' || isWhitespaceRun(r.text)) continue
     if (latinInkOnly && !textHasLatinInk(r.text)) continue
     // per-line mode lifts an ascii-only CJK face through its own stretches
     if (latinInkOnly && r.attrs && asciiOnlyCjkFace(r.attrs)) continue
+    const scaled = runIsScaled(r)
+    if (!scaled && /\S/.test(r.text)) allScaled = false
+    // fallback glyphs lift their own line (inline-segments symbolFallbacks); an
+    // emoji-only run's declared face draws nothing and lends no box
+    if (textInkIsEmoji(r.text)) continue
     // ascii/hAnsi slot only: Word lays Latin text with the (possibly inherited)
     // ascii face, so an eastAsia-only declaration (attrs.font) must not drag
     // its factor onto a Latin line (EA "Arial Unicode MS" = 1.74, sample 13)
@@ -310,14 +355,23 @@ export function latinParaFactor(para: LayoutPara, scriptVar: string, latinInkOnl
       r.attrs?.csFont,
       r.attrs?.cs,
     )) {
-      if (family) declaredMax = Math.max(declaredMax, lineHeightFactor(family))
+      if (family)
+        declaredMax = Math.max(
+          declaredMax,
+          scaled ? scaledLatinLineFactor(family) : lineHeightFactor(family),
+        )
       else undeclared = true
     }
   }
   // text without rFonts under an East Asian docDefaults language lays out in
   // the inherited eastAsia face (SimSun 1.3), empty paragraphs keep scriptVar
   const inherited = inheritedSlotFace()
-  const inheritedVar = inherited && undeclared ? String(lineHeightFactor(inherited)) : scriptVar
+  const inheritedVar =
+    inherited && undeclared
+      ? String(lineHeightFactor(inherited))
+      : undeclared && allScaled && scriptVar === LATIN_SCRIPT_VAR
+        ? SCALED_LATIN_SCRIPT_VAR
+        : scriptVar
   if (declaredMax <= 0) return inheritedVar
   return undeclared ? `max(${inheritedVar}, ${declaredMax})` : String(declaredMax)
 }
@@ -356,7 +410,7 @@ export function paraComplexScriptFamily(para: LayoutPara): string | null {
 export function paraRunFontFamily(para: LayoutPara): string | null {
   let first: string | null = null
   for (const r of para.runs) {
-    if (r.kind !== 'text') continue
+    if (r.kind !== 'text' || isWhitespaceRun(r.text)) continue
     const ea = r.attrs?.font ? String(r.attrs.font) : null
     const ascii = r.attrs?.fontAscii ? String(r.attrs.fontAscii) : null
     if (!ea && !ascii) return null
@@ -378,7 +432,7 @@ export function paraMixedDeclaredCjk(para: LayoutPara): boolean {
   let declaredCjk = false
   let inherited = false
   for (const r of para.runs) {
-    if (r.kind !== 'text') continue
+    if (r.kind !== 'text' || isWhitespaceRun(r.text)) continue
     const family = r.attrs?.font ?? r.attrs?.fontAscii
     if (!family) inherited = true
     else if (isEaLayoutFace(family)) declaredCjk = true
@@ -533,7 +587,11 @@ const CLIPBOARD_PARA_ATTR_TYPES: Record<string, 'string' | 'number' | 'boolean'>
   spaceAfter: 'number',
   spaceBeforeAuto: 'boolean',
   spaceAfterAuto: 'boolean',
+  styleSpaceBeforeAuto: 'boolean',
+  styleSpaceAfterAuto: 'boolean',
   contextualSpacing: 'boolean',
+  suppressAutoHyphens: 'boolean',
+  mirrorIndents: 'boolean',
   keepNext: 'boolean',
   keepLines: 'boolean',
   widowControl: 'boolean',
@@ -549,6 +607,7 @@ const CLIPBOARD_PARA_ATTR_TYPES: Record<string, 'string' | 'number' | 'boolean'>
   shadingFill: 'string',
   shadingDisplay: 'string',
   shadingClear: 'boolean',
+  shadingPattern: 'string',
   borderReset: 'string',
   frameBox: 'string',
   emptyRunSize: 'number',
@@ -759,6 +818,8 @@ export interface LayoutParaFormat {
   spaceBeforeAuto?: boolean | null
   spaceAfterAuto?: boolean | null
   contextualSpacing?: boolean | null
+  suppressAutoHyphens?: boolean | null
+  mirrorIndents?: boolean | null
   emptyRunSize?: number | null
   emptyRunFont?: string | null
   /** in-flow pictures and nothing else */
@@ -823,7 +884,7 @@ export function lineBoxSpec(
     if (textHasHangul(text) && fmt.wordWrap !== false) {
       styles.push('word-break:keep-all', 'overflow-wrap:anywhere')
     }
-    const box = textParaLineBox(para, { fontBox: true, leadGapZero: true, strut: !note })
+    const box = textParaLineBox(para, { strut: !note })
     const strut = strutHalfPoints(para)
     // strip paragraph: runs without their own w:sz inherit the paragraph /
     // table style's size (hf cells), which .doc-strut-mixed restores through
@@ -972,7 +1033,12 @@ export function lineBoxSpec(
   if (kind === 'body') {
     if (fmt.contextualSpacing === true) classes.push('ctx-sp')
     else if (fmt.contextualSpacing === false) classes.push('ctx-sp-off')
+    if (fmt.mirrorIndents === true) classes.push('doc-mirror-ind')
   }
+  if (fmt.suppressAutoHyphens === true)
+    styles.push('hyphens:manual', '-webkit-hyphens:manual', '--doc-shy:none')
+  // the rule exists only in a document that hyphenates (doc-style-css)
+  else if (fmt.suppressAutoHyphens === false) classes.push('doc-hyphens-on')
   return { classes, styles }
 }
 
@@ -1011,6 +1077,7 @@ export function layoutParaOfRuns(
           sizeHalfPoints: run.sizeHalfPoints ?? null,
           eaSlotEmpty: run.eaSlotEmpty ?? null,
           rawRPr: run.rawRPr ?? null,
+          charScalePct: run.charScalePct ?? null,
         }),
         bare: false,
         bold: !!run.bold,
@@ -1084,9 +1151,13 @@ export function fromRuns(
       indentFirstLineChars: fmt?.directCharIndents?.firstLine ?? null,
       spaceBefore: fmt?.spaceBefore ?? tableStyle('spaceBefore') ?? null,
       spaceAfter: fmt?.spaceAfter ?? tableStyle('spaceAfter') ?? null,
-      spaceBeforeAuto: fmt?.spaceBeforeAuto ?? false,
-      spaceAfterAuto: fmt?.spaceAfterAuto ?? false,
+      spaceBeforeAuto:
+        fmt?.spaceBeforeAuto ?? (fmt?.spaceBefore != null && !!fmt?.effective?.spacing.beforeAuto),
+      spaceAfterAuto:
+        fmt?.spaceAfterAuto ?? (fmt?.spaceAfter != null && !!fmt?.effective?.spacing.afterAuto),
       contextualSpacing: fmt?.contextualSpacing ?? null,
+      suppressAutoHyphens: fmt?.suppressAutoHyphens ?? null,
+      mirrorIndents: fmt?.mirrorIndents ?? null,
       emptyRunSize: fmt?.emptyRunSizeHalfPoints ?? null,
       emptyRunFont: fmt?.emptyRunFontFamily ?? null,
       picOnly,
@@ -1302,9 +1373,11 @@ export function fromPmNode(
       indentFirstLineChars: numOrNull(node.attrs.indentFirstLineChars),
       spaceBefore: numOrNull(node.attrs.spaceBefore ?? tbl?.spaceBefore),
       spaceAfter: numOrNull(node.attrs.spaceAfter ?? tbl?.spaceAfter),
-      spaceBeforeAuto: !!node.attrs.spaceBeforeAuto,
-      spaceAfterAuto: !!node.attrs.spaceAfterAuto,
+      spaceBeforeAuto: !!(node.attrs.spaceBeforeAuto ?? node.attrs.styleSpaceBeforeAuto),
+      spaceAfterAuto: !!(node.attrs.spaceAfterAuto ?? node.attrs.styleSpaceAfterAuto),
       contextualSpacing: node.attrs.contextualSpacing as boolean | null,
+      suppressAutoHyphens: node.attrs.suppressAutoHyphens as boolean | null,
+      mirrorIndents: node.attrs.mirrorIndents as boolean | null,
       emptyRunSize: numOrNull(node.attrs.emptyRunSize),
       emptyRunFont: node.attrs.emptyRunFont ? String(node.attrs.emptyRunFont) : null,
       picOnly,
@@ -1314,7 +1387,11 @@ export function fromPmNode(
   classes.push(...box.classes)
   const styles = box.styles
   if (classes.length > 0) attrs['class'] = classes.join(' ')
-  const shdBg = node.attrs.shadingDisplay ?? node.attrs.shadingFill
+  const hatch = paraHatchCss(node.attrs.shadingPattern)
+  const shdBg = hatch
+    ? node.attrs.shadingFill
+    : (node.attrs.shadingDisplay ?? node.attrs.shadingFill)
+  if (hatch) styles.push(`background-image:${hatch}`, dkBackgroundImage(hatch))
   // authored colors stay the declaration; the --dk-* twins feed the dark page (dark-page.ts)
   if (shdBg)
     styles.push(
@@ -1325,7 +1402,8 @@ export function fromPmNode(
     )
   else if (node.attrs.shadingClear)
     styles.push('background-color:transparent', '--pbdr-fill:transparent')
-  const ink = fillInk(shdBg ? String(shdBg) : null)
+  const inkFill = node.attrs.shadingDisplay ?? shdBg
+  const ink = fillInk(inkFill ? String(inkFill) : null)
   if (ink) attrs['data-ink'] = ink
   const borderPad = parseJsonAttr<Partial<Record<'t' | 'b' | 'l' | 'r', number>>>(
     node.attrs.borderPad,
@@ -1343,9 +1421,7 @@ export function fromPmNode(
   if (node.attrs.borders || borderPad) {
     const borders = String(node.attrs.borders ?? '')
     const borderLines = paraBorderLinesWithPad(
-      parseJsonAttr<Partial<Record<'t' | 'b' | 'l' | 'r', { color?: string; szPt?: number }>>>(
-        node.attrs.borderLines,
-      ),
+      parseJsonAttr<ParaBorderSideLines>(node.attrs.borderLines),
       borderPad,
     )
     for (const side of ['top', 'bottom', 'left', 'right'] as const) {
@@ -1361,6 +1437,15 @@ export function fromPmNode(
       delete padding.paddingRight
     }
     styles.push(...paraBorderPaddingDecls(padding), ...paraBorderShadowDecls(borderLines))
+    const outset = paraBorderOutset(borders, borderLines)
+    if (outset)
+      styles.push(
+        ...paraBorderOutsetDecls(styles, outset, {
+          rtl: styles.includes('direction:rtl'),
+          list: listGeometry,
+          anchorHost,
+        }),
+      )
   }
   // a positioned frame (below) models the same w:framePr; frameBox only covers frames without a width
   if (node.attrs.frameBox && !node.attrs.frame)
@@ -1395,6 +1480,11 @@ export function fromPmNode(
     attrs['data-ppr-change'] = 'true'
   }
   return { classes, styles, attrs }
+}
+
+function paraHatchCss(raw: unknown): string | null {
+  const pattern = parseJsonAttr<{ val?: string; color?: string }>(raw)
+  return typeof pattern?.val === 'string' ? shadingHatchCss(pattern.val, pattern.color) : null
 }
 
 function parseJsonAttr<T>(raw: unknown): T | undefined {

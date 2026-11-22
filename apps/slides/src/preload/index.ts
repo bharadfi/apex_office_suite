@@ -93,6 +93,7 @@ import type {
   ExportImagesOp,
   SavePictureOp,
   ExportPdfOp,
+  VideoFileWrite,
   PrintSlidesOp,
   PrinterInfo,
   PrinterOption,
@@ -349,6 +350,12 @@ const api: SlidesApi = {
   exportImages: (op: ExportImagesOp) => ipcRenderer.invoke('slides:export-images', op),
   pickExportPdfPath: (defaultName: string) =>
     ipcRenderer.invoke('slides:pick-export-pdf-path', defaultName),
+  pickExportVideoPath: (defaultName: string) =>
+    ipcRenderer.invoke('slides:pick-export-video-path', defaultName),
+  videoFileOpen: (path: string) => ipcRenderer.invoke('slides:video-file-open', path),
+  videoFileWrite: (op: VideoFileWrite) => ipcRenderer.invoke('slides:video-file-write', op),
+  videoFileClose: (id: number, discard: boolean) =>
+    ipcRenderer.invoke('slides:video-file-close', id, discard),
   savePicture: (op: SavePictureOp) => ipcRenderer.invoke('slides:save-picture', op),
   exportPdf: (op: ExportPdfOp) => ipcRenderer.invoke('slides:export-pdf', op),
   printSlides: (op: PrintSlidesOp) => ipcRenderer.invoke('slides:print', op),
@@ -443,6 +450,11 @@ const api: SlidesApi = {
   aiStreamCancel: (requestId: string) => ipcRenderer.invoke('ai:stream-cancel', requestId),
   aiGskStatus: (withEmail?: boolean) => ipcRenderer.invoke('ai:gsk-status', withEmail),
   aiGskLogin: () => ipcRenderer.invoke('ai:gsk-login'),
+  onGskLoginLanded: (handler: () => void) => {
+    const listener = () => handler()
+    ipcRenderer.on('ai:gsk-login-landed', listener)
+    return () => ipcRenderer.removeListener('ai:gsk-login-landed', listener)
+  },
   aiLogRunFailure: (entry: AiRunFailure) => ipcRenderer.invoke('ai:log-run-failure', entry),
   webSearch: (query: string, maxResults?: number) =>
     ipcRenderer.invoke('ai:web-search', query, maxResults),

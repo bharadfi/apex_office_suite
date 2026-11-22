@@ -13,6 +13,7 @@ import { UniverSheetsFormulaPlugin } from '@univerjs/sheets-formula'
 import '@univerjs/sheets-formula/facade'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
+import { installExcel365Functions } from '../src/renderer/excel-365-functions'
 import { installExcelFixes } from '../src/renderer/excel-fixes'
 import { installExtraFunctions } from '../src/renderer/extra-functions'
 
@@ -253,6 +254,7 @@ describe('Excel correctness pass', () => {
       sheets: { s1: { id: 's1', name: 'S', rowCount: cases.length + 10, columnCount: 12, cellData: { 0: { 2: { v: 1 } }, 1: { 2: { v: 2 } }, 2: { 2: { v: 3 } }, 3: { 2: { v: 4 } }, 4: { 2: { v: 5 } } } } },
     })
     installExtraFunctions({ univer } as never)
+    installExcel365Functions({ univer } as never)
     installExcelFixes({ univer } as never)
     await new Promise((resolve) => setTimeout(resolve, 50))
     api = FUniver.newAPI(univer)

@@ -44,6 +44,8 @@ export interface AccessibilityCheck {
 /** largest slice readFileChunk hands over IPC; the renderer loops over them */
 export const PDF_READ_CHUNK_BYTES = 8 * 1024 * 1024
 
+export type PdfDefaultZoom = 'width' | 'page' | 'last'
+
 export const PDF_CHANNELS = {
   readPageLabels: 'pdf:read-page-labels',
   signatureDisplayCopy: 'pdf:signature-display-copy',
@@ -86,6 +88,7 @@ export const PDF_CHANNELS = {
   setPageSize: 'pdf:set-page-size',
   splitPages: 'pdf:split-pages',
   cropPages: 'pdf:crop-pages',
+  restoreFile: 'pdf:restore-file',
   exportImages: 'pdf:export-images',
   convertOffice: 'pdf:convert-office',
   createDocument: 'pdf:create-document',
@@ -105,6 +108,7 @@ export const PDF_CHANNELS = {
   speechPause: 'pdf:speech-pause',
   speechStop: 'pdf:speech-stop',
   speechState: 'pdf:speech-state',
+  getDefaultZoom: 'pdf:get-default-zoom',
   dirtyChanged: 'pdf:dirty-changed',
   closeSaveRequest: 'pdf:close-save-request',
   closeSaveResult: 'pdf:close-save-result',
@@ -121,6 +125,7 @@ export const PDF_CHANNELS = {
   languageChanged: 'app:language-changed',
   getTheme: 'app:get-theme',
   themeChanged: 'app:theme-changed',
+  authorNameChanged: 'app:author-name-changed',
 } as const
 
 export const VISUAL_SIGNATURE_CONTENT_PREFIX = 'GenOffice visual signature field: '
@@ -505,6 +510,11 @@ export interface TextEditInput {
   oldText: string
   /** Replacement; '\n' splits it into stacked lines (one text object per line) */
   newText: string
+  /** Rebuild the replaced run as visible text (the OCR bake layer's objects are
+      render mode 3 with a white fill, so an edit that keeps them can never be
+      seen). Forces the full-redraw path and defaults the fill to black when the
+      caller sends no color; absent = keep the run's own visibility. */
+  reveal?: boolean
   /** Original run's font size in PDF pt (fallback sizing for the rebuilt object) */
   fontSize: number
   /** User-chosen size in PDF pt; absent = keep the original run's size */
@@ -610,6 +620,10 @@ export interface TextEditValidation {
   /** Base fill color of the matched run (its first object in reading order), for
       display while editing — a uniformly colored run has no colorRuns to seed from */
   baseColor?: [number, number, number]
+  /** The matched run draws nothing (render mode 3): the OCR bake layer's
+      invisible form. The reveal toggle follows the data, so a scan that was
+      recognized, saved and reopened still offers it. */
+  invisible?: boolean
 }
 
 /** Curated fonts selectable for rebuilt text runs. Single-face .ttf on every platform we
@@ -698,6 +712,9 @@ export interface StaticFormFillRecord {
 }
 
 /** A pending area selected for permanent native PDF redaction. PDF user space, y up. */
+/** Max redaction rects per request: prevents 100k-rect DoS on native redact. */
+export const MAX_REDACTION_REGIONS = 500
+
 export interface RedactionInput {
   pageIndex: number
   rect: [number, number, number, number]
@@ -1060,6 +1077,14 @@ export type ReplacePagesResult =
   | { ok: true; canceled: true }
   | { ok: false; error: string }
 
+/** The file put back as it was around a change written in place (Undo and Redo of that change) */
+export interface RestoreFileRequest {
+  path: string
+  bytes: ArrayBuffer
+}
+
+export type RestoreFileResult = { ok: true } | { ok: false; error: string }
+
 /** Resize all pages to a target paper size (points), content scaled to fit; written back in place */
 export interface SetPageSizeRequest {
   path: string
@@ -1262,6 +1287,7 @@ export interface PdfApi {
   setPageSize(request: SetPageSizeRequest): Promise<SetPageSizeResult>
   splitPages(request: SplitPagesRequest): Promise<SplitPagesResult>
   cropPages(request: CropPagesRequest): Promise<CropPagesResult>
+  restoreFile(request: RestoreFileRequest): Promise<RestoreFileResult>
   exportImages(request: ExportImagesRequest): Promise<ExportImagesResult>
   /** Convert the current PDF to Word / Excel / PowerPoint via the shell's local conversion flows */
   convertOffice(format: PdfConvertFormat): Promise<void>
@@ -1303,8 +1329,11 @@ export interface PdfApi {
   trustCertificate(fingerprint: string, commonName: string): Promise<void>
   /** Take a certificate off the user's trusted list again */
   untrustCertificate(fingerprint: string): Promise<void>
-  /** OS account name, used as the default author of new note comments; '' when unavailable */
+  /** Settings → General user name (the OS account name when unset), used as the default author of new note comments */
   getUsername(): Promise<string>
+  onUsernameChanged(handler: (name: string) => void): () => void
+  /** Settings → General default zoom, applied to files without a remembered reading position */
+  getDefaultZoom(): Promise<PdfDefaultZoom>
   /** Read Out Loud: speak `text` with the system voice, replacing any reading in progress */
   speechStart(text: string): Promise<SpeechStartResult>
   /** Pause a reading, or resume a paused one; resolves to the state afterwards ('idle' when nothing is being read) */

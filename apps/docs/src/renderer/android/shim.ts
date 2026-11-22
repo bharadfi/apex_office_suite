@@ -142,7 +142,7 @@ Object.assign(window, {
     closeState = undefined
     closeCheck?.()
     for (let i = 0; i < 20 && !closeState; i++) await new Promise((r) => setTimeout(r, 25))
-    host?.closeChecked(closeState?.dirty ?? false)
+    host?.closeChecked((closeState as { dirty: boolean } | undefined)?.dirty ?? false)
   },
   /** save the open document, resolving once it has been written (or after a few seconds) */
   __apexSave: async () => {

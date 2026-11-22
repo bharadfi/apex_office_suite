@@ -54,6 +54,8 @@ export interface BlockBox {
   docxIndex?: number
   /** owning section index (filled by assignSections) */
   section?: number
+  /** section-break paragraphs inserted this session (no docxIndex yet) right before this block */
+  unsavedSectBreaksBefore?: number
   /** horizontal margin/padding/border total read while measuring (vertical-text
    *  blocks: their writing-mode decoration would remap those margins later) */
   inlineExtraPx?: number
@@ -113,6 +115,11 @@ export interface BlockBox {
   floatPicture?: true
   /** painted offset of a floatPicture's box below its measured slot (px) */
   anchorDyPx?: number
+  /** the block paints off its flow slot (data-anchor-dy): the preview keeps
+   *  its boxes on the page its slot lands on (PageCut.anchored) */
+  anchorShifted?: true
+  /** applied page-relative shift taken out of `top` (the DOM box sits at top + shiftAppliedPx) */
+  shiftAppliedPx?: number
   /** in-block line boundaries (relative to block top, ascending, each = a line's starting Y): used to split page-crossing blocks by line */
   lineOffsets?: number[]
   /** min lines kept on each side of a split (widow/orphan control): paragraphs 2, table rows 1 (default) */
@@ -158,6 +165,9 @@ export interface BlockBox {
   /** BlockPlan.forcedLeadSpacePt (px): the space before an explicit break of
    *  this block keeps at the page top */
   forcedLeadSpacePx?: number
+  /** BlockPlan.sectionLeadSpacePt (px): what the first paragraph of a forced
+   *  section start keeps of its collapsed margin at the page top */
+  sectionLeadSpacePx?: number
   /** forcedLeadSpacePx folded into spaceBeforePx (foldForcedLeadSpaceBefore):
    *  the margin the lead's DOM shows below the gap */
   leadMtPx?: number
@@ -198,7 +208,7 @@ export interface BlockBox {
    */
   tableRows?: TableRowBox[]
 
-  /** virtual endnotes-area block (appended by appendEndnotesBlock; no DOM/docxIndex) */
+  /** endnotes: the virtual end-of-document area (appendEndnotesBlock; no DOM/docxIndex), or one row at a section's end */
   isEndnotes?: boolean
 
   /** virtual trailing block reserving pages for overflowing floating boxes (appendFloatSpillBlock) */
@@ -584,8 +594,12 @@ export interface ColumnBlockPlacement {
   charSpacePt?: number
   /** single-byte half of charSpacePt under balanceSingleByteDoubleByteWidth */
   charSpaceSbPt?: number
+  /** owning section's character-cell pitch (pt, snapToChars) */
+  charCellPt?: number
   dx: number
   dy: number
+  /** the part of dx owed to w:mirrorIndents: the export sheets, which place pages themselves, apply it alone */
+  mirrorDx?: number
   /** left edge of the block's page on the shared paper (--page-cx): pages narrower
    *  than the paper are centered; separate from dx so page-relative anchors can
    *  undo the column shift alone */
@@ -649,8 +663,13 @@ export interface FloatBox {
 }
 
 /** Page-bottom footnote entry (number/text/estimated height): shared by canvas page gaps and the pagination preview */
+/** class of an endnote row drawn in the flow at a section's end (editor/section-endnotes.ts) */
+export const SECT_NOTE_CLASS = 'page-sect-note'
+
 export interface PageNoteItem {
   no: number
+  /** w:numFmt of the note's section; absent = the kind's document format */
+  fmt?: string
   id: string
   text: string
   /** note body has no self-reference mark run: Word draws the entry without a numeral */

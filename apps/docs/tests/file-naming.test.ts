@@ -166,6 +166,8 @@ function ctxFor(opened: Opened, fileName: string, filePath: string | null): File
     setTrailingStartType: noop,
     setPageColor: noop,
     setPageColorDirty: noop,
+    propertyChanges: null,
+    setPropertyChanges: noop,
     setHeader: noop,
     setHeaderDirty: noop,
     setFooter: noop,
@@ -179,6 +181,16 @@ function ctxFor(opened: Opened, fileName: string, filePath: string | null): File
     setEvenOddHfDirty: noop,
     setMirrorMargins: noop,
     setMirrorMarginsDirty: noop,
+    setAutoHyphenation: noop,
+    setAutoHyphenationDirty: noop,
+    setDefaultTabStopEdit: noop,
+    setGutterAtTopEdit: noop,
+    setFontConversions: noop,
+    setCompressPunctEdit: noop,
+    setTrackMovesEdit: noop,
+    setStrictKinsokuEdit: noop,
+    setMathPrEdit: noop,
+    setNotePropsEdit: noop,
     setTrackRevisionsDirty: noop,
     setComments: noop,
     setCommentsDirty: noop,
@@ -193,6 +205,8 @@ function ctxFor(opened: Opened, fileName: string, filePath: string | null): File
     setNotesDirty: noop,
     setSources: noop,
     setSourcesDirty: noop,
+    citationStyle: null,
+    setCitationStyle: noop,
     setZoteroDocumentData: noop,
     setZoteroDocumentDataDirty: noop,
     setThemeFonts: noop,
@@ -232,6 +246,19 @@ function ctxFor(opened: Opened, fileName: string, filePath: string | null): File
     titlePgDirty: false,
     evenOddHfDirty: false,
     mirrorMarginsDirty: false,
+    autoHyphenation: false,
+    autoHyphenationDirty: false,
+    hyphenationEdit: null,
+    setHyphenationEdit: noop,
+    endManualHyphenation: noop,
+    defaultTabStopEdit: null,
+    gutterAtTopEdit: null,
+    fontConversions: null,
+    compressPunctEdit: null,
+    trackMovesEdit: null,
+    strictKinsokuEdit: null,
+    mathPrEdit: null,
+    notePropsEdit: null,
     trackRevisionsDirty: false,
     pgNumEdit: null,
   } as unknown as FileActionContext
@@ -370,5 +397,35 @@ describe('the name the Save As dialog opens on', () => {
     expect(
       dialogNameFor('\u624b\u52a8\u547d\u540d.docx', '\u5b63\u5ea6\u8425\u6536.docx', FILE_NAME),
     ).toBe('\u624b\u52a8\u547d\u540d.docx')
+  })
+})
+
+describe('Save As to another format', () => {
+  it('lets the autosave queued behind the dialog land before the copy is exported', async () => {
+    const opened = await open('Quarterly summary')
+    const ctx = ctxFor(opened, 'report.docx', '/tmp/report.docx')
+    const events: string[] = []
+    let closeDialog: (() => void) | null = null
+    Object.assign((window as unknown as { desktop: Record<string, unknown> }).desktop, {
+      saveDocxAs: () =>
+        new Promise((resolve) => {
+          closeDialog = () => resolve({ ok: false, exportAs: 'md', path: '/tmp/copy.md' })
+        }),
+      saveDocx: async () => {
+        events.push('autosave')
+        return { ok: true, path: '/tmp/report.docx' }
+      },
+      exportMarkdown: async (_name: string, _markdown: string, _images: unknown, out: string) => {
+        events.push(`export ${out}`)
+        return { ok: true, path: out }
+      },
+    })
+    const saveAs = save(ctx, true)
+    await expect.poll(() => closeDialog).not.toBeNull()
+    const autosave = save(ctx, false, true)
+    closeDialog!()
+    expect(await saveAs).toBe(false)
+    expect(await autosave).toBe(true)
+    expect(events).toEqual(['autosave', 'export /tmp/copy.md'])
   })
 })

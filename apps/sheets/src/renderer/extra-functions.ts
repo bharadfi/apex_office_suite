@@ -242,8 +242,6 @@ export class Amordegrc extends BaseFunction {
 
 export function createExtraFunctionExecutors(): BaseFunction[] {
   return [
-    new PercentOf('PERCENTOF'),
-    new RegexTest('REGEXTEST'),
     new IsoCeiling('ISO.CEILING'),
     new InfoFunction('INFO'),
     new Jis('JIS'),
